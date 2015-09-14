@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 """ CMIP5 Utilities
+
+Basics:
+
+ * Use :func:`search` to get a filtered list of CMIP5 files
 """
 
 def search():
