@@ -37,8 +37,16 @@ class CMIP5Session():
         Example:
             
             from ARCCSSive import CMIP5
-            for result in CMIP5.query().filter_by(institute='CSIRO'):
+            session = CMIP5.DB.connect()
+
+            # Filter using SQLAlchemy on the DRS values
+            for result in session.query().filter_by(institute='CSIRO'):
+
+                # Get values from the DRS using attributes
                 print result.model, result.experiment
+
+                # Get a xray Dataset combining all timeslices in this output
+                data = result.dataset()
         """
         return self.session.query(CMIP5Output)
 
