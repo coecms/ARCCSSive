@@ -21,8 +21,6 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
-from Session import engine
-
 Base = declarative_base()
 
 class CMIP5Output(Base):
@@ -45,7 +43,10 @@ class CMIP5Output(Base):
     ensemble   = Column(String)
     version    = Column(String)
 
-    def dataset():
+    def filenames(self):
+        return [x.path for x in self.files]
+
+    def dataset(self):
         """Returns an xray.Dataset() containing the output
         """
         pass
@@ -63,4 +64,3 @@ class CMIP5File(Base):
     output_id  = Column(Integer, ForeignKey('cmip5_output.id'))
     output     = relationship("CMIP5Output", backref=backref('files', order_by=id))
 
-Base.metadata.create_all(engine)

@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from Session import Session
+from DB import Session
 from Model import CMIP5Output, CMIP5File
 
 def insert(path):
@@ -65,6 +65,7 @@ def insert(path):
             variable   = part[10],
                 )
         session.add(output)
+        session.commit()
         output_id = output.id
 
     cmipfile = CMIP5File(
