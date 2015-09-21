@@ -13,7 +13,7 @@ CMIP5
 
 Query and access the CMIP5 data from Raijin
 
-```
+```python
 from ARCCSSive import CMIP5
 
 session = CMIP5.DB.connect()
@@ -21,4 +21,4 @@ for output in session.query().filter_by(model='ACCESS1-0'):
     data = output.dataset()    
 ```
 
-Uses [SQLAlchemy](http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#querying) to filter and sort the data files. Retrieve xray-aggregated time series using the `dataset()` method.
+Uses [SQLAlchemy](http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#querying) to filter and sort the data files. Retrieve [Xray](https://github.com/xray/xray)-aggregated time series using the `dataset()` method.
