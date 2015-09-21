@@ -17,25 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-Base = declarative_base()
-
-class ModelOutput(Base):
-    """Holds the main DRS entry
-    """
-    __tablename__ = 'model_output'
-
-    id         = Column(Integer, primary_key=True)
-    activity   = Column(String)
-    product    = Column(String)
-    institute  = Column(String)
-    model      = Column(String)
-    experiment = Column(String)
-    frequency  = Column(String)
-    realm      = Column(String)
-    variable   = Column(String)
-    MIP        = Column(String)
-    ensemble   = Column(String)
-    version    = Column(String)
+engine = create_engine('sqlite:///:memory:')
+Session = sessionmaker(bind=engine)

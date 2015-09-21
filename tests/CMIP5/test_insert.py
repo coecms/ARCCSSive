@@ -17,22 +17,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from Model import CMIP5Output
-from Session import Session
+from ARCCSSive import CMIP5
 
-def query():
-    """Query the CMIP5 database
-
-    Allows you to filter the full list of CMIP5 outputs using SQLAlchemy
-
-    Returns a interable list of ModelOutputs
-
-    Example:
-        
-        from ARCCSSive import CMIP5
-        for result in CMIP5.query().filter_by(institute='CSIRO'):
-            print result.model, result.experiment
-    """
-    session = Session()
-    return session.query(CMIP5Output)
+def test_insert():
+    CMIP5.insert('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+
+        'mrro_day_inmcm4_esmHistorical_r1i1p1_19800101-19891231.nc')
 
