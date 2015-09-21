@@ -24,7 +24,7 @@ setup(
         version='0.1.0',
         url='https://github.com/coecms/ARCCSSive',
         packages=['ARCCSSive'],
-        requires=[
+        install_requires=[
             'SQLAlchemy',
             ]
         )
