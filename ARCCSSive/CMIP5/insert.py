@@ -34,17 +34,17 @@ def insert(path):
     session = Session()
 
     output = session.query(CMIP5Output).filter_by(
-            activity=part[0],
-            product=part[1],
-            institute=part[2],
-            model=part[3],
-            experiment=part[4],
-            frequency=part[5],
-            realm=part[6],
-            MIP=part[7],
-            ensemble=part[8],
-            version=part[9],
-            variable=part[10],
+            activity   = part[0],
+            product    = part[1],
+            institute  = part[2],
+            model      = part[3],
+            experiment = part[4],
+            frequency  = part[5],
+            realm      = part[6],
+            MIP        = part[7],
+            ensemble   = part[8],
+            version    = part[9],
+            variable   = part[10],
             )
     output_id = None
 
@@ -52,22 +52,24 @@ def insert(path):
         output_id = output[0].id
     else:
         output = CMIP5Output(
-                activity=part[0],
-                product=part[1],
-                institute=part[2],
-                model=part[3],
-                experiment=part[4],
-                frequency=part[5],
-                realm=part[6],
-                variable=part[7],
-                ensemble=part[8],
-                version=part[9],
+            activity   = part[0],
+            product    = part[1],
+            institute  = part[2],
+            model      = part[3],
+            experiment = part[4],
+            frequency  = part[5],
+            realm      = part[6],
+            MIP        = part[7],
+            ensemble   = part[8],
+            version    = part[9],
+            variable   = part[10],
                 )
         session.add(output)
         output_id = output.id
 
     cmipfile = CMIP5File(
             path=path,
-            output_id=output.id
+            output_id=output_id
             )
     session.add(cmipfile)
+    session.commit()
