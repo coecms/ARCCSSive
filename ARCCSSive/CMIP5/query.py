@@ -17,14 +17,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from distutils.core import setup
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from ORM import ModelOutput
 
-setup(
-        name='ARCCSSive',
-        version='0.1.0',
-        url='https://github.com/coecms/ARCCSSive',
-        packages=['ARCCSSive'],
-        requires=[
-            'SQLAlchemy',
-            ]
-        )
+engine = create_engine('sqlite:///:memory:')
+Session = sessionmaker(bind=engine)
+
+def query():
+    """Query the CMIP5 database
+    """
+    session = Session()
+    return session.query(ModelOutput)
+

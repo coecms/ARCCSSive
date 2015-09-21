@@ -19,7 +19,6 @@ limitations under the License.
 
 from ARCCSSive import CMIP5
 
-def test_CMIP5_search():
-    results = CMIP5.search()
-    assert results
+def test_CMIP5_query():
+    results = CMIP5.query()
 

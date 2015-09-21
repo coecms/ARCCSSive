@@ -17,14 +17,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from distutils.core import setup
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 
-setup(
-        name='ARCCSSive',
-        version='0.1.0',
-        url='https://github.com/coecms/ARCCSSive',
-        packages=['ARCCSSive'],
-        requires=[
-            'SQLAlchemy',
-            ]
-        )
+Base = declarative_base()
+
+class ModelOutput(Base):
+    """Holds the main DRS entry
+    """
+    __tablename__ = 'model_output'
+
+    id         = Column(Integer, primary_key=True)
+    activity   = Column(String)
+    product    = Column(String)
+    institute  = Column(String)
+    model      = Column(String)
+    experiment = Column(String)
+    frequency  = Column(String)
+    realm      = Column(String)
+    variable   = Column(String)
+    MIP        = Column(String)
+    ensemble   = Column(String)
+    version    = Column(String)
