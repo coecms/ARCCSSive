@@ -4,6 +4,7 @@ python:
 
 install:
     - pip install pytest coverage codecov
+    - pip install .
 
 script: 
     - coverage run --source ARCCSSive -m py.test
