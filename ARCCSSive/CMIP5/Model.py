@@ -27,23 +27,21 @@ Base = declarative_base()
 
 class Dataset(Base):
     """Holds the main DRS entry
-
-    Retrieve a iterable list of outputs from the database using CMIP5.query()
     """
     __tablename__ = 'cmip5_dataset'
 
     id         = Column(Integer, primary_key=True)
-    activity   = Column(String)
-    product    = Column(String)
-    institute  = Column(String)
-    model      = Column(String)
-    experiment = Column(String)
-    frequency  = Column(String)
-    realm      = Column(String)
-    variable   = Column(String)
-    MIP        = Column(String)
-    ensemble   = Column(String)
-    version    = relationship("Version", order_by="Version.version", backref="dataset")
+    activity   = Column(String) #: MIP activity, e.g. 'CMIP5', 'TAMIP'
+    product    = Column(String) #: 
+    institute  = Column(String) #: Submitting institution
+    model      = Column(String) #: E.g. 'ACCESS1-0'
+    experiment = Column(String) #: E.g. 'rcp45'
+    frequency  = Column(String) #: Sampling frequency
+    realm      = Column(String) #: E.g. 'atmos'
+    variable   = Column(String) #: Physical quantity
+    MIPTable   = Column(String) #: Variable group
+    ensemble   = Column(String) #: Ensemble member identifier
+    version    = relationship("Version", order_by="Version.version", backref="dataset") #: List of available versions for this Dataset
 
     def filenames(self):
         return [x.path for x in self.version[-1].files]
