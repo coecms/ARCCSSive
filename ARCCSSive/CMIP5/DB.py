@@ -19,7 +19,7 @@ limitations under the License.
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from Model import Base, CMIP5Output
+from Model import Base, Dataset
 
 Session = sessionmaker()
 
@@ -48,7 +48,7 @@ class CMIP5Session():
                 # Get a xray Dataset combining all timeslices in this output
                 data = result.dataset()
         """
-        return self.session.query(CMIP5Output)
+        return self.session.query(Dataset)
 
 def connect():
     """Initialise the DB session

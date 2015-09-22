@@ -18,7 +18,7 @@ limitations under the License.
 """
 
 from ARCCSSive import CMIP5
-from ARCCSSive.CMIP5.Model import CMIP5File
+from ARCCSSive.CMIP5.Model import File
 
 import pytest
 
@@ -27,14 +27,14 @@ def db():
     return CMIP5.DB.connect()
 
 def test_insert(db):
-    CMIP5.insert('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+
+    CMIP5.insert.insert_path('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+
         'mrro_day_inmcm4_esmHistorical_r1i1p1_19800101-19891231.nc')
     assert db.query().count() == 1
 
     # Should create a new file under the same CMIP5Output
-    CMIP5.insert('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+
+    CMIP5.insert.insert_path('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+
         'mrro_day_inmcm4_esmHistorical_r1i1p1_19900101-19991231.nc')
     assert db.query().count() == 1
 
-    assert db.session.query(CMIP5File).count() == 2
+    assert db.session.query(File).count() == 2
 

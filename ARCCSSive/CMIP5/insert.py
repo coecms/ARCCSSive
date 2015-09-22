@@ -18,9 +18,26 @@ limitations under the License.
 """
 
 from DB import Session
-from Model import CMIP5Output, CMIP5File
+from Model import Dataset, Version, File
 
-def insert(path):
+def get_or_insert(session, klass, **kwargs):
+    """Return the id of a entry
+
+    Creates a new entry with kwargs if one doesn't exist
+    """
+    search = session.query(klass).filter_by(**kwargs)
+
+    if search.count() > 1:
+        raise IndexError('Too many matches')
+    elif search.count() == 1:
+        return search[0].id
+    else:
+        entry = klass(**kwargs)
+        session.add(entry)
+        session.commit()
+        return entry.id
+
+def insert_path(path):
     """ Insert a DRS path into the database
 
     Example:
@@ -33,7 +50,7 @@ def insert(path):
     part = path.split('/')
     session = Session()
 
-    output = session.query(CMIP5Output).filter_by(
+    dataset_id = get_or_insert(session, Dataset,
             activity   = part[0],
             product    = part[1],
             institute  = part[2],
@@ -43,34 +60,16 @@ def insert(path):
             realm      = part[6],
             MIP        = part[7],
             ensemble   = part[8],
-            version    = part[9],
             variable   = part[10],
             )
-    output_id = None
 
-    if output.count() > 0:
-        output_id = output[0].id
-    else:
-        output = CMIP5Output(
-            activity   = part[0],
-            product    = part[1],
-            institute  = part[2],
-            model      = part[3],
-            experiment = part[4],
-            frequency  = part[5],
-            realm      = part[6],
-            MIP        = part[7],
-            ensemble   = part[8],
+    version_id = get_or_insert(session, Version,
+            dataset_id = dataset_id,
             version    = part[9],
-            variable   = part[10],
-                )
-        session.add(output)
-        session.commit()
-        output_id = output.id
-
-    cmipfile = CMIP5File(
-            path=path,
-            output_id=output_id
             )
-    session.add(cmipfile)
-    session.commit()
+
+    file_id = get_or_insert(session, File,
+            version_id = version_id,
+            path       = path,
+            )
+

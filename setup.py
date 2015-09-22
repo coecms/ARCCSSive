@@ -26,5 +26,6 @@ setup(
         packages=['ARCCSSive'],
         install_requires=[
             'SQLAlchemy',
+            'xray',
             ]
         )

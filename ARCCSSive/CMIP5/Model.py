@@ -21,14 +21,16 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
+import xray
+
 Base = declarative_base()
 
-class CMIP5Output(Base):
+class Dataset(Base):
     """Holds the main DRS entry
 
     Retrieve a iterable list of outputs from the database using CMIP5.query()
     """
-    __tablename__ = 'cmip5_output'
+    __tablename__ = 'cmip5_dataset'
 
     id         = Column(Integer, primary_key=True)
     activity   = Column(String)
@@ -41,17 +43,37 @@ class CMIP5Output(Base):
     variable   = Column(String)
     MIP        = Column(String)
     ensemble   = Column(String)
-    version    = Column(String)
+    version    = relationship("Version", order_by="Version.version", backref="dataset")
 
     def filenames(self):
-        return [x.path for x in self.files]
+        return [x.path for x in self.version[-1].files]
 
     def dataset(self):
-        """Returns an xray.Dataset() containing the output
-        """
-        pass
+        """Returns an xray.Dataset() containing the most recent version of this dataset
 
-class CMIP5File(Base):
+        To retrieve a specific version use the 'version' attribute, e.g.
+            version = dataset.version[1].version
+            data    = dataset.version[1].dataset()
+        """
+        return self.version[-1].dataset()
+
+class Version(Base):
+    """Used to select different versions of the dataset
+    """
+    __tablename__ = 'cmip5_version'
+
+    id      = Column(Integer, primary_key=True)
+    version = Column(String)
+    files   = relationship("File", order_by="File.id", backref="version")
+
+    dataset_id  = Column(Integer, ForeignKey('cmip5_dataset.id'))
+
+    def dataset(self):
+        """Returns a xray.Dataset combining all files in this dataset version
+        """
+        return xray.concat([f.dataset() for f in self.files],'time')
+
+class File(Base):
     """Holds a single output file
     """
     __tablename__ = 'cmip5_file'
@@ -61,6 +83,10 @@ class CMIP5File(Base):
     start_date = Column(String)
     final_date = Column(String)
 
-    output_id  = Column(Integer, ForeignKey('cmip5_output.id'))
-    output     = relationship("CMIP5Output", backref=backref('files', order_by=id))
+    version_id  = Column(Integer, ForeignKey('cmip5_version.id'))
+
+    def dataset(self):
+        """Returns a xray.Dataset containing this file's data
+        """
+        return xray.open_dataset(self.path)
 
