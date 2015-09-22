@@ -58,7 +58,7 @@ def insert_path(path):
             experiment = part[4],
             frequency  = part[5],
             realm      = part[6],
-            MIP        = part[7],
+            MIPTable   = part[7],
             ensemble   = part[8],
             variable   = part[10],
             )
