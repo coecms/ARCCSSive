@@ -24,17 +24,18 @@ from Model import Base, Dataset
 Session = sessionmaker()
 
 class CMIP5Session():
-    """Holds a SQLAlchemy session to allow for queries
+    """Holds a connection to the catalog
     """
 
     def query(self):
         """Query the CMIP5 database
 
         Allows you to filter the full list of CMIP5 outputs using SQLAlchemy
+        commands
 
-        Returns a interable list of ModelOutputs
+        :return: a interable sequence of :py:class:`Dataset`
 
-        Example:
+        Example::
             
             from ARCCSSive import CMIP5
             session = CMIP5.DB.connect()
@@ -53,7 +54,11 @@ class CMIP5Session():
 def connect():
     """Initialise the DB session
 
-    Example:
+    :return: A :py:class:`ARCCSSive.CMIP5.DB.CMIP5Session`
+
+    Example::
+
+        from ARCCSSive import CMIP5
         session = CMIP5.DB.connect()
         outputs = session.query()
     """

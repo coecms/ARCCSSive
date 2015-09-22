@@ -51,7 +51,8 @@ class Dataset(Base):
     def dataset(self):
         """Returns an xray.Dataset() containing the most recent version of this dataset
 
-        To retrieve a specific version use the 'version' attribute, e.g.
+        To retrieve a specific version use the 'version' attribute, e.g::
+
             version = dataset.version[1].version
             data    = dataset.version[1].dataset()
         """
