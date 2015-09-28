@@ -24,7 +24,7 @@ import pytest
 
 @pytest.fixture
 def db():
-    session = CMIP5.DB.connect()
+    session = CMIP5.DB.connect('sqlite:///:memory:')
     CMIP5.insert.insert_path('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+
         'mrro_day_inmcm4_esmHistorical_r1i1p1_19800101-19891231.nc')
     CMIP5.insert.insert_path('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+

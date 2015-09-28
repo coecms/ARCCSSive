@@ -21,71 +21,19 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
-import xray
-
 Base = declarative_base()
 
-class Dataset(Base):
-    """Holds the main DRS entry
-    """
-    __tablename__ = 'cmip5_dataset'
-
-    id         = Column(Integer, primary_key=True)
-    activity   = Column(String) #: MIP activity, e.g. 'CMIP5', 'TAMIP'
-    product    = Column(String) #: 
-    institute  = Column(String) #: Submitting institution
-    model      = Column(String) #: E.g. 'ACCESS1-0'
-    experiment = Column(String) #: E.g. 'rcp45'
-    frequency  = Column(String) #: Sampling frequency
-    realm      = Column(String) #: E.g. 'atmos'
-    variable   = Column(String) #: Physical quantity
-    MIPTable   = Column(String) #: Variable group
-    ensemble   = Column(String) #: Ensemble member identifier
-    version    = relationship("Version", order_by="Version.version", backref="dataset") #: List of available versions for this Dataset
-
-    def filenames(self):
-        return [x.path for x in self.version[-1].files]
-
-    def dataset(self):
-        """Returns an xray.Dataset() containing the most recent version of this dataset
-
-        To retrieve a specific version use the 'version' attribute, e.g::
-
-            version = dataset.version[1].version
-            data    = dataset.version[1].dataset()
-        """
-        return self.version[-1].dataset()
-
-class Version(Base):
-    """Used to select different versions of the dataset
-    """
-    __tablename__ = 'cmip5_version'
-
-    id      = Column(Integer, primary_key=True)
-    version = Column(String)
-    files   = relationship("File", order_by="File.id", backref="version")
-
-    dataset_id  = Column(Integer, ForeignKey('cmip5_dataset.id'))
-
-    def dataset(self):
-        """Returns a xray.Dataset combining all files in this dataset version
-        """
-        return xray.concat([f.dataset() for f in self.files],'time')
+# CREATE TABLE cmip5
+#             (id text, variable text, mip text, model text, experiment text, ensemble text, version text);
 
 class File(Base):
-    """Holds a single output file
-    """
-    __tablename__ = 'cmip5_file'
+    __tablename__ = 'cmip5'
 
-    id         = Column(Integer, primary_key=True)
-    path       = Column(String)
-    start_date = Column(String)
-    final_date = Column(String)
-
-    version_id  = Column(Integer, ForeignKey('cmip5_version.id'))
-
-    def dataset(self):
-        """Returns a xray.Dataset containing this file's data
-        """
-        return xray.open_dataset(self.path)
+    path       = Column(String, name = 'id', primary_key = True)
+    variable   = Column(String)
+    mip        = Column(String)
+    model      = Column(String)
+    experiment = Column(String)
+    ensemble   = Column(String)
+    version    = Column(String)
 

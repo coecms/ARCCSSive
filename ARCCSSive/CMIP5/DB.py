@@ -19,7 +19,8 @@ limitations under the License.
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from Model import Base, Dataset
+
+import Model
 
 Session = sessionmaker()
 
@@ -27,7 +28,7 @@ class CMIP5Session():
     """Holds a connection to the catalog
     """
 
-    def query(self):
+    def query(self, *args, **kwargs):
         """Query the CMIP5 database
 
         Allows you to filter the full list of CMIP5 outputs using SQLAlchemy
@@ -49,9 +50,12 @@ class CMIP5Session():
                 # Get a xray Dataset combining all timeslices in this output
                 data = result.dataset()
         """
-        return self.session.query(Dataset)
+        return self.session.query(*args, **kwargs)
 
-def connect():
+    def filter_files(self, **kwargs):
+        return self.query(Model.File).filter_by(**kwargs)
+
+def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
     """Initialise the DB session
 
     :return: A :py:class:`ARCCSSive.CMIP5.DB.CMIP5Session`
@@ -62,8 +66,8 @@ def connect():
         session = CMIP5.DB.connect()
         outputs = session.query()
     """
-    engine = create_engine('sqlite:///:memory:')
-    Base.metadata.create_all(engine)
+    engine = create_engine(path)
+    Model.Base.metadata.create_all(engine)
     Session.configure(bind=engine)
 
     connection = CMIP5Session()

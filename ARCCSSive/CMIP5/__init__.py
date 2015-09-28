@@ -1,1 +1,1 @@
-import DB
+from DB import connect
