@@ -23,32 +23,19 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-class Variable(Base):
-    __tablename__ = 'variable'
-    id         = Column(Integer, primary_key = True)
+# CREATE TABLE cmip5
+#             (id text, variable text, mip text, model text, experiment text, ensemble text, version text);
 
-    model      = Column(String)
-    experiment = Column(String)
+class File(Base):
+    __tablename__ = 'cmip5'
+
+    path       = Column(String, name = 'id', primary_key = True)
     variable   = Column(String)
     mip        = Column(String)
+    model      = Column(String)
+    experiment = Column(String)
     ensemble   = Column(String)
-
-    versions   = relationship('Version', order_by='Version.version', backref='variable')
-
-    def open(self):
-        """ Open the most recent version
-        """
-        return self.versions[-1].open()
-
-class Version(Base):
-    __tablename__ = 'version'
-    id          = Column(Integer, primary_key = True)
-    variable_id = Column(Integer, ForeignKey('variable.id'))
-
-    version     = Column(String)
-    path        = Column(String)
+    version    = Column(String)
 
     def open(self):
-        """ Open the file
-        """
-        return open(self.path, 'r')
+        return open(self.path,'r')

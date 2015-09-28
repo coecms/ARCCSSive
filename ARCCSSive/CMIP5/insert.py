@@ -17,59 +17,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from DB import Session
-from Model import Dataset, Version, File
-
 def get_or_insert(session, klass, **kwargs):
-    """Return the id of a entry
+    """Return the id of the entry matching **kwargs
 
     Creates a new entry with kwargs if one doesn't exist
+    Raises an exception if more than one match
     """
     search = session.query(klass).filter_by(**kwargs)
 
     if search.count() > 1:
-        raise IndexError('Too many matches')
-    elif search.count() == 1:
-        return search[0].id
+        raise RuntimeError("Too many matches")
+    if search.count() == 1:
+        return search.first().id
     else:
         entry = klass(**kwargs)
         session.add(entry)
         session.commit()
         return entry.id
-
-def insert_path(path):
-    """ Insert a DRS path into the database
-
-    Example:
-        
-        from ARCCSSive import CMIP5
-        CMIP5.insert('CMIP5/output1/INM/inmcm4/esmHistorical/day/land/day/r1i1p1/mrro/1/'+
-            'mrro_day_inmcm4_esmHistorical_r1i1p1_19800101-19891231.nc')
-    """
-
-    part = path.split('/')
-    session = Session()
-
-    dataset_id = get_or_insert(session, Dataset,
-            activity   = part[0],
-            product    = part[1],
-            institute  = part[2],
-            model      = part[3],
-            experiment = part[4],
-            frequency  = part[5],
-            realm      = part[6],
-            MIPTable   = part[7],
-            ensemble   = part[8],
-            variable   = part[10],
-            )
-
-    version_id = get_or_insert(session, Version,
-            dataset_id = dataset_id,
-            version    = part[9],
-            )
-
-    file_id = get_or_insert(session, File,
-            version_id = version_id,
-            path       = path,
-            )
-
