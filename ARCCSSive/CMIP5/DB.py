@@ -17,10 +17,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, func
 from sqlalchemy.orm import sessionmaker
 
-import Model
+from Model import Base, Version, Variable, File
 
 Session = sessionmaker()
 
@@ -52,8 +52,31 @@ class CMIP5Session():
         """
         return self.session.query(*args, **kwargs)
 
-    def filter_files(self, **kwargs):
-        return self.query(Model.File).filter_by(**kwargs)
+    def latest_variable_versions(self):
+        """ Returns the most recent version of each variable
+        """
+        sub = self.query(Version.variable_id, Version.version, Version.id, func.max(Version.version)).group_by(Version.variable_id).subquery()
+        return self.query(Variable, sub.c.version).filter(Variable.id == sub.c.variable_id)
+
+    def filter_files(self, 
+            startYear=None, 
+            endYear=None, 
+            **kwargs):
+        latest = self.latest_variable_versions().filter_by(**kwargs).subquery()
+        return self.query(File.path).filter(File.version_id == latest.c.id)
+
+    def models(self):
+        return self.query(Variable.model).distinct().all()
+
+    def experiments(self):
+        return self.query(Variable.experiment).distinct().all()
+
+    def variables(self):
+        return self.query(Variable.variable).distinct().all()
+
+    def mips(self):
+        return self.query(Variable.mip).distinct().all()
+
 
 def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
     """Initialise the DB session
@@ -67,7 +90,7 @@ def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5
         outputs = session.query()
     """
     engine = create_engine(path)
-    Model.Base.metadata.create_all(engine)
+    Base.metadata.create_all(engine)
     Session.configure(bind=engine)
 
     connection = CMIP5Session()

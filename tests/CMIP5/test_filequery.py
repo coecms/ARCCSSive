@@ -24,7 +24,7 @@ import pytest
 
 @pytest.fixture
 def cmip5():
-    session = CMIP5.connect()
+    session = CMIP5.connect('sqlite:///cmip5.db')
     return session
 
 def test_filter_files(cmip5):
@@ -32,6 +32,7 @@ def test_filter_files(cmip5):
             variable   = 'tas',
             mip        = 'Amon',
             experiment = 'historicalNat',
+            startYear   = 1980,
             )
 
     assert hist_files.count() > 0
