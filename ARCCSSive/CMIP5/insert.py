@@ -28,9 +28,9 @@ def get_or_insert(session, klass, **kwargs):
     if search.count() > 1:
         raise RuntimeError("Too many matches")
     if search.count() == 1:
-        return search.first().id
+        return search.first()
     else:
         entry = klass(**kwargs)
         session.add(entry)
         session.commit()
-        return entry.id
+        return entry

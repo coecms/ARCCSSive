@@ -29,17 +29,19 @@ output = CMIP5.connect('sqlite:///cmip5.db')
 
 for file in input.query(latest.Model.File):
     print file.path
-    variable_id = get_or_insert(output.session,
-            CMIP5.Model.Variable,
-            model      = file.model,
-            experiment = file.experiment,
-            variable   = file.variable,
-            mip        = file.mip,
-            ensemble   = file.ensemble)
 
-    get_or_insert(output.session,
+    version = get_or_insert(output.session,
             CMIP5.Model.Version,
             version     = file.version,
-            path        = file.path,
-            variable_id = variable_id)
+            path        = file.path)
+
+    if version.variable_id is None:
+        variable = get_or_insert(output.session,
+                CMIP5.Model.Variable,
+                model      = file.model,
+                experiment = file.experiment,
+                variable   = file.variable,
+                mip        = file.mip,
+                ensemble   = file.ensemble)
+        version.variable_id = variable.id
 

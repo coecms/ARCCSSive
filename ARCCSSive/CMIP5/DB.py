@@ -29,57 +29,71 @@ class CMIP5Session():
     """
 
     def query(self, *args, **kwargs):
-        """Query the CMIP5 database
+        """Query the CMIP5 catalog
 
         Allows you to filter the full list of CMIP5 outputs using SQLAlchemy
         commands
 
         :return: a interable sequence of :py:class:`Dataset`
-
-        Example::
-            
-            from ARCCSSive import CMIP5
-            session = CMIP5.DB.connect()
-
-            # Filter using SQLAlchemy on the DRS values
-            for result in session.query().filter_by(institute='CSIRO'):
-
-                # Get values from the DRS using attributes
-                print result.model, result.experiment
-
-                # Get a xray Dataset combining all timeslices in this output
-                data = result.dataset()
         """
         return self.session.query(*args, **kwargs)
 
-    def latest_variable_versions(self):
+    def latest_variables(self):
         """ Returns the most recent version of each variable
+
+        :return: An iterable returning pairs of
+            :py:class:`ARCCSSive.CMIP5.Model.Variable`,
+            :py:class:`ARCCSSive.CMIP5.Model.Version` where the Version
+            is the most recent matching that variable
         """
         sub = self.query(Version.variable_id, Version.version, Version.id, func.max(Version.version)).group_by(Version.variable_id).subquery()
         return self.query(Variable, sub.c.version).filter(Variable.id == sub.c.variable_id)
 
-    def filter_files(self, 
+    def files(self, 
             startYear=None, 
             endYear=None, 
             **kwargs):
+        """ Query the list of files
+
+        Returns a list of files that match the arguments
+
+        :argument: model
+        :argument: experiment
+        :argument: variable
+        :argument: mip
+        :argument: ensemble
+        :argument: startYear
+        :argument: endYear
+
+        :return: An iterable returning :py:class:`ARCCSSive.CMIP5.Model.File`s
+            matching the search query
+        """
         latest = self.latest_variable_versions().filter_by(**kwargs).subquery()
         return self.query(File.path).filter(File.version_id == latest.c.id)
 
     def models(self):
+        """ Get the list of all models in the dataset
+        """
         return self.query(Variable.model).distinct().all()
 
     def experiments(self):
+        """ Get the list of all experiments in the dataset
+        """
         return self.query(Variable.experiment).distinct().all()
 
     def variables(self):
+        """ Get the list of all variables in the dataset
+        """
         return self.query(Variable.variable).distinct().all()
 
     def mips(self):
+        """ Get the list of all MIP tables in the dataset
+        """
         return self.query(Variable.mip).distinct().all()
 
 
 def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
-    """Initialise the DB session
+    """Connect to the CMIP5 catalog
 
     :return: A :py:class:`ARCCSSive.CMIP5.DB.CMIP5Session`
 

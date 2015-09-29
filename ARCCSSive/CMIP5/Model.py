@@ -32,7 +32,21 @@ class Variable(Base):
     """
     A variable from a model ensemble run
 
-    Has a list of output versions
+    Query the catalog using SQLalchemy::
+
+        from ARCCSSive import CMIP5
+        from ARCCSSive.CMIP5.Model import Variable
+
+        catalog = CMIP5.connect()
+        for var in catalog.query(Variable).filter_by(model='ACCESS1-0'):
+            print var.experiment, var.variable
+
+    :attribute: model
+    :attribute: experiment
+    :attribute: variable
+    :attribute: mip
+    :attribute: ensemble
+    :attribute: version A list of :py:class:`Version` for this variable
     """
     __tablename__ = 'variable'
     id         = Column(Integer, primary_key = True)
@@ -49,7 +63,10 @@ class Version(Base):
     """
     A version of a model run's variable
 
-    Contains multiple files
+    :attribute: version Version identifier
+    :attribute: path Path to the output directory
+    :attribute: version The matching :py:class:`Variable`
+    :attribute: files A list of :py:class:`File` for this variable version
     """
     __tablename__ = 'version'
     id          = Column(Integer, primary_key = True)
@@ -63,6 +80,13 @@ class Version(Base):
 class File(Base):
     """
     An individual output file
+
+    :attribute: path Path to the file
+    :attribute: owner Owner of the file
+    :attribute: modified Date file was last modified
+
+    :attribute: start First date of model data in this file
+    :attribute: end Final date of model data in this file
     """
     __tablename__ = 'file'
     id         = Column(Integer, primary_key = True)
