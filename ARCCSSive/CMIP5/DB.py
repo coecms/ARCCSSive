@@ -31,8 +31,7 @@ class CMIP5Session():
     def query(self, *args, **kwargs):
         """Query the CMIP5 catalog
 
-        Allows you to filter the full list of CMIP5 outputs using SQLAlchemy
-        commands
+        Allows you to filter the full list of CMIP5 outputs using `SQLAlchemy commands <http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#querying>`_
 
         :return: a interable sequence of :py:class:`Dataset`
         """

@@ -27,8 +27,11 @@ input = latest.connect()
 # Connect to the output db
 output = CMIP5.connect('sqlite:///cmip5.db')
 
+nread = 0
 for file in input.query(latest.Model.File):
-    print file.path
+    if nread % 20 == 0:
+        print file.path
+    nread += 1
 
     version = get_or_insert(output.session,
             CMIP5.Model.Version,

@@ -124,3 +124,14 @@ class File(Base):
                 ).timetuple()
         self.end      = datetime.datetime(*end[0:6])
         data.close()
+
+class Latest(Base):
+    __tablename__ = 'cmip5'
+
+    id         = Column(String, primary_key = True)
+    variable   = Column(String)
+    mip        = Column(String)
+    model      = Column(String)
+    experiment = Column(String)
+    ensemble   = Column(String)
+    version    = Column(String)
