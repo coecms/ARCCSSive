@@ -21,14 +21,13 @@ from setuptools import setup
 
 requirements = [
         'SQLAlchemy',
-        'xray',
         ]
 
 # Don't install dependencies when making docs
-import os
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-if on_rtd:
-    requirements = []
+# import os
+# on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+# if on_rtd:
+#     requirements = []
 
 setup(
         name             = 'ARCCSSive',
