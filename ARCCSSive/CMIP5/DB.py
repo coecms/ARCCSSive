@@ -56,13 +56,9 @@ class CMIP5Session():
 
         Returns a list of files that match the arguments
 
-        :argument model:
-        :argument experiment:
-        :argument variable:
-        :argument mip:
-        :argument ensemble:
         :argument startYear: Only files with data after this year
         :argument endYear: Only files with data before this year
+        :argument **kwargs: Match any attribute in :class:`Model.Variable`, e.g. `model = 'ACCESS1-3'`
 
         :return: An iterable returning :py:class:`Model.File`
             matching the search query
