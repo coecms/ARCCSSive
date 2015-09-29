@@ -86,6 +86,7 @@ class Version(Base):
     __tablename__ = 'version'
     id          = Column(Integer, primary_key = True)
     variable_id = Column(Integer, ForeignKey('variable.id'))
+    latest_id   = Column(Integer, ForeignKey('cmip5.id'))
 
     version     = Column(String) #: Version identifier
     path        = Column(String) #: Path to the output directory
@@ -156,3 +157,15 @@ class File(Base):
                 ).timetuple()
         self.end      = datetime.datetime(*end[0:6])
         data.close()
+
+class Latest(Base):
+    __tablename__ = 'cmip5'
+
+    id         = Column(Integer, primary_key = True)
+    path       = Column(String)
+    variable   = Column(String)
+    mip        = Column(String)
+    model      = Column(String)
+    experiment = Column(String)
+    ensemble   = Column(String)
+    version    = Column(String)
