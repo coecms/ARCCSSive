@@ -30,76 +30,56 @@ Base = declarative_base()
 
 class Variable(Base):
     """
-    A variable from a model ensemble run
-
-    Query the catalog using SQLalchemy::
-
-        from ARCCSSive import CMIP5
-        from ARCCSSive.CMIP5.Model import Variable
-
-        catalog = CMIP5.connect()
-        for var in catalog.query(Variable).filter_by(model='ACCESS1-0'):
-            print var.experiment, var.variable
-
-    :attribute: model
-    :attribute: experiment
-    :attribute: variable
-    :attribute: mip
-    :attribute: ensemble
-    :attribute: version A list of :py:class:`Version` for this variable
+    A model variable from a specific run
     """
     __tablename__ = 'variable'
     id         = Column(Integer, primary_key = True)
 
-    model      = Column(String)
-    experiment = Column(String)
-    variable   = Column(String)
-    mip        = Column(String)
-    ensemble   = Column(String)
+    variable   = Column(String) #: Variable name
+    experiment = Column(String) #: CMIP experiment
+    mip        = Column(String) #: MIP table specifying output frequency
+    model      = Column(String) #: Model that generated the dataset
+    ensemble   = Column(String) #: Ensemble member
 
-    versions   = relationship('Version', order_by='Version.version', backref='variable')
+    versions   = relationship('Version', order_by='Version.version', backref='variable') #: List of :class:`Version` for this model variable
 
 class Version(Base):
     """
     A version of a model run's variable
 
-    :attribute: version Version identifier
-    :attribute: path Path to the output directory
-    :attribute: version The matching :py:class:`Variable`
-    :attribute: files A list of :py:class:`File` for this variable version
+    .. attribute:: variable
+
+        :class:`Variable` associated with this version
     """
     __tablename__ = 'version'
     id          = Column(Integer, primary_key = True)
     variable_id = Column(Integer, ForeignKey('variable.id'))
 
-    version     = Column(String)
-    path        = Column(String)
+    version     = Column(String) #: Version identifier
+    path        = Column(String) #: Path to the output directory
 
-    files       = relationship('File', order_by='File.start', backref='version')
+    files       = relationship('File', order_by='File.start', backref='version') #: List of :py:class:`File` for this version
 
 class File(Base):
     """
     An individual output file
 
-    :attribute: path Path to the file
-    :attribute: owner Owner of the file
-    :attribute: modified Date file was last modified
+    .. attribute:: version
 
-    :attribute: start First date of model data in this file
-    :attribute: end Final date of model data in this file
+        :class:`Version` associated with this file
     """
     __tablename__ = 'file'
     id         = Column(Integer, primary_key = True)
     version_id = Column(Integer, ForeignKey('version.id'))
 
     # Filesystem metadata
-    path       = Column(String)
-    owner      = Column(String)
-    modified   = Column(Date)
+    path       = Column(String) #: Path to the file
+    owner      = Column(String) #: File owner
+    modified   = Column(Date)   #: Date file was last modified
 
     # Netcdf metadata
-    start      = Column(Date)
-    end        = Column(Date)
+    start      = Column(Date)   #: Start date of file's data
+    end        = Column(Date)   #: End date of file's data
 
     def __init__(self, version_id, path):
         self.version_id = version_id

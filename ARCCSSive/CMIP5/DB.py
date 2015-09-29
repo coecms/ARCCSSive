@@ -31,10 +31,9 @@ class CMIP5Session():
     def query(self, *args, **kwargs):
         """Query the CMIP5 catalog
 
-        Allows you to filter the full list of CMIP5 outputs using SQLAlchemy
-        commands
+        Allows you to filter the full list of CMIP5 outputs using `SQLAlchemy commands <http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#querying>`_
 
-        :return: a interable sequence of :py:class:`Dataset`
+        :return: A SQLalchemy query object
         """
         return self.session.query(*args, **kwargs)
 
@@ -42,8 +41,8 @@ class CMIP5Session():
         """ Returns the most recent version of each variable
 
         :return: An iterable returning pairs of
-            :py:class:`ARCCSSive.CMIP5.Model.Variable`,
-            :py:class:`ARCCSSive.CMIP5.Model.Version` where the Version
+            :py:class:`Model.Variable`,
+            :py:class:`Model.Version` where the Version
             is the most recent matching that variable
         """
         sub = self.query(Version.variable_id, Version.version, Version.id, func.max(Version.version)).group_by(Version.variable_id).subquery()
@@ -57,15 +56,15 @@ class CMIP5Session():
 
         Returns a list of files that match the arguments
 
-        :argument: model
-        :argument: experiment
-        :argument: variable
-        :argument: mip
-        :argument: ensemble
-        :argument: startYear
-        :argument: endYear
+        :argument model:
+        :argument experiment:
+        :argument variable:
+        :argument mip:
+        :argument ensemble:
+        :argument startYear: Only files with data after this year
+        :argument endYear: Only files with data before this year
 
-        :return: An iterable returning :py:class:`ARCCSSive.CMIP5.Model.File`s
+        :return: An iterable returning :py:class:`Model.File`
             matching the search query
         """
         latest = self.latest_variable_versions().filter_by(**kwargs).subquery()
@@ -95,7 +94,7 @@ class CMIP5Session():
 def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
     """Connect to the CMIP5 catalog
 
-    :return: A :py:class:`ARCCSSive.CMIP5.DB.CMIP5Session`
+    :return: A new :py:class:`CMIP5Session`
 
     Example::
 
