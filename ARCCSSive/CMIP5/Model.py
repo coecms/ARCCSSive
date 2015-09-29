@@ -31,6 +31,26 @@ Base = declarative_base()
 class Variable(Base):
     """
     A model variable from a specific run
+
+    .. attribute:: variable
+
+        Variable name
+
+    .. attribute:: experiment
+
+        CMIP experiment
+
+    .. attribute:: mip
+
+        MIP table specifying output frequency
+
+    .. attribute:: model
+
+        Model that generated the dataset
+
+    .. attribute:: ensemble
+
+        Ensemble member
     """
     __tablename__ = 'variable'
     id         = Column(Integer, primary_key = True)
@@ -46,6 +66,18 @@ class Variable(Base):
 class Version(Base):
     """
     A version of a model run's variable
+
+    .. attribute:: version
+
+        Version identifier
+
+    .. attribute:: path
+
+        Path to the output directory
+
+    .. attribute:: files
+
+        List of :py:class:`File` for this version
 
     .. attribute:: variable
 
@@ -63,6 +95,26 @@ class Version(Base):
 class File(Base):
     """
     An individual output file
+
+    .. attribute:: path
+
+        Path to the file
+
+    .. attribute:: owner
+
+        File owner
+
+    .. attribute:: modified
+
+        Date file was last modified
+
+    .. attribute:: start
+
+        Start date of file's data
+
+    .. attribute:: end
+
+        End date of file's data
 
     .. attribute:: version
 
