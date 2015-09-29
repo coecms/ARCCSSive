@@ -14,10 +14,10 @@ CMIP5
 Query and access the CMIP5 data from Raijin
 
 ```python
-from ARCCSSive import CMIP5
+from ARCCSSive import CMIP5, CMIP5.Model.Variable
 
 session = CMIP5.DB.connect()
-for output in session.query().filter_by(model='ACCESS1-0'):
+for output in session.query(Variable).filter_by(model='ACCESS1-0'):
     data = output.dataset()    
 ```
 
