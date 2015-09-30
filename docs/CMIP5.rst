@@ -11,27 +11,32 @@ Getting Started:
 To use the CMIP5 catalog you first need to connect to it::
 
     from ARCCSSive import CMIP5
-    session = CMIP5.connect()
+    cmip5 = CMIP5.connect()
 
 The session object allows you to run queries on the catalog. There are a number
-of helper functions for common operations, for instance retrieving a list of files::
+of helper functions for common operations, for instance searching through the
+model outputs::
 
-    files = session.files(
+    outputs = cmip5.outputs(
         experiment = 'rcp45',
         variable   = 'tas',
         mip        = 'Amon')
 
 You can then loop over the search results in normal Python fashion::
 
-    for f in files:
-        print f.path
+    for o in outputs:
+        print o.model, o.files()
 
 connect()
 ---------
 .. autofunction:: connect()
 
-CMIP5Session
-------------
+Session
+-------
+
+The session object has a number of helper functions for getting information out
+of the catalog, e.g. :func:`CMIP5Session.models()` gets a list of all available
+models.
 
 .. autoclass:: CMIP5Session
     :members:
@@ -51,9 +56,5 @@ a time sequence.
     :member-order: bysource
 
 .. autoclass:: Version
-    :members:
-    :member-order: bysource
-
-.. autoclass:: File
     :members:
     :member-order: bysource

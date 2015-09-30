@@ -26,6 +26,8 @@ Session = sessionmaker()
 
 class CMIP5Session():
     """Holds a connection to the catalog
+
+    Create using :func:`ARCCSSive.CMIP5.connect()`
     """
 
     def query(self, *args, **kwargs):
@@ -51,26 +53,44 @@ class CMIP5Session():
 
     def models(self):
         """ Get the list of all models in the dataset
+
+        :return: A list of strings
         """
         return [x[0] for x in self.query(Variable.model).distinct().all()]
 
     def experiments(self):
         """ Get the list of all experiments in the dataset
+
+        :return: A list of strings
         """
         return [x[0] for x in self.query(Variable.experiment).distinct().all()]
 
     def variables(self):
         """ Get the list of all variables in the dataset
+
+        :return: A list of strings
         """
         return [x[0] for x in self.query(Variable.variable).distinct().all()]
 
     def mips(self):
         """ Get the list of all MIP tables in the dataset
+
+        :return: A list of strings
         """
         return [x[0] for x in self.query(Variable.mip).distinct().all()]
 
     def outputs(self, **kwargs):
         """ Get the most recent files matching a query
+
+        Arguments are optional, using them will select only matching outputs
+
+        :argument variable: Variable name
+        :argument experiment: CMIP experiment
+        :argument mip: MIP table
+        :argument model: Model used to generate the dataset
+        :argument ensemble: Ensemble member
+
+        :return: An iterable sequence of :class:`ARCCSSive.CMIP5.Model.Variable`
         """
         return self.query(Variable).filter_by(**kwargs)
 

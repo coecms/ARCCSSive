@@ -30,6 +30,8 @@ class Variable(Base):
     """
     A model variable from a specific run
 
+    Search through these using :func:`ARCCSSive.CMIP5.DB.CMIP5Session.outputs()`
+
     .. attribute:: variable
 
         Variable name
@@ -49,6 +51,10 @@ class Variable(Base):
     .. attribute:: ensemble
 
         Ensemble member
+
+    .. attribute:: versions
+
+        List of :class:`Version` available for this output
     """
     __tablename__ = 'variable'
     id         = Column(Integer, primary_key = True)
@@ -80,10 +86,6 @@ class Version(Base):
 
         Path to the output directory
 
-    .. attribute:: files
-
-        List of :py:class:`File` for this version
-
     .. attribute:: variable
 
         :class:`Variable` associated with this version
@@ -97,16 +99,20 @@ class Version(Base):
     path        = Column(String) #: Path to the output directory
 
     def glob(self):
-        file = '%s_%s_%s_%s_%s*.nc'%(
+        """ Get the glob string matching the CMIP5 filename
+        """
+        return '%s_%s_%s_%s_%s*.nc'%(
             self.variable.variable,
             self.variable.mip,
             self.variable.model,
             self.variable.experiment,
             self.variable.ensemble)
-        return os.path.join(self.path, file)
 
     def files(self):
-        return glob.glob(self.glob())
+        """ Returns the list of files matching this version
+        """
+        g = os.path.join(self.path, self.glob())
+        return glob.glob(g)
 
 class Latest(Base):
     __tablename__ = 'cmip5'
