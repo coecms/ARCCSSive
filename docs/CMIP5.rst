@@ -35,10 +35,10 @@ Session
 -------
 
 The session object has a number of helper functions for getting information out
-of the catalog, e.g. :func:`CMIP5Session.models()` gets a list of all available
+of the catalog, e.g. :func:`Session.models()` gets a list of all available
 models.
 
-.. autoclass:: CMIP5Session
+.. autoclass:: Session
     :members:
 
 Model

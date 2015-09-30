@@ -22,9 +22,9 @@ from sqlalchemy.orm import sessionmaker
 
 from Model import Base, Version, Variable, Latest
 
-Session = sessionmaker()
+SQASession = sessionmaker()
 
-class CMIP5Session():
+class Session():
     """Holds a connection to the catalog
 
     Create using :func:`ARCCSSive.CMIP5.connect()`
@@ -98,7 +98,7 @@ class CMIP5Session():
 def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
     """Connect to the CMIP5 catalog
 
-    :return: A new :py:class:`CMIP5Session`
+    :return: A new :py:class:`Session`
 
     Example::
 
@@ -108,10 +108,10 @@ def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5
     """
     engine = create_engine(path)
     Base.metadata.create_all(engine)
-    Session.configure(bind=engine)
+    SQASession.configure(bind=engine)
 
-    connection = CMIP5Session()
-    connection.session = Session()
+    connection = Session()
+    connection.session = SQASession()
     return connection
 
 def update(session):

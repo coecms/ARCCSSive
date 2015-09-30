@@ -30,7 +30,7 @@ class Variable(Base):
     """
     A model variable from a specific run
 
-    Search through these using :func:`ARCCSSive.CMIP5.DB.CMIP5Session.outputs()`
+    Search through these using :func:`ARCCSSive.CMIP5.Session.outputs()`
 
     .. attribute:: variable
 

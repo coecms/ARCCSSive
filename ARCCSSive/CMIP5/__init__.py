@@ -1,1 +1,1 @@
-from DB import connect, CMIP5Session
+from DB import connect, Session
