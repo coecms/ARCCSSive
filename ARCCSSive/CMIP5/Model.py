@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -62,6 +62,10 @@ class Variable(Base):
     ensemble   = Column(String) #: Ensemble member
 
     versions   = relationship('Version', order_by='Version.version', backref='variable') #: List of :class:`Version` for this model variable
+
+    __table_args__ = (
+            UniqueConstraint('variable','experiment','mip','model','ensemble'),
+            )
 
 class Version(Base):
     """
