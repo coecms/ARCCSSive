@@ -35,4 +35,9 @@ setup(
         url              = 'https://github.com/coecms/ARCCSSive',
         packages         = ['ARCCSSive', 'ARCCSSive.CMIP5'],
         install_requires = requirements,
+
+        author           = 'Scott Wales',
+        author_email     = 'scott.wales@unimelb.edu.au',
+        description      = 'ARCCSS Data Access Tools',
+        licence          = 'Apache 2.0',
         )
