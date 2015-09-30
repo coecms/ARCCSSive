@@ -39,5 +39,5 @@ setup(
         author           = 'Scott Wales',
         author_email     = 'scott.wales@unimelb.edu.au',
         description      = 'ARCCSS Data Access Tools',
-        licence          = 'Apache 2.0',
+        license          = 'Apache 2.0',
         )
