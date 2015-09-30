@@ -17,10 +17,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine, func, select, join, and_
 from sqlalchemy.orm import sessionmaker
 
-from Model import Base, Version, Variable, File
+from Model import Base, Version, Variable, Latest
 
 Session = sessionmaker()
 
@@ -37,7 +37,44 @@ class CMIP5Session():
         """
         return self.session.query(*args, **kwargs)
 
-    def latest_variables(self):
+    def files(self, **kwargs):
+        """ Query the list of files
+
+        Returns a list of files that match the arguments
+
+        :argument **kwargs: Match any attribute in :class:`Model.Variable`, e.g. `model = 'ACCESS1-3'`
+
+        :return: An iterable returning :py:class:`Model.File`
+            matching the search query
+        """
+        pass
+
+    def models(self):
+        """ Get the list of all models in the dataset
+        """
+        return [x[0] for x in self.query(Variable.model).distinct().all()]
+
+    def experiments(self):
+        """ Get the list of all experiments in the dataset
+        """
+        return [x[0] for x in self.query(Variable.experiment).distinct().all()]
+
+    def variables(self):
+        """ Get the list of all variables in the dataset
+        """
+        return [x[0] for x in self.query(Variable.variable).distinct().all()]
+
+    def mips(self):
+        """ Get the list of all MIP tables in the dataset
+        """
+        return [x[0] for x in self.query(Variable.mip).distinct().all()]
+
+    def all_outputs(self):
+        """ Return all output variables
+        """
+        return self.query(Variable)
+
+    def latest_output_versions(self):
         """ Returns the most recent version of each variable
 
         :return: An iterable returning pairs of
@@ -46,45 +83,14 @@ class CMIP5Session():
             is the most recent matching that variable
         """
         sub = self.query(Version.variable_id, Version.version, Version.id, func.max(Version.version)).group_by(Version.variable_id).subquery()
-        return self.query(Variable, sub.c.version).filter(Variable.id == sub.c.variable_id)
+        return self.query(Variable, Version) \
+            .filter(Variable.id == sub.c.variable_id) \
+            .filter(Version.id == sub.c.id)
 
-    def files(self, 
-            startYear=None, 
-            endYear=None, 
-            **kwargs):
-        """ Query the list of files
-
-        Returns a list of files that match the arguments
-
-        :argument startYear: Only files with data after this year
-        :argument endYear: Only files with data before this year
-        :argument **kwargs: Match any attribute in :class:`Model.Variable`, e.g. `model = 'ACCESS1-3'`
-
-        :return: An iterable returning :py:class:`Model.File`
-            matching the search query
+    def outputs(self):
+        """ Get the most recent files matching a query
         """
-        latest = self.latest_variable_versions().filter_by(**kwargs).subquery()
-        return self.query(File.path).filter(File.version_id == latest.c.id)
-
-    def models(self):
-        """ Get the list of all models in the dataset
-        """
-        return self.query(Variable.model).distinct().all()
-
-    def experiments(self):
-        """ Get the list of all experiments in the dataset
-        """
-        return self.query(Variable.experiment).distinct().all()
-
-    def variables(self):
-        """ Get the list of all variables in the dataset
-        """
-        return self.query(Variable.variable).distinct().all()
-
-    def mips(self):
-        """ Get the list of all MIP tables in the dataset
-        """
-        return self.query(Variable.mip).distinct().all()
+        return [ver for var, ver in self.latest_output_versions()]
 
 
 def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
@@ -106,3 +112,59 @@ def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5
     connection.session = Session()
     return connection
 
+def update(session):
+    """ Update the tables using the latest values
+    """
+    conn = session.connection()
+
+    variable = Variable.__table__
+    version  = Version.__table__
+    latest   = Latest.__table__
+
+    # Add any missing variables to the 'variable' table
+
+    # A list of ids for de-duplicated variables
+    unique = select([func.min(latest.c.id)]).group_by(
+        latest.c.variable,   
+        latest.c.experiment, 
+        latest.c.mip,        
+        latest.c.model,      
+        latest.c.ensemble,   
+        )
+    # A list of values already in the variables table
+    j = join(latest, variable, and_(
+        variable.c.variable   == latest.c.variable,
+        variable.c.experiment == latest.c.experiment,
+        variable.c.mip        == latest.c.mip,
+        variable.c.model      == latest.c.model,
+        variable.c.ensemble   == latest.c.ensemble,
+        ), isouter=True)
+    missing = select([
+        latest.c.variable,   
+        latest.c.experiment, 
+        latest.c.mip,        
+        latest.c.model,      
+        latest.c.ensemble,   
+        ]).where(latest.c.id.in_(unique)).select_from(j).where(variable.c.variable.is_(None))
+    insert     = variable.insert().from_select(['variable','experiment','mip','model','ensemble'], missing)
+
+    print insert
+    print
+    conn.execute(insert)
+
+    # Add any missing versions to the 'version' table, linking with the releant variable
+
+    j = join(latest, variable, and_(
+        variable.c.variable   == latest.c.variable,
+        variable.c.experiment == latest.c.experiment,
+        variable.c.mip        == latest.c.mip,
+        variable.c.model      == latest.c.model,
+        variable.c.ensemble   == latest.c.ensemble,
+        ))
+    latest_ids = select([version.c.latest_id])
+    missing    = select([latest.c.id, latest.c.path, latest.c.version, variable.c.id]).select_from(j).where(latest.c.id.notin_(latest_ids))
+    insert     = version.insert().from_select(['latest_id','path','version','variable_id'], missing)
+
+    print insert
+    print
+    conn.execute(insert)

@@ -22,6 +22,7 @@ from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
 import os
+import glob
 import pwd
 import netCDF4
 import datetime
@@ -95,72 +96,17 @@ class Version(Base):
     version     = Column(String) #: Version identifier
     path        = Column(String) #: Path to the output directory
 
-    files       = relationship('File', order_by='File.start', backref='version') #: List of :py:class:`File` for this version
+    def glob(self):
+        file = '%s_%s_%s_%s_%s*.nc'%(
+            self.variable.variable,
+            self.variable.mip,
+            self.variable.model,
+            self.variable.experiment,
+            self.variable.ensemble)
+        return os.path.join(self.path, file)
 
-class File(Base):
-    """
-    An individual output file
-
-    .. attribute:: path
-
-        Path to the file
-
-    .. attribute:: owner
-
-        File owner
-
-    .. attribute:: modified
-
-        Date file was last modified
-
-    .. attribute:: start
-
-        Start date of file's data
-
-    .. attribute:: end
-
-        End date of file's data
-
-    .. attribute:: version
-
-        :class:`Version` associated with this file
-    """
-    __tablename__ = 'file'
-    id         = Column(Integer, primary_key = True)
-    version_id = Column(Integer, ForeignKey('version.id'))
-
-    # Filesystem metadata
-    path       = Column(String) #: Path to the file
-    owner      = Column(String) #: File owner
-    modified   = Column(Date)   #: Date file was last modified
-
-    # Netcdf metadata
-    start      = Column(Date)   #: Start date of file's data
-    end        = Column(Date)   #: End date of file's data
-
-    def __init__(self, version_id, path):
-        self.version_id = version_id
-        self.path       = path
-
-        stat            = os.stat(path)
-        self.owner      = pwd.getpwuid(stat.st_uid).pw_name
-        self.modified   = datetime.datetime.fromtimestamp(stat.st_mtime)
-
-        # Need to do some mangling to get a proper datetime object
-        data            = netCDF4.Dataset(path)
-        start = netCDF4.num2date(
-                    data.variables['time'][0],
-                    data.variables['time'].units,
-                    data.variables['time'].calendar
-                ).timetuple()
-        self.start      = datetime.datetime(*start[0:6])
-        end = netCDF4.num2date(
-                    data.variables['time'][-1],
-                    data.variables['time'].units,
-                    data.variables['time'].calendar
-                ).timetuple()
-        self.end      = datetime.datetime(*end[0:6])
-        data.close()
+    def files(self):
+        return glob.glob(self.glob())
 
 class Latest(Base):
     __tablename__ = 'cmip5'
