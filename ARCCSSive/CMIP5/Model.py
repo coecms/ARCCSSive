@@ -65,6 +65,9 @@ class Variable(Base):
             UniqueConstraint('variable','experiment','mip','model','ensemble'),
             )
 
+    def files(self):
+        return self.versions[-1].files()
+
 class Version(Base):
     """
     A version of a model run's variable

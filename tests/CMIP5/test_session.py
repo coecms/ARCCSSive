@@ -34,7 +34,7 @@ def test_mips(session):
     assert session.mips() == [u'b', u'g']
 
 def test_all(session):
-    v = session.all_outputs()
+    v = session.outputs()
 
     assert v.count() == 2
 
@@ -44,13 +44,8 @@ def test_all(session):
     
     assert v[1].variable == u'f'
 
-def test_latest(session):
-    assert session.latest_output_versions().count() == session.all_outputs().count()
-
-    for var, vn in session.latest_output_versions():
-        assert var.versions[-1] == vn
-
-def test_outputs(session):
-    vars = session.outputs()
-    assert vars[0].glob() == '/example/2/a_b_c_d_e*.nc'
+def test_query(session):
+    vars = session.outputs(mip = 'g')
+    assert vars.count() == 1
+    assert vars[0].mip == 'g'
 

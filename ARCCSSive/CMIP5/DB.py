@@ -69,28 +69,10 @@ class CMIP5Session():
         """
         return [x[0] for x in self.query(Variable.mip).distinct().all()]
 
-    def all_outputs(self):
-        """ Return all output variables
-        """
-        return self.query(Variable)
-
-    def latest_output_versions(self):
-        """ Returns the most recent version of each variable
-
-        :return: An iterable returning pairs of
-            :py:class:`Model.Variable`,
-            :py:class:`Model.Version` where the Version
-            is the most recent matching that variable
-        """
-        sub = self.query(Version.variable_id, Version.version, Version.id, func.max(Version.version)).group_by(Version.variable_id).subquery()
-        return self.query(Variable, Version) \
-            .filter(Variable.id == sub.c.variable_id) \
-            .filter(Version.id == sub.c.id)
-
-    def outputs(self):
+    def outputs(self, **kwargs):
         """ Get the most recent files matching a query
         """
-        return [ver for var, ver in self.latest_output_versions()]
+        return self.query(Variable).filter_by(**kwargs)
 
 
 def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
