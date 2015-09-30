@@ -23,9 +23,6 @@ from sqlalchemy.ext.declarative import declarative_base
 
 import os
 import glob
-import pwd
-import netCDF4
-import datetime
 
 Base = declarative_base()
 
