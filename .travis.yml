@@ -1,13 +1,18 @@
 language: python
 python:
-    - "2.7"
-
+- '2.7'
 install:
-    - pip install pytest coverage codecov
-    - pip install .
-
-script: 
-    - coverage run --source ARCCSSive -m py.test
-
+- pip install pytest coverage codecov
+- pip install .
+script:
+- coverage run --source ARCCSSive -m py.test
 after_success:
-    - codecov
+- codecov
+deploy:
+  provider: pypi
+  user: scottwales
+  password:
+    secure: dguwEBN09fw+FmvDgnG23hAWjUmj0XLpkxzldnMzu8dximv9hw3HN+RLGPnf13DR4UkkS7WMdLaSaF+XW4qf/Sk7elyR5eZ2eOYj+p30Y0eU+2DWMYD8u6okbkFKlEIZtZTNBi3Nuh1h4vJM05DFvlmb8wWRtPrnXN2cS2mc9FEnkyhV7aFPjGlWed120RfxB3Z8LbhJYMboSTyUJK6UFe1Jc4MY9gpP34r5gloJ2N9VipBP6yRZJcjPYR/5cuoYKn29WmkTrNq+wQ2MSnqcuTTWqLaspvY2VADQWYYwFTKsUrs5EadZn/y9Ues1/YWLDFtcbBrRNoSl9qREvaOd0pgipfki896Te2KQncZVsszkKVmL2+7eslE6jTCn1OPSZLBl+XUriVU+83S3QNSJM+C4TF7NRcNr/egsehfuDGjOdD+fyfz8IIu5JJFn0LtGUiDjs69nM+TI759xMWhBXQs3JCcu+8GXjVlxdBACkm9zZwis6yuLi+lavmye6IpQ0YvJ3Kmf4RMrEBw0XpFIetnciBVX1UnixP0KBrN/hkLo29mQhyIAgd4LlTHphSyMCzc9fJ6p0Wi2hrMYhgJWMIYwVoLAW/7oDH/4E/KUuOdMN4cdj79k/n06JOHLwhAVNl4HtRekUS9pZm+I71PPkUta84lztB3OToVjvkVbiGk=
+  on:
+    tags: true
+    repo: coecms/ARCCSSive
