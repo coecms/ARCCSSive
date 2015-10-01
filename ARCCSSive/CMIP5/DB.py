@@ -95,7 +95,7 @@ class Session():
         return self.query(Variable).filter_by(**kwargs)
 
 
-def connect(path = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'):
+def connect(path = 'sqlite:////short/public/saw562/latest.db'):
     """Connect to the CMIP5 catalog
 
     :return: A new :py:class:`Session`
