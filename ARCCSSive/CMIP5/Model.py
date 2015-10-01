@@ -59,10 +59,10 @@ class Variable(Base):
     __tablename__ = 'variable'
     id         = Column(Integer, primary_key = True)
 
-    variable   = Column(String)
-    experiment = Column(String)
-    mip        = Column(String)
-    model      = Column(String)
+    variable   = Column(String, index=True)
+    experiment = Column(String, index=True)
+    mip        = Column(String, index=True)
+    model      = Column(String, index=True)
     ensemble   = Column(String)
 
     versions   = relationship('Version', order_by='Version.version', backref='variable')
