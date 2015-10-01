@@ -25,7 +25,7 @@ requirements = [
 
 setup(
         name             = 'ARCCSSive',
-        version          = '0.1.0',
+        version          = '0.1.1',
         url              = 'https://github.com/coecms/ARCCSSive',
         packages         = ['ARCCSSive', 'ARCCSSive.CMIP5'],
         install_requires = requirements,
