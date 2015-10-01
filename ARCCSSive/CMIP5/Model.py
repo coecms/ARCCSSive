@@ -59,19 +59,24 @@ class Variable(Base):
     __tablename__ = 'variable'
     id         = Column(Integer, primary_key = True)
 
-    variable   = Column(String) #: Variable name
-    experiment = Column(String) #: CMIP experiment
-    mip        = Column(String) #: MIP table specifying output frequency
-    model      = Column(String) #: Model that generated the dataset
-    ensemble   = Column(String) #: Ensemble member
+    variable   = Column(String)
+    experiment = Column(String)
+    mip        = Column(String)
+    model      = Column(String)
+    ensemble   = Column(String)
 
-    versions   = relationship('Version', order_by='Version.version', backref='variable') #: List of :class:`Version` for this model variable
+    versions   = relationship('Version', order_by='Version.version', backref='variable')
 
     __table_args__ = (
             UniqueConstraint('variable','experiment','mip','model','ensemble'),
             )
 
-    def files(self):
+    def filenames(self):
+        """
+        Returns the file names from the latest version of this variable
+
+        :returns: List of file names
+        """
         return self.versions[-1].files()
 
 class Version(Base):
@@ -95,8 +100,8 @@ class Version(Base):
     variable_id = Column(Integer, ForeignKey('variable.id'))
     latest_id   = Column(Integer, ForeignKey('cmip5.id'))
 
-    version     = Column(String) #: Version identifier
-    path        = Column(String) #: Path to the output directory
+    version     = Column(String)
+    path        = Column(String)
 
     def glob(self):
         """ Get the glob string matching the CMIP5 filename
@@ -108,8 +113,11 @@ class Version(Base):
             self.variable.experiment,
             self.variable.ensemble)
 
-    def files(self):
-        """ Returns the list of files matching this version
+    def filenames(self):
+        """
+        Returns the list of files matching this version
+
+        :returns: List of file names
         """
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)

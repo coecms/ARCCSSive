@@ -25,7 +25,7 @@ model outputs::
 You can then loop over the search results in normal Python fashion::
 
     for o in outputs:
-        print o.model, o.files()
+        print o.model, o.filenames()
 
 Examples
 --------
@@ -45,7 +45,7 @@ Get files from a single model variable
         model      = 'ACCESS1-3',
         ensemble   = 'r1i1p1')
 
-    for f in outputs.first().files():
+    for f in outputs.first().filenames():
         print f
 
 
@@ -65,7 +65,7 @@ Get files from all models for a specific variable
 
     for m in outputs:
         model = m.model
-        files = m.files()
+        files = m.filenames()
 
 API
 ---
