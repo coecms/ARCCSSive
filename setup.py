@@ -23,12 +23,6 @@ requirements = [
         'SQLAlchemy',
         ]
 
-# Don't install dependencies when making docs
-# import os
-# on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-# if on_rtd:
-#     requirements = []
-
 setup(
         name             = 'ARCCSSive',
         version          = '0.1.0',
