@@ -77,7 +77,7 @@ class Variable(Base):
 
         :returns: List of file names
         """
-        return self.versions[-1].files()
+        return self.versions[-1].filenames()
 
 class Version(Base):
     """
