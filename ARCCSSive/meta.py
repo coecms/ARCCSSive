@@ -17,22 +17,4 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from setuptools     import setup
-from ARCCSSive.meta import __VERSION__
-
-requirements = [
-        'SQLAlchemy',
-        ]
-
-setup(
-        name             = 'ARCCSSive',
-        version          = __VERSION__,
-        url              = 'https://github.com/coecms/ARCCSSive',
-        packages         = ['ARCCSSive', 'ARCCSSive.CMIP5'],
-        install_requires = requirements,
-
-        author           = 'Scott Wales',
-        author_email     = 'scott.wales@unimelb.edu.au',
-        description      = 'ARCCSS Data Access Tools',
-        license          = 'Apache 2.0',
-        )
+__VERSION__ = '0.1.2'
