@@ -49,3 +49,8 @@ def test_query(session):
     assert vars.count() == 1
     assert vars[0].mip == 'g'
 
+def test_filenames(session):
+    outs = session.outputs()
+    for o in outs:
+        for f in o.filenames():
+            assert f

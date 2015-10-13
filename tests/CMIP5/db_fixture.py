@@ -24,13 +24,16 @@ from ARCCSSive.CMIP5.DB import update
 from ARCCSSive.CMIP5.Model import Latest
 
 @pytest.fixture(scope="module")
-def session(request):
+def session(request, tmpdir_factory):
     session = CMIP5.connect('sqlite:///:memory:')
+
+    dira = tmpdir_factory.mktemp('a')
+    dirb = tmpdir_factory.mktemp('b')
 
     # Create some example entries
     db = session.session
     db.add(Latest(
-        path       = '/example',
+        path       = dira.strpath,
         variable   = 'a',
         mip        = 'b',
         model      = 'c',
@@ -38,7 +41,7 @@ def session(request):
         ensemble   = 'e',
         version    = 'v01'))
     db.add(Latest(
-        path       = '/example/2',
+        path       = dira.strpath,
         variable   = 'a',
         mip        = 'b',
         model      = 'c',
@@ -46,7 +49,7 @@ def session(request):
         ensemble   = 'e',
         version    = 'v02'))
     db.add(Latest(
-        path       = '/example',
+        path       = dirb.strpath,
         variable   = 'f',
         mip        = 'g',
         model      = 'c',
