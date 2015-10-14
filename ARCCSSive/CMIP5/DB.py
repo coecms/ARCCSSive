@@ -17,10 +17,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from __future__ import print_function
+
 from sqlalchemy import create_engine, func, select, join, and_
 from sqlalchemy.orm import sessionmaker
 
-from Model import Base, Version, Variable, Latest
+from ARCCSSive.CMIP5.Model import Base, Version, Variable, Latest
 
 SQASession = sessionmaker()
 
@@ -150,8 +152,8 @@ def update(session):
         ]).where(latest.c.id.in_(unique)).select_from(j).where(variable.c.variable.is_(None))
     insert     = variable.insert().from_select(['variable','experiment','mip','model','ensemble'], missing)
 
-    print insert
-    print
+    print(insert)
+    print()
     conn.execute(insert)
 
     # Add any missing versions to the 'version' table, linking with the releant variable
@@ -167,6 +169,6 @@ def update(session):
     missing    = select([latest.c.id, latest.c.path, latest.c.version, variable.c.id]).select_from(j).where(latest.c.id.notin_(latest_ids))
     insert     = version.insert().from_select(['latest_id','path','version','variable_id'], missing)
 
-    print insert
-    print
+    print(insert)
+    print()
     conn.execute(insert)
