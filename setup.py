@@ -17,8 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from setuptools     import setup
-from ARCCSSive.meta import __VERSION__
+from setuptools import setup, find_packages
+import meta
 
 requirements = [
         'SQLAlchemy',
@@ -26,7 +26,7 @@ requirements = [
 
 setup(
         name             = 'ARCCSSive',
-        version          = __VERSION__,
+        version          = meta.version,
         url              = 'https://github.com/coecms/ARCCSSive',
         packages         = ['ARCCSSive', 'ARCCSSive.CMIP5'],
         install_requires = requirements,

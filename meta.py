@@ -17,4 +17,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-__VERSION__ = '0.1.2'
+from subprocess import Popen, PIPE
+
+# Version of the current repository
+describe   = Popen(['git','describe','--always','--dirty'],stdout=PIPE)
+version, _ = describe.communicate()
+
+# Most recent release
+describe   = Popen(['git','describe','--abbrev=0'],stdout=PIPE)
+release, _ = describe.communicate()
