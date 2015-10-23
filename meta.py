@@ -20,9 +20,9 @@ limitations under the License.
 from subprocess import Popen, PIPE
 
 # Version of the current repository
-describe   = Popen(['git','describe','--always','--dirty'],stdout=PIPE)
-version, _ = describe.communicate()
+describe = Popen(['git','describe','--always','--dirty'],stdout=PIPE)
+version  = describe.communicate()[0].decode('utf-8').strip()
 
 # Most recent release
-describe   = Popen(['git','describe','--abbrev=0'],stdout=PIPE)
-release, _ = describe.communicate()
+describe = Popen(['git','describe','--abbrev=0'],stdout=PIPE)
+release  = describe.communicate()[0].decode('utf-8').strip()
