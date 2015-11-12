@@ -20,8 +20,36 @@ limitations under the License.
 
 import pytest
 from ARCCSSive import CMIP5
-from ARCCSSive.CMIP5.DB import update
-from ARCCSSive.CMIP5.Model import Latest
+from ARCCSSive.CMIP5.Model import *
+from sqlalchemy.orm.exc import NoResultFound
+
+def insert_unique(db, klass, **kwargs):
+    """
+    Insert an item into the DB if it can't be found
+    """
+    try:
+        value = db.query(klass).filter_by(**kwargs).one()
+    except NoResultFound:
+        value = klass(**kwargs)
+        db.add(value)
+        db.commit()
+    return value
+
+def add_item(db, variable, mip, model, experiment, ensemble, path, version):
+    """
+    Add a new test item to the DB
+    """
+    instance = insert_unique(db, Instance,
+            variable   = variable,
+            mip        = mip,
+            model      = model,
+            experiment = experiment,
+            ensemble   = ensemble)
+
+    version = insert_unique(db, Version,
+            instance_id = instance.id,
+            path        = path,
+            version     = version)
 
 @pytest.fixture(scope="module")
 def session(request, tmpdir_factory):
@@ -32,34 +60,31 @@ def session(request, tmpdir_factory):
 
     # Create some example entries
     db = session.session
-    db.add(Latest(
+    add_item(db,
         path       = dira.strpath,
         variable   = 'a',
         mip        = 'b',
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v01'))
-    db.add(Latest(
+        version    = 'v01')
+    add_item(db,
         path       = dira.strpath,
         variable   = 'a',
         mip        = 'b',
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v02'))
-    db.add(Latest(
+        version    = 'v02')
+    add_item(db,
         path       = dirb.strpath,
         variable   = 'f',
         mip        = 'g',
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v01'))
+        version    = 'v01')
     db.commit()
-
-    # Update other tables
-    CMIP5.DB.update(db)
 
     # Close the session
     def fin():

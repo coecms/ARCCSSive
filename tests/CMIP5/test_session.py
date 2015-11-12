@@ -39,6 +39,7 @@ def test_all(session):
     assert v.count() == 2
 
     assert v[0].variable == u'a'
+    assert len(v[0].versions) == 2
     assert v[0].versions[0].version == u'v01'
     assert v[0].versions[1].version == u'v02'
     

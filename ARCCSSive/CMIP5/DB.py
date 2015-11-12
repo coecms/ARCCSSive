@@ -19,10 +19,12 @@ limitations under the License.
 
 from __future__ import print_function
 
+import os
+
 from sqlalchemy import create_engine, func, select, join, and_
 from sqlalchemy.orm import sessionmaker
 
-from ARCCSSive.CMIP5.Model import Base, Version, Variable, Latest
+from ARCCSSive.CMIP5.Model import Base, Version, Instance
 
 SQASession = sessionmaker()
 
@@ -46,7 +48,7 @@ class Session():
 
         Returns a list of files that match the arguments
 
-        :argument **kwargs: Match any attribute in :class:`Model.Variable`, e.g. `model = 'ACCESS1-3'`
+        :argument **kwargs: Match any attribute in :class:`Model.Instance`, e.g. `model = 'ACCESS1-3'`
 
         :return: An iterable returning :py:class:`Model.File`
             matching the search query
@@ -58,46 +60,46 @@ class Session():
 
         :return: A list of strings
         """
-        return [x[0] for x in self.query(Variable.model).distinct().all()]
+        return [x[0] for x in self.query(Instance.model).distinct().all()]
 
     def experiments(self):
         """ Get the list of all experiments in the dataset
 
         :return: A list of strings
         """
-        return [x[0] for x in self.query(Variable.experiment).distinct().all()]
+        return [x[0] for x in self.query(Instance.experiment).distinct().all()]
 
     def variables(self):
         """ Get the list of all variables in the dataset
 
         :return: A list of strings
         """
-        return [x[0] for x in self.query(Variable.variable).distinct().all()]
+        return [x[0] for x in self.query(Instance.variable).distinct().all()]
 
     def mips(self):
         """ Get the list of all MIP tables in the dataset
 
         :return: A list of strings
         """
-        return [x[0] for x in self.query(Variable.mip).distinct().all()]
+        return [x[0] for x in self.query(Instance.mip).distinct().all()]
 
     def outputs(self, **kwargs):
         """ Get the most recent files matching a query
 
         Arguments are optional, using them will select only matching outputs
 
-        :argument variable: Variable name
+        :argument variable: Instance name
         :argument experiment: CMIP experiment
         :argument mip: MIP table
         :argument model: Model used to generate the dataset
         :argument ensemble: Ensemble member
 
-        :return: An iterable sequence of :class:`ARCCSSive.CMIP5.Model.Variable`
+        :return: An iterable sequence of :class:`ARCCSSive.CMIP5.Model.Instance`
         """
-        return self.query(Variable).filter_by(**kwargs)
+        return self.query(Instance).filter_by(**kwargs)
 
 
-def connect(path = 'sqlite:////short/public/saw562/latest.db'):
+def connect(path = None):
     """Connect to the CMIP5 catalog
 
     :return: A new :py:class:`Session`
@@ -108,6 +110,14 @@ def connect(path = 'sqlite:////short/public/saw562/latest.db'):
         session = CMIP5.DB.connect()
         outputs = session.query()
     """
+
+    if path is None:
+        try:
+            # Get the path from the environment
+            path = os.environ['CMIP5_DB']
+        except KeyError:
+            raise Exception('Environment variable $CMIP5_DB should point to the database')
+
     engine = create_engine(path)
     Base.metadata.create_all(engine)
     SQASession.configure(bind=engine)
@@ -116,59 +126,3 @@ def connect(path = 'sqlite:////short/public/saw562/latest.db'):
     connection.session = SQASession()
     return connection
 
-def update(session):
-    """ Update the tables using the latest values
-    """
-    conn = session.connection()
-
-    variable = Variable.__table__
-    version  = Version.__table__
-    latest   = Latest.__table__
-
-    # Add any missing variables to the 'variable' table
-
-    # A list of ids for de-duplicated variables
-    unique = select([func.min(latest.c.id)]).group_by(
-        latest.c.variable,   
-        latest.c.experiment, 
-        latest.c.mip,        
-        latest.c.model,      
-        latest.c.ensemble,   
-        )
-    # A list of values already in the variables table
-    j = join(latest, variable, and_(
-        variable.c.variable   == latest.c.variable,
-        variable.c.experiment == latest.c.experiment,
-        variable.c.mip        == latest.c.mip,
-        variable.c.model      == latest.c.model,
-        variable.c.ensemble   == latest.c.ensemble,
-        ), isouter=True)
-    missing = select([
-        latest.c.variable,   
-        latest.c.experiment, 
-        latest.c.mip,        
-        latest.c.model,      
-        latest.c.ensemble,   
-        ]).where(latest.c.id.in_(unique)).select_from(j).where(variable.c.variable.is_(None))
-    insert     = variable.insert().from_select(['variable','experiment','mip','model','ensemble'], missing)
-
-    print(insert)
-    print()
-    conn.execute(insert)
-
-    # Add any missing versions to the 'version' table, linking with the releant variable
-
-    j = join(latest, variable, and_(
-        variable.c.variable   == latest.c.variable,
-        variable.c.experiment == latest.c.experiment,
-        variable.c.mip        == latest.c.mip,
-        variable.c.model      == latest.c.model,
-        variable.c.ensemble   == latest.c.ensemble,
-        ))
-    latest_ids = select([version.c.latest_id])
-    missing    = select([latest.c.id, latest.c.path, latest.c.version, variable.c.id]).select_from(j).where(latest.c.id.notin_(latest_ids))
-    insert     = version.insert().from_select(['latest_id','path','version','variable_id'], missing)
-
-    print(insert)
-    print()
-    conn.execute(insert)
