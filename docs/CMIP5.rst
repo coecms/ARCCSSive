@@ -88,7 +88,7 @@ SQLalchemy's `filter() <http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#
         experiment = 'rcp45',
         model      = 'ACCESS1-3',
         mip        = 'Amon',) \
-        .filter(Variable.variable.in_(['tas','pr']))
+        .filter(Instance.variable.in_(['tas','pr']))
 
 Get results from a specific output version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -102,7 +102,7 @@ ARCCSSive::
 
     outputs = cmip5.versions(
     res = cmip5.query(Version) \
-            .join(Variable) \
+            .join(Instance) \
             .filter_by(
         model      = 'ACCESS1-3',
         version    = 'v20120413',
@@ -130,17 +130,17 @@ Link two sets of outputs together using joins::
 
     # Create aliases for the historical and rcp variables, so we can
     distinguish them in the query
-    histVariable = aliased(Variable)
-    rcpVariable  = aliased(Variable)
-    rcp_hist  = cmip5.query(rcpVariable, histVariable).join(
-            histVariable, and_(
-                histVariable.variable == rcpVariable.variable,
-                histVariable.model    == rcpVariable.model,
-                histVariable.mip      == rcpVariable.mip,
-                histVariable.ensemble == rcpVariable.ensemble,
+    histInstance = aliased(Instance)
+    rcpInstance  = aliased(Instance)
+    rcp_hist  = cmip5.query(rcpInstance, histInstance).join(
+            histInstance, and_(
+                histInstance.variable == rcpInstance.variable,
+                histInstance.model    == rcpInstance.model,
+                histInstance.mip      == rcpInstance.mip,
+                histInstance.ensemble == rcpInstance.ensemble,
             )).filter(
-                rcpVariable.experiment  == 'rcp45',
-                histVariable.experiment == 'historicalNat',
+                rcpInstance.experiment  == 'rcp45',
+                histInstance.experiment == 'historicalNat',
             )
 
     for r, h in rcp_hist:
@@ -173,7 +173,7 @@ variable can have a number of different data versions, as errors get corrected
 by the publisher, and each version can consist of a number of files split into
 a time sequence.
 
-.. autoclass:: Variable
+.. autoclass:: Instance
     :members:
     :member-order: bysource
 
