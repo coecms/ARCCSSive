@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from sqlalchemy import Column, Integer, String, ForeignKey, Date, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -26,7 +26,7 @@ import glob
 
 Base = declarative_base()
 
-class Variable(Base):
+class Instance(Base):
     """
     A model variable from a specific run
 
@@ -56,14 +56,15 @@ class Variable(Base):
 
         List of :class:`Version` available for this output
     """
-    __tablename__ = 'variable'
-    id         = Column(Integer, primary_key = True)
+    __tablename__ = 'instances'
+    id         = Column(Integer, name='instance_id', primary_key = True)
 
     variable   = Column(String, index=True)
     experiment = Column(String, index=True)
     mip        = Column(String, index=True)
     model      = Column(String, index=True)
     ensemble   = Column(String)
+    latest     = Column(String)
 
     versions   = relationship('Version', order_by='Version.version', backref='variable')
 
@@ -78,6 +79,9 @@ class Variable(Base):
         :returns: List of file names
         """
         return self.versions[-1].filenames()
+
+# Add alias to deprecated name
+Variable = Instance
 
 class Version(Base):
     """
@@ -95,13 +99,15 @@ class Version(Base):
 
         :class:`Variable` associated with this version
     """
-    __tablename__ = 'version'
-    id          = Column(Integer, primary_key = True)
-    variable_id = Column(Integer, ForeignKey('variable.id'))
-    latest_id   = Column(Integer, ForeignKey('cmip5.id'))
+    __tablename__ = 'versions'
+    id          = Column(Integer, name='version_id', primary_key = True)
+    instance_id = Column(Integer, ForeignKey('instances.instance_id'))
 
     version     = Column(String)
     path        = Column(String)
+    is_latest   = Column(Boolean)
+    checked_on  = Column(String)
+    to_update   = Column(Boolean)
 
     def glob(self):
         """ Get the glob string matching the CMIP5 filename
@@ -122,14 +128,17 @@ class Version(Base):
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
 
-class Latest(Base):
-    __tablename__ = 'cmip5'
+class Warning(Base):
+    """
+    Warnings associated with a output version
+    """
+    __tablename__ = 'warnings'
 
-    id         = Column(Integer, primary_key = True)
-    path       = Column(String)
-    variable   = Column(String)
-    mip        = Column(String)
-    model      = Column(String)
-    experiment = Column(String)
-    ensemble   = Column(String)
-    version    = Column(String)
+    id         = Column(Integer, name='warning_id', primary_key = True)
+    warning    = Column(String)
+    added_by   = Column(String)
+    added_on   = Column(Date)
+    version_id = Column(Integer, ForeignKey('versions.version_id'))
+
+    def __str__(self):
+        return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
