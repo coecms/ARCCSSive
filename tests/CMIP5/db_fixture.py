@@ -32,6 +32,7 @@ def insert_unique(db, klass, **kwargs):
     except NoResultFound:
         value = klass(**kwargs)
         db.add(value)
+        db.commit()
     return value
 
 def add_item(db, variable, mip, model, experiment, ensemble, path, version):
