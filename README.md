@@ -8,7 +8,7 @@ ARCCSS Data Access Tools
 [![Code Climate](https://codeclimate.com/github/coecms/ARCCSSive/badges/gpa.svg)](https://codeclimate.com/github/coecms/ARCCSSive)
 [![PyPI version](https://badge.fury.io/py/ARCCSSive.svg)](https://pypi.python.org/pypi/ARCCSSive)
 
-For full documentation please see http://arccssive.readthedocs.org
+For full documentation please see http://arccssive.readthedocs.org/en/stable
 
 CMIP5
 =====
