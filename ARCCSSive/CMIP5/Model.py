@@ -18,7 +18,7 @@ limitations under the License.
 """
 
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, UniqueConstraint
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 import os
@@ -128,7 +128,7 @@ class Version(Base):
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
 
-class Warning(Base):
+class VersionWarning(Base):
     """
     Warnings associated with a output version
     """

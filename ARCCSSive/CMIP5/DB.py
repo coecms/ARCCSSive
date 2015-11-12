@@ -21,14 +21,14 @@ from __future__ import print_function
 
 import os
 
-from sqlalchemy import create_engine, func, select, join, and_
+from sqlalchemy import create_engine, func, select, and_
 from sqlalchemy.orm import sessionmaker
 
-from ARCCSSive.CMIP5.Model import Base, Version, Instance
+from ARCCSSive.CMIP5.Model import Base, Instance
 
 SQASession = sessionmaker()
 
-class Session():
+class Session(object):
     """Holds a connection to the catalog
 
     Create using :func:`ARCCSSive.CMIP5.connect()`
