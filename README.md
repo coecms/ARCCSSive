@@ -16,11 +16,12 @@ CMIP5
 Query and access the CMIP5 data from Raijin
 
 ```python
-from ARCCSSive import CMIP5, CMIP5.Model.Variable
+from ARCCSSive import CMIP5
 
-session = CMIP5.DB.connect()
-for output in session.query(Variable).filter_by(model='ACCESS1-0'):
-    files = output.filenames()    
+cmip = CMIP5.DB.connect()
+for output in cmip.outputs(model='ACCESS1-0'):
+    variable = output.variable
+    files    = output.filenames()    
 ```
 
 Uses
