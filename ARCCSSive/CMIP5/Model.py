@@ -98,6 +98,10 @@ class Version(Base):
     .. attribute:: variable
 
         :class:`Variable` associated with this version
+
+    .. attribute:: warnings
+
+        List of :class:`VersionWarning` available for this output
     """
     __tablename__ = 'versions'
     id          = Column(Integer, name='version_id', primary_key = True)
@@ -108,6 +112,8 @@ class Version(Base):
     is_latest   = Column(Boolean)
     checked_on  = Column(String)
     to_update   = Column(Boolean)
+
+    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
 
     def glob(self):
         """ Get the glob string matching the CMIP5 filename
@@ -127,6 +133,7 @@ class Version(Base):
         """
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
+
 
 class VersionWarning(Base):
     """
