@@ -33,6 +33,15 @@ def test_variables(session):
 def test_mips(session):
     assert session.mips() == [u'b', u'g']
 
+def test_warnings(session):
+    outs =session.outputs()
+    for o in outs:
+       for v in o.versions:
+          for w in v.warnings:
+             if v.version == u'v02': 
+                assert w.warning == u'Test warning for v02'    
+                assert w.added_by == u'someone@example.com'
+
 def test_all(session):
     v = session.outputs()
 

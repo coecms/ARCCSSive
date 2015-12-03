@@ -22,6 +22,7 @@ import pytest
 from ARCCSSive import CMIP5
 from ARCCSSive.CMIP5.Model import *
 from sqlalchemy.orm.exc import NoResultFound
+from datetime import date
 
 def insert_unique(db, klass, **kwargs):
     """
@@ -35,7 +36,7 @@ def insert_unique(db, klass, **kwargs):
         db.commit()
     return value
 
-def add_item(db, variable, mip, model, experiment, ensemble, path, version):
+def add_item(db, variable, mip, model, experiment, ensemble, path, version, warning, added_by, added_on):
     """
     Add a new test item to the DB
     """
@@ -51,6 +52,12 @@ def add_item(db, variable, mip, model, experiment, ensemble, path, version):
             path        = path,
             version     = version)
 
+    warning = insert_unique(db, VersionWarning,
+            version_id = version.id,
+            warning        = warning,
+            added_on        = added_on,
+            added_by     = added_by)
+
 @pytest.fixture(scope="module")
 def session(request, tmpdir_factory):
     session = CMIP5.connect('sqlite:///:memory:')
@@ -60,6 +67,7 @@ def session(request, tmpdir_factory):
 
     # Create some example entries
     db = session.session
+    added_on=date.today()
     add_item(db,
         path       = dira.strpath,
         variable   = 'a',
@@ -67,7 +75,10 @@ def session(request, tmpdir_factory):
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v01')
+        version    = 'v01',
+        warning    = 'Test warning for v01',
+        added_by    = 'someone@example.com',
+        added_on    = added_on)
     add_item(db,
         path       = dira.strpath,
         variable   = 'a',
@@ -75,7 +86,10 @@ def session(request, tmpdir_factory):
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v02')
+        version    = 'v02',
+        warning    = 'Test warning for v02',
+        added_by    = 'someone@example.com',
+        added_on    = added_on)
     add_item(db,
         path       = dirb.strpath,
         variable   = 'f',
@@ -83,7 +97,10 @@ def session(request, tmpdir_factory):
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v01')
+        version    = 'v01',
+        warning    = 'Test warning for v01',
+        added_by    = 'anyone@example.com',
+        added_on    = added_on)
     db.commit()
 
     # Close the session
