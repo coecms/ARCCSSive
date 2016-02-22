@@ -78,7 +78,10 @@ class Instance(Base):
 
         :returns: List of file names
         """
-        return self.versions[-1].filenames()
+        #return self.versions[-1].filenames()
+        if not self.versions[-1].is_latest: print "Warning this is the latest version on raijin but not the latest published"
+#PA need to add to this the path!!
+        return self.versions[-1].files
 
 # Add alias to deprecated name
 Variable = Instance

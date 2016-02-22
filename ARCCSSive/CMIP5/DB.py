@@ -84,11 +84,11 @@ class Session(object):
         return [x[0] for x in self.query(Instance.mip).distinct().all()]
 
     def outputs(self, **kwargs):
-        """ Get the most recent files matching a query
+        """ Get the most recent instances matching a query
 
         Arguments are optional, using them will select only matching outputs
 
-        :argument variable: Instance name
+        :argument variable: CMIP variable name
         :argument experiment: CMIP experiment
         :argument mip: MIP table
         :argument model: Model used to generate the dataset
