@@ -98,6 +98,14 @@ class Version(Base):
     .. attribute:: variable
 
         :class:`Variable` associated with this version
+
+    .. attribute:: warnings
+
+        List of :class:`VersionWarning` available for this output
+
+    .. attribute:: files
+
+        List of :class:`VersionFile` available for this output
     """
     __tablename__ = 'versions'
     id          = Column(Integer, name='version_id', primary_key = True)
@@ -108,6 +116,9 @@ class Version(Base):
     is_latest   = Column(Boolean)
     checked_on  = Column(String)
     to_update   = Column(Boolean)
+
+    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
+    files   = relationship('VersionFile', order_by='VersionFile.id', backref='version')
 
     def glob(self):
         """ Get the glob string matching the CMIP5 filename
@@ -144,7 +155,7 @@ class VersionWarning(Base):
         return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
 
 
-class VersionFiles(Base):
+class VersionFile(Base):
     """
     Files associated with a output version
     """
@@ -156,12 +167,5 @@ class VersionFiles(Base):
     sha256     = Column(String)
     version_id = Column(Integer, ForeignKey('versions.version_id'))
 
-   # def get_md5(self):
-   #     """ Get the md5 checksum
-   #     """
-   #     return '%s'%(self.md5)
-
-   # def get_sha256(self):
-   #     """ Get the sha256 checksum
-   #     """
-   #     return '%s'%(self.sha256)
+    def __str__(self):
+        return '%s'%(self.filename)
