@@ -142,3 +142,26 @@ class VersionWarning(Base):
 
     def __str__(self):
         return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
+
+
+class VersionFiles(Base):
+    """
+    Files associated with a output version
+    """
+    __tablename__ = 'files'
+
+    id         = Column(Integer, name='file_id', primary_key = True)
+    filename   = Column(String)
+    md5        = Column(String)
+    sha256     = Column(String)
+    version_id = Column(Integer, ForeignKey('versions.version_id'))
+
+   # def get_md5(self):
+   #     """ Get the md5 checksum
+   #     """
+   #     return '%s'%(self.md5)
+
+   # def get_sha256(self):
+   #     """ Get the sha256 checksum
+   #     """
+   #     return '%s'%(self.sha256)
