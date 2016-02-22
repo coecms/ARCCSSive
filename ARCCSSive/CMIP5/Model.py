@@ -139,6 +139,7 @@ class Version(Base):
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
 
+
 class VersionWarning(Base):
     """
     Warnings associated with a output version
