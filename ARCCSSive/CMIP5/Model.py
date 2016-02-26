@@ -116,6 +116,7 @@ class Version(Base):
 
     version     = Column(String)
     path        = Column(String)
+    dataset_id  = Column(String)
     is_latest   = Column(Boolean)
     checked_on  = Column(String)
     to_update   = Column(Boolean)
@@ -165,11 +166,12 @@ class VersionFile(Base):
     """
     __tablename__ = 'files'
 
-    id         = Column(Integer, name='file_id', primary_key = True)
-    filename   = Column(String)
-    md5        = Column(String)
-    sha256     = Column(String)
-    version_id = Column(Integer, ForeignKey('versions.version_id'))
+    id           = Column(Integer, name='file_id', primary_key = True)
+    filename     = Column(String)
+    tracking_id  = Column(String)
+    md5          = Column(String)
+    sha256       = Column(String)
+    version_id   = Column(Integer, ForeignKey('versions.version_id'))
 
     def __str__(self):
         return '%s'%(self.filename)
