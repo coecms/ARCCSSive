@@ -1,5 +1,26 @@
-# functions to use py-esgf-search
+# wrapper functions for py-esgf-search
+#!/usr/bin/env python
+"""
+Copyright 2016 ARC Centre of Excellence for Climate Systems Science
+
+author: Paola Petrelli <paola.petrelli@utas.edu.au>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
+
+from __future__ import print_function
 import sys
+
 from pyesgf.logon import LogonManager
 from pyesgf.search import SearchConnection
 from pyesgf.search.results import DatasetResult as DatasetResult
@@ -22,78 +43,92 @@ def logoff(lm):
     return not lm.is_logged_on()
 
 class ESGFSearch(object):
-    ''' defines a ESGF search object '''
+    ''' defines a ESGF search object 
+        :param connection: The SearchConnection
+        :param constraints: A dictionary of initial constraints
+        :param search_type: One of TYPE_* constants defining the document
+            type to search for.  Overrides SearchContext.DEFAULT_SEARCH_TYPE
+        :param facets: The list of facets for which counts will be retrieved
+            and constraints be validated against.  Or None to represent all facets.
+        :param fields: A list of field names to return in search responses
+        :param replica: A boolean defining whether to return master records
+            or replicas, or None to return both.
+        :param latest: A boolean defining whether to return only latest verisons
+            or only non-latest versions, or None to return both.
+        :param shards: list of shards to restrict searches to.  Should be from the list
+            self.connection.get_shard_list()
+        :param from_timestamp: Date-time string to specify start of search range 
+            (e.g. "2000-01-01T00:00:00Z"). 
+        :param to_timestamp: Date-time string to specify end of search range
+            (e.g. "2100-12-31T23:59:59Z")
+        **kwargs for all the functions are optional constraints as defined in the ESGF RESTful Search API 
+        http://
+    '''
 
     def search_node(self, node, **kwargs):
-        ''' Opens search connection and creates search context object 
-            arguments node: primary node to search
-            distrib default True search across all nodes '''
-    # open search connection, distrib=True to search all nodes
-        self.conn = SearchConnection(node, distrib=False)
-    #print kwargs.items()
-    #print conn.get_shard_list()
-    #there's issue with shards
-    # open search context by passing constraints, by defauklt searches project=CMIP5 
-        self.ctx = self.conn.new_context(project='CMIP5', latest=True, **kwargs)
+        ''' Opens search connection and creates search context object self.ctx 
+            by default searches CMIP5 latest version, not replica
+        :argument node: primary node to search
+        :argument distrib: default True search across all nodes 
+        :argument **kwargs: optional constraints to apply, listed in class comment
+        :return: 
+        ''' 
+        self.conn = SearchConnection(node, distrib=True)
+        self.ctx = self.conn.new_context(project='CMIP5', latest=True, replica=False, **kwargs)
         return 
 
     def get_ds(self, **kwargs):
-        ''' Returns list of dataset objects selcted by search_node, further contsriants can be applied  
-        : arguments key,value pairs of constraints, optional
+        ''' Returns list of dataset objects selected by search_node, further constraints can be applied  
+        :argument **kwargs: optional constraints to apply, listed in class comment
         :return: A list of pyESGF DatasetResult objects
         '''
         return self.ctx.search(**kwargs)
 
-    def narrow(self, **kwargs):
-        """Narrows down search results 
-
-        Allows you to filter the full list of CMIP5 outputs using `SQLAlchemy commands <http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#querying>`_
-
+    def ds_filter(self, **kwargs):
+        '''Narrows down search results 
+        :argument **kwargs: optional constraints to apply, listed in class comment
         :return: A list of pyESGF DatasetResult objects
-        """
-        return self.ctx.constrains(**kwargs)
+        '''
+        return self.ctx.constrain(**kwargs)
 
-    def which_facets(self, **kwargs):
-        """Narrows down search results 
+    def which_facets(self, *args):
+        ''' Lists available facets, applies first additional constraints if any
+        :argument **kwargs: optional constraints to apply, listed in class comment
+        :return: A list of available facets ie any parameter key,value pair returned by search
+        ''' 
+        # this needs fixing leave it aside for moment
+        print(dir(self.ctx))
+        return self.ctx.facets(*args)
 
-        Allows you to filter the full list of CMIP5 outputs using `SQLAlchemy commands <http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#querying>`_
-
-        :return: A list of pyESGF DatasetResult objects
-        """
-        return self.ctx.facets()
-
-    #print ctx.hit_count
-    #this add further constraints ctx.constrain(**constraints)
-    #print ctx.facets()
-    #print ctx.search.results()
-    #print ctx.get_facet_options()
-    # ds is a DatasetResult obj pyesgf.search.results.DatasetResult(json,context)
-    # json is the original representation of result and context is the SearchContext that generated the result
-    #def ds(self): 
-    #    ''' return list of DatasetResult objects from search result '''
-    #    return  self.ctx.search()
-      
-    def ds_count(self): 
-        ''' return number of datasets in search result '''
-        return self.ctx.hit_count()
-
-    def facets(self, **kwargs): 
-        ''' return facets available to narrow down further search results '''
-        return self.ctx.facets(**kwargs)
+    def facet_values(self, *args): 
+        ''' return available values for a particular facet as currently constrained 
+        :argument *args: optional facet (constraints key), listed in class comment
+        :return: A list of available values for the input facet/s in current search result
+        ''' 
+        return self.ctx.facets_count(*args)
 
     def facet_options(self, **kwargs): 
-        ''' return facets available to narrow down further search results '''
+        ''' return facets available to narrow down further search results
+        :argument **kwargs: optional constraints to apply, listed in class comment
+        ''' 
         return self.ctx.get_facet_options(**kwargs)
 
-    def facet_list(self, **kwargs): 
-        ''' return available values for a particular facet as currently constrained '''
-        return self.ctx.get_facet_options(**kwargs)
+    def which_fields(self, **kwargs):
+        ''' Lists available facets, applies first additional constraints if any
+        :argument **kwargs: optional constraints to apply, listed in class comment
+        :return: A list of available facets ie any parameter key,value pair returned by search
+        ''' 
+        return self.ctx.fields()
+
+    def ds_count(self): 
+        ''' return number of datasets in search result '''
+        return self.ctx.hit_count
 
     def ds_ids(self): 
         ''' return list of dataset_id for datasets in search result '''
         return [ x.dataset_id for x in self.ctx.search()]
       
-    def versions(self):
+    def ds_versions(self):
         ''' return list of versions for datasets in search result '''
         return [ 'v'+x.json['version'] for x in self.ctx.search()]
 
@@ -113,12 +148,20 @@ def files(self):
     ''' return list of FileResult for one  dataset object '''
     return self.file_context().search()
 
+def filenames(self):
+    ''' return list of FileResult for one  dataset object '''
+    return [x.filename for x in self.files()]
+
+
+def tracking_ids(self):
+    ''' return list of FileResult for one  dataset object '''
+    return [x.tracking_id for x in self.files()]
+
 # all FileResult properties
 # 'checksum', 'checksum_type', 'context', 'download_url', 'file_id', 'filename', 'index_node', 'json', 'las_url', 'opendap_url', 'size', 'tracking_id', 'urls']
 
 def list_attributes(self):
     ''' return a listed of available attributes of Dataset/FileResult '''
-    #if type(self) == 'pyesgf.search.results.Dataset
     return self.json.keys()
 
 def get_attribute(self, attr):
@@ -128,8 +171,19 @@ def get_attribute(self, attr):
 # Adding methods to DatasetResult class
 DatasetResult.variables = variables
 DatasetResult.files = files
+DatasetResult.filenames = filenames
+DatasetResult.tracking_ids = tracking_ids
 DatasetResult.list_attributes = list_attributes
 DatasetResult.get_attribute = get_attribute
 # Adding methods to FileResult class
 FileResult.list_attributes = list_attributes
 FileResult.get_attribute = get_attribute
+
+#print ctx.hit_count
+    #this add further constraints ctx.constrain(**constraints)
+#print ctx.facets()
+#print ctx.search.results()
+#print ctx.get_facet_options()
+    # ds is a DatasetResult obj pyesgf.search.results.DatasetResult(json,context)
+    # json is the original representation of result and context is the SearchContext that generated the result
+      

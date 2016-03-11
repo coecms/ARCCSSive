@@ -64,7 +64,11 @@ class Instance(Base):
     mip        = Column(String, index=True)
     model      = Column(String, index=True)
     ensemble   = Column(String)
-    latest     = Column(String)
+    realm      = Column(String)
+    #latest     = Column(String)
+    #drstree    = Column(String)
+    # these last two are replaced by functions
+    # there will be new versions labelled 've' (version estimate) in drstree so using only timestamp to order them
 
     versions   = relationship('Version', order_by='Version.version', backref='variable')
 
@@ -82,6 +86,18 @@ class Instance(Base):
         if not self.versions[-1].is_latest: print "Warning this is the latest version on raijin but not the latest published"
 #PA need to add to this the path!!
         return self.versions[-1].files
+
+    def drstree_path(self):
+        """ 
+        Returns the drstree path for this instance, if one is not yet available returns None 
+        """
+        drstreep="/g/data1/ua6/drstree/CMIP5/GCM/" # this should be passed as DRSTREE env var
+        return DRSTREE + "/".join( self.model, 
+                                   self.experiment,
+                                   self.frequency,
+                                   self.realm,
+                                   self.variable,
+                                   self.ensemble) 
 
 # Add alias to deprecated name
 Variable = Instance
@@ -142,8 +158,24 @@ class Version(Base):
         """
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
+         
+    def filenames2(self):
+        """
+        Returns the list of files matching this version
 
+        :returns: List of file names
+        """
+        return [x.filename for x in self.files] 
+         
 
+    def tracking_ids(self):
+        """
+        Returns the list of tracking_ids for files in this version
+
+        :returns: List of tracking_ids
+        """
+        return [x.tracking_id for x in self.files] 
+        
 class VersionWarning(Base):
     """
     Warnings associated with a output version

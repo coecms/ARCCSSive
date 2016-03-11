@@ -46,7 +46,7 @@ def retrieve_item(db, klass, **kwargs):
         print "Cannot find fixture with ", kwargs
     return value
 
-def add_instance_item(db, variable, mip, model, experiment, ensemble):
+def add_instance_item(db, variable, mip, model, experiment, ensemble, realm):
     """
     Add a new test instance item to the DB
     """
@@ -55,20 +55,24 @@ def add_instance_item(db, variable, mip, model, experiment, ensemble):
             mip        = mip,
             model      = model,
             experiment = experiment,
-            ensemble   = ensemble)
+            ensemble   = ensemble,
+            realm      = realm)
     return instance.id
 
-#def add_version_item(db, instance_id, path, is_latest, checked_on, version):
-def add_version_item(db, **kwargs):
+def add_version_item(db, instance_id, path, is_latest, checked_on, to_update, dataset_id, version):
+#def add_version_item(db, **kwargs):
     """
     Add a new test version item to the DB
     """
-    version = insert_unique(db, Version,**kwargs)
-    #version = insert_unique(db, Version,
-    
-            #instance_id = instance_id,
-            #path        = path,
-            #version     = version)
+    #version = insert_unique(db, Version,**kwargs)
+    version = insert_unique(db, Version,
+            instance_id = instance_id,
+            path        = path,
+            is_latest   = is_latest,
+            checked_on  = checked_on,
+            to_update  = to_update,
+            dataset_id  = dataset_id,
+            version     = version)
     return version.id
 
 def add_warning_item(db, version_id, warning, added_by, added_on):
@@ -108,36 +112,46 @@ def session(request, tmpdir_factory):
         mip        = 'b',
         model      = 'c',
         experiment = 'd',
-        ensemble   = 'e')
+        ensemble   = 'e',
+        realm      = 'realm')
     v11_id = add_version_item(db,
         instance_id = inst1_id,
         path        = dira.strpath,
         is_latest   = True,
         checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
         version     = 'v01')
     v12_id = add_version_item(db,
         instance_id = inst1_id,
         path        = dira.strpath,
         is_latest   = False,
         checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
         version     = 'v02')
     inst2_id = add_instance_item(db,
         variable   = 'f',
         mip        = 'g',
         model      = 'c',
         experiment = 'd',
-        ensemble   = 'e')
+        ensemble   = 'e',
+        realm      = 'realm')
     v21_id = add_version_item(db,
         instance_id = inst2_id,
         path        = dirb.strpath,
         is_latest   = False,
         checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
         version     = 'v01')
     v22_id = add_version_item(db,
         instance_id = inst2_id,
         path        = dirb.strpath,
         is_latest   = True,
         checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
         version     = 'v02')
     add_warning_item(db,
         version_id    = v11_id,

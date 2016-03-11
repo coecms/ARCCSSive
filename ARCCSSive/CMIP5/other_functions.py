@@ -22,7 +22,9 @@ from __future__ import print_function
 
 import os
 import itertools
+from datetime import date
 
+today = date.today().strftime('%d/%m/%Y')
 #from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile, VersionWarning
 
 
@@ -38,3 +40,51 @@ def join_varmip(var0,mip0):
     comb = ["_".join(x) for x in itertools.product(*[var0,mip0])]
     print(comb)
     return comb
+
+def compare_instances(remote,local):
+    ''' Compare remote and local search results they're both a list of dictionaries
+        :argument remote: each dict has keys version, files (objs), filenames, tracking_ids, dataset_id 
+        :argument local: version, files (objs), filenames, tracking_ids, dataset_id
+        :return: remote, local with updated dictionaries
+    '''
+    local_versions=[x['version'] for x in local]
+    for ind,ds in enumerate(remote):
+        indices = [i for i,x in enumerate(local_versions) if x == ds['version']]
+        for i in range(len(local)):
+            local[i]['checked_on'] = today
+            # if version same as latest on esgf 
+            if i in indices:
+               local[i]['dataset_id'] = remote['dataset_id']
+               local[i]['is_latest'] = True
+               extra = compare_tracking_ids(ds['tracking_ids'],local[i]['tracking_ids'])
+               if extra==[]:
+                  local[i]['to_update'] = False
+               else:
+                  local[i]['to_update'] = True
+            # if version undefined 
+            elif local[i]['version'] in ['NA',r've\d*']:
+               extra = compare_tracking_ids(ds['tracking_ids'],local[i]['tracking_ids'])
+               if extra==[]:
+                  local[i]['version'] = remote['version']
+                  local[i]['dataset_id'] = remote['dataset_id']
+                  local[i]['is_latest'] = True
+                  local[i]['to_update'] = False
+            # if version different or undefined but one or more tracking_ids are different assume different version from latest
+            else:
+                  local[i]['is_latest'] = False
+        if len(local)==0 or sum( local[i]['is_latest'] for i in range(len(local)) ) == 0 : 
+           remote[ind]['new']=True 
+        else:
+           remote[ind]['new']=False 
+    return remote, local
+           
+            
+
+def compare_tracking_ids(remote_ids,local_ids):
+    ''' Compare the lists of the tracking_ids from a remote and a loca version of a dataset
+        :argument remote_ids: list of remote tracking_ids  
+        :argument local_ids: list of local tracking_ids  
+        :return: result set 
+    '''
+    return set(remote_ids).difference(local_ids)
+    
