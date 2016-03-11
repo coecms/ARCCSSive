@@ -26,7 +26,29 @@ from datetime import date
 import glob
 import pickle
 import subprocess
+import argparse
 from collections import defaultdict
+
+def parse_input():
+    ''' Parse input arguments '''
+    parser = argparse.ArgumentParser(description='''Lists all the CMIP5 ensembles available on raijin and
+             responding to the constraints passed as arguments.
+            All arguments, except the output file name,  can be repeated, for example to select two variables:
+            -v tas tasmin
+            All arguments are optional, failing to input any argument will return the entire dataset.
+            The script returns all the ensembles satifying the constraints
+            [var1 OR var2 OR ..] AND [model1 OR model2 OR ..] AND [exp1 OR exp2 OR ...]
+            AND [mip1 OR mip2 OR ...]
+            Frequency adds all the correspondent mip_tables to the mip_table list
+            If a constraint isn't specified for one of the fields automatically all values
+            for that field will be selected.''')
+    parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=False)
+    parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
+    parser.add_argument('-v','--variable', type=str, nargs="*", help='CMIP5 variable', required=False)
+    parser.add_argument('-t','--mip_table', type=str, nargs="*", help='CMIP5 MIP table', required=False)
+    parser.add_argument('-f','--frequency', type=str, nargs="*", help='CMIP5 frequency', required=False)
+    parser.add_argument('-o','--output', type=str, nargs=1, help='database output file name', required=False)
+    return vars(parser.parse_args())
 
 def combine_constraints(**kwargs):
    ''' Return a set of dictionaries, one for each constraints combination '''
@@ -88,13 +110,13 @@ def compare_tracking_ids(remote_ids,local_ids):
     
 # these functions are to manage drstree and tmp/tree directories
 
-def list_drstree(root, **kwargs):
+def list_drstree(**kwargs):
     ''' find directories matching kwargs constraints in drstree
         check if they are in database,
         if not add them to db
         return: list of matches '''
     if 'mip' in kwargs.keys(): kwargs['frequency']=frequency(kwargs['mip'])
-    indir=root + drs_glob(**kwargs)
+    indir=drstree + drs_glob(**kwargs)
     return glob.glob(indir)
 
 def list_tmpdir(flist):
@@ -107,8 +129,8 @@ def list_tmpdir(flist):
     inst_list=[]
     lines=f.readlines()
     for line in lines[1:]:
-       values=line[:-1].split(',')
-       inst_list.append( {keys[i]:values[i] for i in range(len(keys))} )
+        values=line[:-1].split(',')
+        inst_list.append( {keys[i]:values[i] for i in range(len(keys))} )
     return inst_list
 
 def file_glob(**kwargs):
@@ -223,7 +245,10 @@ def frequency(mip):
      
 # this should be taken by setting environment variable DRSTREE
 # define root cirectory for drstree and /tmp/tree
-#drstree="/g/data1/ua6/drstree/CMIP5/GCM/"
+try:
+  drstree = os.environ['DRSTREE']
+except KeyError:
+  drstree = "/g/data1/ua6/drstree/CMIP5/GCM/"
 drstree="/g/data1/ua8/cmip-download/drstree/CMIP5/GCM/"
 tmptree="/g/data1/ua6/unofficial-ESG-replica/tmp/tree/"
 # load mip and frequency dictionaries

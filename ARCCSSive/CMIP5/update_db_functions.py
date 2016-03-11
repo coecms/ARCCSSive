@@ -20,12 +20,6 @@ limitations under the License.
 
 from __future__ import print_function
 
-import os
-import glob
-import pickle
-import subprocess
-from collections import defaultdict
-
 from sqlalchemy.orm.exc import NoResultFound
 from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile, VersionWarning
 

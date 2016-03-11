@@ -20,55 +20,43 @@ limitations under the License.
 
 from __future__ import print_function
 
-import os
-
-#from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile, VersionWarning
 from ARCCSSive import CMIP5
-from pyesgf_functions import *
-from update_db_functions import *
-from other_functions import *
+from ARCCSSive.CMIP5.pyesgf_functions import *
+from ARCCSSive.CMIP5.update_db_functions import *
+from ARCCSSive.CMIP5.other_functions import *
 
+# Should actually use parse_input() function from other_functions.py to build kwargs from input
 #assign constraints
 kwargs={"variable":["tas","tasmax"], "experiment":["rcp60","historical"],"model":["MIROC5"]}
-# open connection to ESGF
-node_url="http://pcmdi.llnl.gov/esg-search"
-openid="https://pcmdi.llnl.gov/esgf-idp/openid/paolap2"
-password="FM27g201@"
-#Psession=logon(openid,password)
-#Pif not session.is_logged_on():
-#P   print("User ", openid.split("/")[-1], "could not log onto node ", openid.split("/")[2])
-#Pelse:
-#P   print("User successfully logged on ESGF")
-#open connection to local database
+# open connection to local database and intiate SQLalchemy session 
 cmip5 = CMIP5.connect()
 
 # get constraints combination
 combs=combine_constraints(**kwargs)
-# use function already written to add in other_functions.py
+# initiate ESGFsearch object 
 esgf=ESGFSearch()
-##or should I use here a dictionary again to have 
-# search constraints on local DB, these should return instance_ids
-# search versions available for instance_ids returned
+# for each constraints combination
 for constraints in combs:
     db_results=[]
     esgf_results=[]
     print(constraints)
+# search on local DB, return instance_ids
     outputs=cmip5.outputs(**constraints)
-# this is just a test
+# loop through returned Instance objects
     for o in outputs:
+# loop available versions
        for v in o.versions:
-         print(v.id,v.is_latest)
-# either I append the entire object or i append only the useful info
+# append to results list of version dictionaries containing useful info 
          db_results.append({'version':v.version,'files':v.files,'filenames':v.filenames2(), 'tracking_ids': v.tracking_ids()})
-# search combs in ESGF database
+# search in ESGF database
     esgf.search_node(node_url,**constraints)
+# loop returned DatasetResult objects
     for ds in esgf.get_ds():
-       #esgf_results.append(ds)
+# append to results list of version dictionaries containing useful info 
+# NB search should return only one latest, not replica version if any
        esgf_results.append({'version': ds.get_attribute('version'), 'files':ds.files(), 'filenames':ds.filenames(),
                        'tracking_ids': ds.tracking_ids(), 'dataset_id':ds.dataset_id })
         
-    #print(esgf_results)
-#    print(db_results)
 
 #  WHAT SHOULD WE DO IF THEER'S NOTHING ONLINE FOR A CERTAIN CONSTRAINTS COMB? JUST CONTINUE WITH LOOP OR ACTUALLY CHECK IF THERE'S ANYTHING ALREADY ON DATABASE BUT NOT UPDATING ANY INFO???
 # FIRST AP[PROACH MAKE SENSE IF ALL I WANT IS TO COMPARE, BUT THEN IF POTENTIALLY A PARTICULAR VERSION HAS BEEN UNPUBLISHED OR IS CURRENTLY UNAVAILABLE I WOULD WANT TO KNOW
