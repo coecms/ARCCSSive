@@ -17,6 +17,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from future import print_function
 
 import pytest
 from ARCCSSive import CMIP5
@@ -43,7 +44,7 @@ def retrieve_item(db, klass, **kwargs):
     try:
         value = db.query(klass).filter_by(**kwargs).one()
     except NoResultFound:
-        print "Cannot find fixture with ", kwargs
+        print( "Cannot find fixture with ", kwargs)
     return value
 
 def add_instance_item(db, variable, mip, model, experiment, ensemble, realm):
