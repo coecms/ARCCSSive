@@ -17,6 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from __future__ import print_function
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -83,7 +84,7 @@ class Instance(Base):
         :returns: List of file names
         """
         #return self.versions[-1].filenames()
-        if not self.versions[-1].is_latest: print "Warning this is the latest version on raijin but not the latest published"
+        if not self.versions[-1].is_latest: print("Warning this is the latest version on raijin but not the latest published")
 #PA need to add to this the path!!
         return self.versions[-1].files
 
