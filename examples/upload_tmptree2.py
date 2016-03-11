@@ -13,26 +13,6 @@ from update_db_functions import *
 from ARCCSSive import CMIP5
 
 
-def parse_input():
-    ''' Parse input arguments '''
-    parser = argparse.ArgumentParser(description='''Lists all the CMIP5 ensembles available on raijin and
-             responding to the constraints passed as arguments.
-            All arguments, except the output file name,  can be repeated, for example to select two variables:
-            -v tas tasmin
-            All arguments are optional, failing to input any argument will return the entire dataset.
-            The script returns all the ensembles satifying the constraints
-            [var1 OR var2 OR ..] AND [model1 OR model2 OR ..] AND [exp1 OR exp2 OR ...]
-            AND [mip1 OR mip2 OR ...]
-            Frequency adds all the correspondent mip_tables to the mip_table list
-            If a constraint isn't specified for one of the fields automatically all values
-            for that field will be selected.''')
-    parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=False)
-    parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
-    parser.add_argument('-v','--variable', type=str, nargs="*", help='CMIP5 variable', required=False)
-    parser.add_argument('-t','--mip_table', type=str, nargs="*", help='CMIP5 MIP table', required=False)
-    parser.add_argument('-f','--frequency', type=str, nargs="*", help='CMIP5 frequency', required=False)
-    parser.add_argument('-o','--output', type=str, nargs=1, help='database output file name', required=False)
-    return vars(parser.parse_args())
 
 # open local database using ARCSSive interface
 conn = CMIP5.DB.connect()
