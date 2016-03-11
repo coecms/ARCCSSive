@@ -23,13 +23,10 @@ from __future__ import print_function
 import os
 import itertools
 from datetime import date
-
-today = date.today().strftime('%d/%m/%Y')
-#from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile, VersionWarning
-
-
-#def combine_constraints(args):
-#    return set(itertools.product(*args))
+import glob
+import pickle
+import subprocess
+from collections import defaultdict
 
 def combine_constraints(**kwargs):
    ''' Return a set of dictionaries, one for each constraints combination '''
@@ -69,7 +66,10 @@ def compare_instances(remote,local):
                   local[i]['dataset_id'] = remote['dataset_id']
                   local[i]['is_latest'] = True
                   local[i]['to_update'] = False
-            # if version different or undefined but one or more tracking_ids are different assume different version from latest
+            # if version different or undefined but one or more tracking_ids are different
+            # assume different version from latest
+            # NB what would happen if we fix faulty files? tracking_ids will be same but md5 different, 
+            # need to set a standard warning for them
             else:
                   local[i]['is_latest'] = False
         if len(local)==0 or sum( local[i]['is_latest'] for i in range(len(local)) ) == 0 : 
@@ -77,9 +77,7 @@ def compare_instances(remote,local):
         else:
            remote[ind]['new']=False 
     return remote, local
-           
             
-
 def compare_tracking_ids(remote_ids,local_ids):
     ''' Compare the lists of the tracking_ids from a remote and a loca version of a dataset
         :argument remote_ids: list of remote tracking_ids  
@@ -88,3 +86,151 @@ def compare_tracking_ids(remote_ids,local_ids):
     '''
     return set(remote_ids).difference(local_ids)
     
+# these functions are to manage drstree and tmp/tree directories
+
+def list_drstree(root, **kwargs):
+    ''' find directories matching kwargs constraints in drstree
+        check if they are in database,
+        if not add them to db
+        return: list of matches '''
+    if 'mip' in kwargs.keys(): kwargs['frequency']=frequency(kwargs['mip'])
+    indir=root + drs_glob(**kwargs)
+    return glob.glob(indir)
+
+def list_tmpdir(flist):
+    ''' this read from file list of instances on tmp/tree and return the ones matching constraints '''
+# skip first line
+# variable,mip_table,model,experiment,ensemble,realm,version,path
+    keys=['variable','mip','model','experiment',
+             'ensemble', 'realm', 'version', 'path']
+    f=open(flist,'r')
+    inst_list=[]
+    lines=f.readlines()
+    for line in lines[1:]:
+       values=line[:-1].split(',')
+       inst_list.append( {keys[i]:values[i] for i in range(len(keys))} )
+    return inst_list
+
+def file_glob(**kwargs):
+        """ Get the glob string matching the CMIP5 filename
+        """
+        value=defaultdict(lambda: "*")
+        value.update(kwargs)
+        return '%s_%s_%s_%s_%s*.nc'%(
+            value['variable'],
+            value[ 'mip'],
+            value['model'],
+            value['experiment'],
+            value['ensemble'])
+
+def drs_glob(**kwargs):
+    """ Get the glob string matching the directory structure under drstree
+    """
+    value=defaultdict(lambda: "*")
+    value.update(kwargs)
+    return '%s/%s/%s/%s/%s/%s'%(
+        value['model'],
+        value['experiment'],
+        value['frequency'],
+        value['realm'],
+        value['variable'],
+        value['ensemble'])
+
+def tree_glob(**kwargs):
+    """ Get the glob string matching the directory structure under tmp/tree
+    """
+    value=defaultdict(lambda: "*")
+    value.update(kwargs)
+    return '%s/%s/%s/%s/%s/%s'%(
+        value['model'],
+        value['experiment'],
+        value['frequency'],
+        value['realm'],
+        value['variable'],
+        value['ensemble'])
+
+def drs_details(path):
+    ''' Split the drstree path in model, experiment, frequency, realm, variable, ensemble '''
+    keys=['model','experiment', 'frequency', 'realm', 'variable','ensemble']
+    values=path.replace(drstree,"").split('/')
+    dummy=dict((keys[i],values[i]) for i in range(len(values)))
+    return dummy.pop('frequency'), dummy
+
+def file_details(fname):
+    ''' Split the filename in variable, MIP code, model, experiment, ensemble (period is excluded) '''
+    keys=['variable','mip','model','experiment','ensemble']
+    values = fname.split('_')
+    if len(values) >= 5:
+      return dict((keys[i],values[i]) for i  in range(len(values[:-1])))
+    else:
+      return 
+
+def find_version(bits,string):
+    ''' Returns matching string if found in directory structure '''
+    dummy = filter(lambda el: re.findall( string, el), bits)
+    if len(dummy) == 0:
+        return 'not_specified'
+    else:
+        return dummy[0]
+
+def list_drs_versions(path):
+    ''' Returns matching string if found in directory structure '''
+    return [x.split("/")[-1] for x in glob.glob(path+"/v*")]
+
+def list_drs_files(path):
+    ''' Returns matching string if found in directory structure '''
+    return [x.split("/")[-1] for x in glob.glob(path+"/*.nc")]
+ 
+def get_mip(path):
+    ''' Returns mip for instance 
+        input: instance path
+    '''
+    onefile = os.path.basename(glob.glob(path + "/latest/*.nc")[0]) 
+    dummy = file_details(onefile)
+    return dummy['mip']
+
+def tree_path(drspath):
+    ''' Returns the tmp/tree path for a particular instance &  version from 
+        input: drstree path for one the version files
+    '''
+    path=os.path.realpath(drspath)
+    return "/".join(path.split("/")[:-1])
+
+def check_hash(path,hash_type):
+    ''' Execute md5sum/sha256sum on file on tree and return True,f same as in wget file '''
+    hash_cmd="md5sum"
+    if hash_type in ["SHA256","sha256"]: hash_cmd="sha256sum"
+    try:
+      return subprocess.check_output([hash_cmd, path]).split()[0]
+    except:
+      print("Warning cannot calculate ",hash_type," for file ",path)
+      return ""
+
+# functions to manage dictionaries
+def assign_mips(*args):
+    ''' Append the cmip5 mip tables corresponding to the input frequency and/or realm
+        return updates list of mips '''
+    if not mips: mips=[]
+    if frq:
+       mips.extend(frq_dict[frq]) 
+    if realm:
+       mips.extend(realm_dict[realm]) 
+    return mips
+
+def frequency(mip):
+    ''' returns frequency for input mip '''
+    return  mip_dict[mip]
+     
+# this should be taken by setting environment variable DRSTREE
+# define root cirectory for drstree and /tmp/tree
+#drstree="/g/data1/ua6/drstree/CMIP5/GCM/"
+drstree="/g/data1/ua8/cmip-download/drstree/CMIP5/GCM/"
+tmptree="/g/data1/ua6/unofficial-ESG-replica/tmp/tree/"
+# load mip and frequency dictionaries
+picklefile = open("cmip_dict_pickle", 'r')
+mip_dict = pickle.load(picklefile)
+frq_dict = pickle.load(picklefile)
+picklefile.close()
+# define date string for current date
+today = date.today().strftime('%d/%m/%Y')
+
