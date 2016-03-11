@@ -24,10 +24,10 @@ import os
 import itertools
 from datetime import date
 import glob
-import pickle
 import subprocess
 import argparse
 from collections import defaultdict
+from ARCCSSive.data import *
 
 def parse_input():
     ''' Parse input arguments '''
@@ -251,11 +251,7 @@ except KeyError:
   drstree = "/g/data1/ua6/drstree/CMIP5/GCM/"
 drstree="/g/data1/ua8/cmip-download/drstree/CMIP5/GCM/"
 tmptree="/g/data1/ua6/unofficial-ESG-replica/tmp/tree/"
-# load mip and frequency dictionaries
-picklefile = open("cmip_dict_pickle", 'r')
-mip_dict = pickle.load(picklefile)
-frq_dict = pickle.load(picklefile)
-picklefile.close()
+
 # define date string for current date
 today = date.today().strftime('%d/%m/%Y')
 

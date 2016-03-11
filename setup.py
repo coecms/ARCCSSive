@@ -28,8 +28,10 @@ setup(
         name             = 'ARCCSSive',
         version          = meta.version,
         url              = 'https://github.com/coecms/ARCCSSive',
-        packages         = ['ARCCSSive', 'ARCCSSive.CMIP5'],
-        data_files       = ['data','data/*'],
+        packages         = find_packages(),
+        package_data     = {
+                '': ['data/*'],
+            },
         install_requires = requirements,
 
         author           = 'Scott Wales',
