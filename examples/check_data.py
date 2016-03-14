@@ -27,6 +27,8 @@ from ARCCSSive.CMIP5.other_functions import *
 
 # Should actually use parse_input() function from other_functions.py to build kwargs from input
 #assign constraints
+args=parse_input_check()
+
 kwargs={"variable":["tas","tasmax"], "experiment":["rcp60","historical"],"model":["MIROC5"]}
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = CMIP5.connect()
