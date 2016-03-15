@@ -35,8 +35,8 @@ from other_functions import *
 kwargs={"variable":["tas","tasmin"], "experiment":["rcp45","historical"],"model":["MIROC5"]}
 # open connection to ESGF
 node_url="http://pcmdi.llnl.gov/esg-search"
-openid="https://pcmdi.llnl.gov/esgf-idp/openid/paolap2"
-password="FM27g201@"
+openid="https://pcmdi.llnl.gov/esgf-idp/openid/"
+password=""
 #Psession=logon(openid,password)
 #Pif not session.is_logged_on():
 #P   print("User ", openid.split("/")[-1], "could not log onto node ", openid.split("/")[2])
