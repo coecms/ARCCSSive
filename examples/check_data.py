@@ -67,16 +67,18 @@ for constraints in combs:
 # search on local DB, return instance_ids
     outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
-    for o in outputs:
-       print("instance_id: ",o.id)
+    db_results=[v for o in outputs for v in o.versions]
+    #Pfor o in outputs:
+    #P   print("instance_id: ",o.id)
 # loop available versions
-       for v in o.versions:
-         print("version_id: ",v.id)
-         print("files: ",v.files,v.tracking_ids())
+    #P   for v in o.versions:
+    #P     print("version_id: ",v.id)
+    #P     print("files: ",v.files,v.tracking_ids())
 # append to results list of version dictionaries containing useful info 
-         db_results.append({'version':v.version,'files':v.files,'path':v.path, 
-                            'tracking_ids': v.tracking_ids()})
-         print(v.id,[f.sha256 for f in v.files])
+         #Pdb_results.append({'version':v.version,'vid':v.id,'files':v.files,'path':v.path, 
+         #P                   'tracking_ids': v.tracking_ids(),'dataset_id':v.dataset_id,
+         #P                    'is_latest': v.is_latest})
+         #Pprint(v.id,[f.sha256 for f in v.files])
     timing.log("finished DB search")
 # search in ESGF database
     constraints['distrib']=False 
@@ -106,8 +108,6 @@ for constraints in combs:
 # FIRST AP[PROACH MAKE SENSE IF ALL I WANT IS TO COMPARE, BUT THEN IF POTENTIALLY A PARTICULAR VERSION HAS BEEN UNPUBLISHED OR IS CURRENTLY UNAVAILABLE I WOULD WANT TO KNOW
 # PRINT A WARNING COULD BE SUFFICIENT? 
 # compare local to remote info
-    #print("before compare esgf results \n", esgf_results)
-    #if len(db_results)!= 0: print("before db results \n", db_results)
     esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results)
     print("after esgf results \n", esgf_results)
     if len(db_results)!= 0: print("after db results \n", db_results)

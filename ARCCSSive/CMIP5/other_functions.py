@@ -73,74 +73,79 @@ def compare_instances(db,remote,local):
         :argument local: version, files (objs), filenames, tracking_ids, dataset_id
         :return: remote, local with updated dictionaries
     '''
-    local_versions=[x['version'] for x in local]
-    print('In compare, local_versions ',local_versions)
+    # loop through all returned remote datasets
     for ind,ds in enumerate(remote):
-        indices = [i for i,x in enumerate(local_versions) if x == ds['version']]
-        print('Found ', len(indices), ' corresponding versions', ds['version'])
-        for i in range(len(local)):
-            local[i]['checked_on'] = today
+        # loop through all local versions
+        ##P for i in range(len(local)):
+        print( local)
+        for v in local:
+            print(type(v))
+            v.checked_on = today
+            # compare files for all cases except if version regular but different from remote 
+            if v.version in [ds['version'],'NA',r've\d*']:
+               extra = compare_files(db,ds,v)
+               # if tracking_ids or checksums are same
+               if extra==set([]):
+                  v.to_update = False
+               else:
+                  v.to_update = True
+            # if local dataset_id is the same as remote skip all other checks
+            if v.dataset_id==ds['dataset_id']:
+               print("skipping all other checks")
             # if version same as latest on esgf 
-            if i in indices:
-               local[i]['dataset_id'] = ds['dataset_id']
-               local[i]['is_latest'] = True
-               extra = compare_files(db,ds,local[i])
-               print(extra==set([]))
-               if extra==set([]):
-                  local[i]['to_update'] = False
-               else:
-                  local[i]['to_update'] = True
+            elif v.version == ds['version']:
+               v.dataset_id = ds['dataset_id']
+               v.is_latest = True
+               print('version same',extra,v.version)
             # if version undefined 
-               print('version same',extra,local[i])
-            elif local[i]['version'] in ['NA',r've\d*']:
-               extra = compare_files(db,ds,local[i])
-               print(extra==set([]))
+            elif v.version in ['NA',r've\d*']:
                if extra==set([]):
-                  local[i]['version'] = ds['version']
-                  local[i]['dataset_id'] = ds['dataset_id']
-                  local[i]['is_latest'] = True
-                  local[i]['to_update'] = False
-               else:
-                  local[i]['is_latest'] = False
-               print('version NA or ve',local[i])
+                  v.version = ds['version']
+                  v.dataset_id = ds['dataset_id']
+                  v.is_latest = True
+               print('version NA or ve',v.version)
             # if version different or undefined but one or more tracking_ids are different
             # assume different version from latest
             # NB what would happen if we fix faulty files? tracking_ids will be same but md5 different, 
             # need to set a standard warning for them
             else:
-                  local[i]['is_latest'] = False
-                  print('version different',local[i])
-        if len(local)==0 or sum( local[i]['is_latest'] for i in range(len(local)) ) == 0 : 
-           remote[ind]['new']=True 
-        else:
-           remote[ind]['new']=False 
+               v.is_latest = False
+               print('version different',v.version)
+    # update local version on database
+            print(type(v))
+            db.commit()
+            #update_item(db,Version,vid,kwargs)
+    # add to remote dictionary list of local identical versions
+        remote[ind]['same_as']=[v.id for v in local if v.is_latest] 
     return remote, local
 
-def compare_files(db,rds,lds):
+def compare_files(db,rds,v):
     ''' Compare files of remote and local version of a dataset
         :argument rds: dictionary of remote dataset object selected attributes  
-        :argument lds: dictionary of local version object selected attributes  
+        :argument v:  local version object   
         :return: result set, NB updating VerisonFiles object in databse if calculating checksums 
     '''
     extra=set([])
     print('trackingids from ESGF',rds['tracking_ids'])
-    print('trackingids local',lds['tracking_ids'])
-    print(lds['tracking_ids'] is  None or lds['tracking_ids']==[])
-    if not (None in lds['tracking_ids'] or "" in lds['tracking_ids']):
-        print('should not be here')
-        extra = compare_tracking_ids(rds['tracking_ids'],lds['tracking_ids'])
+    print('trackingids local',v.tracking_ids())
+    # first compare tracking_ids if all are present in local version
+    local_ids=v.tracking_ids()
+    if (local_ids and "" not in local_ids):
+        extra = compare_tracking_ids(rds['tracking_ids'],local_ids)
+    # if tracking_ids are the same or if they are not present compare checksums
+    # calculate checksums and update local db if necessary  
     if extra==set([]):
        local_sums=[]
        if rds['checksum_type'] in ['md5','MD5']:
-          for f in lds['files']:
+          for f in v.files:
              if f.md5 in ["", None]:
-                 f.md5 = check_hash(lds['path']+"/"+f.filename,'md5')
+                 f.md5 = check_hash(v.path+"/"+f.filename,'md5')
                  update_item(db,VersionFile,f.id,{'md5':f.md5})
              local_sums.append(f.md5) 
        else:
-          for f in lds['files']:
+          for f in v.files:
              if f.sha256 in ["",None]:
-                 f.sha256=check_hash(lds['path']+"/"+f.filename,'sha256')
+                 f.sha256=check_hash(v.path+"/"+f.filename,'sha256')
                  update_item(db,VersionFile,f.id,{'sha256':f.sha256})
              local_sums.append(f.sha256) 
        extra = compare_checksums(rds['checksums'],local_sums)
