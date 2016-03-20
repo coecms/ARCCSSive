@@ -31,31 +31,6 @@ from ARCCSSive.data import *
 #from ARCCSSive.CMIP5.Model import VersionFile
 from ARCCSSive.CMIP5.update_db_functions import * 
 
-def parse_input_check():
-    ''' Parse input arguments '''
-    parser = argparse.ArgumentParser(description=r'''Checks all the CMIP5 ensembles
-             (latest official version) on ESGF nodes, matching the constraints 
-             passed as arguments and compare them to ones available on raijins.||
-             All arguments, except the output file name,  can be repeated, for 
-            example to select two variables:||
-            -v tas tasmin||
-            At least one experiment and one variable should be passed all other 
-            arguments are optional.||
-            The script returns all the ensembles satifying the constraints
-            [var1 OR var2 OR ..] AND [model1 OR model2 OR ..] AND [exp1 OR exp2 OR ...]
-            AND [mip1 OR mip2 OR ...]||
-            Frequency adds all the correspondent mip_tables to the mip_table list.||
-            If a constraint isn't specified for one of the fields automatically all values
-            for that field will be selected.''')
-    parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
-    parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
-    parser.add_argument('-v','--variable', type=str, nargs="*", help='CMIP5 variable', required=True)
-    parser.add_argument('-t','--mip_table', type=str, nargs="*", help='CMIP5 MIP table', required=False)
-    parser.add_argument('-f','--frequency', type=str, nargs="*", help='CMIP5 frequency', required=False)
-    parser.add_argument('-en','--ensemble', type=str, nargs="*", help='CMIP5 ensemble', required=False)
-    parser.add_argument('-ve','--version', type=str, nargs="*", help='CMIP5 version', required=False)
-    parser.add_argument('-o','--output', type=str, nargs=1, help='database output file name', required=False)
-    return vars(parser.parse_args())
 
 def combine_constraints(**kwargs):
    ''' Return a set of dictionaries, one for each constraints combination '''
@@ -76,10 +51,7 @@ def compare_instances(db,remote,local):
     # loop through all returned remote datasets
     for ind,ds in enumerate(remote):
         # loop through all local versions
-        ##P for i in range(len(local)):
-        print( local)
         for v in local:
-            print(type(v))
             v.checked_on = today
             # compare files for all cases except if version regular but different from remote 
             if v.version in [ds['version'],'NA',r've\d*']:
@@ -112,9 +84,7 @@ def compare_instances(db,remote,local):
                v.is_latest = False
                print('version different',v.version)
     # update local version on database
-            print(type(v))
             db.commit()
-            #update_item(db,Version,vid,kwargs)
     # add to remote dictionary list of local identical versions
         remote[ind]['same_as']=[v.id for v in local if v.is_latest] 
     return remote, local
@@ -126,8 +96,13 @@ def compare_files(db,rds,v):
         :return: result set, NB updating VerisonFiles object in databse if calculating checksums 
     '''
     extra=set([])
-    print('trackingids from ESGF',rds['tracking_ids'])
-    print('trackingids local',v.tracking_ids())
+    # if there are no files on db for local version add them
+    if v.filenames2()==[]:
+       rows=[]
+       for f in filenames():
+           checksum=check_hash(f,'sha256')
+           rows.append(dict(filename=f.split("/")[-1], sha256=checksum, version_id=v.id))
+       add_bulk_item(db, VersionFile, rows)
     # first compare tracking_ids if all are present in local version
     local_ids=v.tracking_ids()
     if (local_ids and "" not in local_ids):

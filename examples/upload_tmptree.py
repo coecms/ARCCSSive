@@ -37,7 +37,7 @@ for kw_instance in instances:
     files = list_drs_files(kw_version['path']) 
     #print kw_version.items()
     v_obj,new = insert_unique(db, Version, **kw_version)
-    if v_obj.filenames==[]: 
+    if v_obj.filenames2()==[]: 
        rows=[]
        for f in files:
            checksum=check_hash(v_obj.path+"/"+f,'md5')

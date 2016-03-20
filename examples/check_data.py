@@ -19,7 +19,6 @@ limitations under the License.
 """
 
 from __future__ import print_function
-#from __future__ import unicode_literals
 
 import timing
 from ARCCSSive import CMIP5
@@ -68,17 +67,6 @@ for constraints in combs:
     outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
     db_results=[v for o in outputs for v in o.versions]
-    #Pfor o in outputs:
-    #P   print("instance_id: ",o.id)
-# loop available versions
-    #P   for v in o.versions:
-    #P     print("version_id: ",v.id)
-    #P     print("files: ",v.files,v.tracking_ids())
-# append to results list of version dictionaries containing useful info 
-         #Pdb_results.append({'version':v.version,'vid':v.id,'files':v.files,'path':v.path, 
-         #P                   'tracking_ids': v.tracking_ids(),'dataset_id':v.dataset_id,
-         #P                    'is_latest': v.is_latest})
-         #Pprint(v.id,[f.sha256 for f in v.files])
     timing.log("finished DB search")
 # search in ESGF database
     constraints['distrib']=False 
@@ -103,17 +91,16 @@ for constraints in combs:
              'dataset_id':ds.dataset_id })
     timing.log("finished ESGF search")
         
-
-#  WHAT SHOULD WE DO IF THEER'S NOTHING ONLINE FOR A CERTAIN CONSTRAINTS COMB? JUST CONTINUE WITH LOOP OR ACTUALLY CHECK IF THERE'S ANYTHING ALREADY ON DATABASE BUT NOT UPDATING ANY INFO???
-# FIRST AP[PROACH MAKE SENSE IF ALL I WANT IS TO COMPARE, BUT THEN IF POTENTIALLY A PARTICULAR VERSION HAS BEEN UNPUBLISHED OR IS CURRENTLY UNAVAILABLE I WOULD WANT TO KNOW
-# PRINT A WARNING COULD BE SUFFICIENT? 
 # compare local to remote info
-    esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results)
-    print("after esgf results \n", esgf_results)
-    if len(db_results)!= 0: print("after db results \n", db_results)
-
-# update database if needed based on recovered information, at the minimum for is_latest and checked_on
-# potentially update file list and checksum if they're not there yet
-# should we add an if admin clause here? 
+    if esgf_results==[]:
+       if db_results!=[]:
+           print("Found local version but none is currently available on ESGF nodes for constraints:\n",constraints)
+       else: 
+           print("Nothing currently available on ESGF nodes and no local version existsi for constraints:\n",constraints)
+    else:
+       esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results)
+    #print("after esgf results \n", esgf_results)
+    #if len(db_results)!= 0: print("after db results \n", db_results)
+    timing.log("finished comparing results")
 
 # build table to summarise results
