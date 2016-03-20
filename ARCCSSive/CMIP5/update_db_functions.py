@@ -75,10 +75,10 @@ def add_bulk_items(db, klass, rows):
     db.commit()
     return
 
-def update_item(db, klass, item_id, **kwargs):
+def update_item(db, klass, item_id, newvalues):
     '''
     '''
-    db.query(klass).filter(id == item_id).update(**kwargs)
+    db.query(klass).filter_by(id=item_id).update(newvalues)
     db.commit()
     return
 

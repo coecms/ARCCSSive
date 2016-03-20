@@ -65,16 +65,23 @@ class ESGFSearch(object):
         http://
     '''
 
-    def search_node(self, node, **kwargs):
+    def search_node(self, **kwargs):
         ''' Opens search connection and creates search context object self.ctx 
             by default searches CMIP5 latest version, not replica
-        :argument node: primary node to search
+        :argument node: primary node to search 
+                        default "http://pcmdi.llnl.gov/esg-search" 
         :argument distrib: default True search across all nodes 
+                           both these arguments can be passed as part of **kwargs
         :argument **kwargs: optional constraints to apply, listed in class comment
         :return: 
         ''' 
-        self.conn = SearchConnection(node, distrib=True)
-        self.ctx = self.conn.new_context(project='CMIP5', latest=True, replica=False, **kwargs)
+        node, distrib = ["http://pcmdi.llnl.gov/esg-search",True]
+        if "node" in kwargs.keys(): node = kwargs.pop('node')
+        if "distrib" in kwargs.keys(): distrib = kwargs.pop('distrib')
+        
+        self.conn = SearchConnection(node, distrib=distrib)
+        self.ctx = self.conn.new_context(project='CMIP5', latest=True, 
+                                           replica=False, **kwargs)
         return 
 
     def get_ds(self, **kwargs):
@@ -92,7 +99,7 @@ class ESGFSearch(object):
         return self.ctx.constrain(**kwargs)
 
     def which_facets(self, *args):
-        ''' Lists available facets, applies first additional constraints if any
+        ''' Lists available facets, applies first additional constraints irgsf any
         :argument **kwargs: optional constraints to apply, listed in class comment
         :return: A list of available facets ie any parameter key,value pair returned by search
         ''' 
@@ -149,13 +156,20 @@ def files(self):
     return self.file_context().search()
 
 def filenames(self):
-    ''' return list of FileResult for one  dataset object '''
+    ''' return list of filenames for files in the dataset object '''
     return [x.filename for x in self.files()]
 
-
 def tracking_ids(self):
-    ''' return list of FileResult for one  dataset object '''
+    ''' return list of tracking_ids for files in the dataset object '''
     return [x.tracking_id for x in self.files()]
+
+def checksums(self):
+    ''' return list of checksums for files in the dataset object '''
+    return [x.checksum for x in self.files()]
+
+def chksum_type(self):
+    ''' return checksum_type for files in the dataset object '''
+    return self.files()[0].checksum_type
 
 # all FileResult properties
 # 'checksum', 'checksum_type', 'context', 'download_url', 'file_id', 'filename', 'index_node', 'json', 'las_url', 'opendap_url', 'size', 'tracking_id', 'urls']
@@ -165,7 +179,7 @@ def list_attributes(self):
     return self.json.keys()
 
 def get_attribute(self, attr):
-    ''' return the attribute of Dataset/FileResult specified as input '''
+    ''' return a list for the attribute of Dataset/FileResult specified as input '''
     return self.json[attr]
 
 # Adding methods to DatasetResult class
@@ -173,6 +187,8 @@ DatasetResult.variables = variables
 DatasetResult.files = files
 DatasetResult.filenames = filenames
 DatasetResult.tracking_ids = tracking_ids
+DatasetResult.checksums = checksums
+DatasetResult.chksum_type = chksum_type
 DatasetResult.list_attributes = list_attributes
 DatasetResult.get_attribute = get_attribute
 # Adding methods to FileResult class

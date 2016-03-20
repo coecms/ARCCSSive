@@ -19,17 +19,39 @@ limitations under the License.
 """
 
 from __future__ import print_function
+#from __future__ import unicode_literals
 
+import timing
 from ARCCSSive import CMIP5
 from ARCCSSive.CMIP5.pyesgf_functions import *
 from ARCCSSive.CMIP5.update_db_functions import *
 from ARCCSSive.CMIP5.other_functions import *
 
+def assign_constraint():
+    ''' Assign default values and input to constraints '''
+    global var0, exp0, mod0, table, outfile, db, dbfile
+    var0 = []
+    exp0 = []
+    mod0 = []
+    outfile = 'variables'
+# assign constraints from arguments list
+    args = parse_input()
+    var0=args["variable"]
+    if args["model"]: mod0=args["model"]
+    exp0=args["experiment"]
+    table=args["table"]
+    db=args["database"]
+    if db: table=True
+    outfile=args["output"]
+    return
+
+
 # Should actually use parse_input() function from other_functions.py to build kwargs from input
 #assign constraints
 args=parse_input_check()
+timing.log("finished argparse")
 
-kwargs={"variable":["tas","tasmax"], "experiment":["rcp60","historical"],"model":["MIROC5"]}
+kwargs={"ensemble":["r4i1p1"],"mip":["Amon"], "variable":["tasmax"], "experiment":["historical"],"model":["MIROC5"]}
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = CMIP5.connect()
 
@@ -46,29 +68,49 @@ for constraints in combs:
     outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
     for o in outputs:
+       print("instance_id: ",o.id)
 # loop available versions
        for v in o.versions:
+         print("version_id: ",v.id)
+         print("files: ",v.files,v.tracking_ids())
 # append to results list of version dictionaries containing useful info 
-         db_results.append({'version':v.version,'files':v.files,'filenames':v.filenames2(), 'tracking_ids': v.tracking_ids()})
+         db_results.append({'version':v.version,'files':v.files,'path':v.path, 
+                            'tracking_ids': v.tracking_ids()})
+         print(v.id,[f.sha256 for f in v.files])
+    timing.log("finished DB search")
 # search in ESGF database
-    esgf.search_node(node_url,**constraints)
+    constraints['distrib']=False 
+    kwargs=constraints
+    constraints['cmor_table']=constraints.pop('mip')
+    esgf.search_node(**constraints)
 # loop returned DatasetResult objects
     for ds in esgf.get_ds():
 # append to results list of version dictionaries containing useful info 
 # NB search should return only one latest, not replica version if any
-       esgf_results.append({'version': ds.get_attribute('version'), 'files':ds.files(), 'filenames':ds.filenames(),
-                       'tracking_ids': ds.tracking_ids(), 'dataset_id':ds.dataset_id })
+       files, checksums, tracking_ids = [],[],[]
+       for f in ds.files(): 
+          if f.get_attribute('variable')[0]== constraints['variable']:
+             print('found same var as tasmax',f.checksum,f.tracking_id,f)
+             files.append(f)
+             checksums.append(f.checksum)
+             tracking_ids.append(f.tracking_id)
+          #print(checksums,tracking_ids)
+       esgf_results.append({'version': "v" + ds.get_attribute('version'), 
+             'files':files, 'tracking_ids': tracking_ids, 
+             'checksum_type': ds.chksum_type(), 'checksums': checksums,
+             'dataset_id':ds.dataset_id })
+    timing.log("finished ESGF search")
         
 
 #  WHAT SHOULD WE DO IF THEER'S NOTHING ONLINE FOR A CERTAIN CONSTRAINTS COMB? JUST CONTINUE WITH LOOP OR ACTUALLY CHECK IF THERE'S ANYTHING ALREADY ON DATABASE BUT NOT UPDATING ANY INFO???
 # FIRST AP[PROACH MAKE SENSE IF ALL I WANT IS TO COMPARE, BUT THEN IF POTENTIALLY A PARTICULAR VERSION HAS BEEN UNPUBLISHED OR IS CURRENTLY UNAVAILABLE I WOULD WANT TO KNOW
 # PRINT A WARNING COULD BE SUFFICIENT? 
 # compare local to remote info
-    print("before esgf first result \n", esgf_results[0])
-    if len(db_results)!= 0: print("before db first result \n", db_results[0])
-    esgf_results, db_results=compare_instances(esgf_results, db_results)
-    print("after esgf first result \n", esgf_results[0])
-    if len(db_results)!= 0: print("after db first result \n", db_results[0])
+    #print("before compare esgf results \n", esgf_results)
+    #if len(db_results)!= 0: print("before db results \n", db_results)
+    esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results)
+    print("after esgf results \n", esgf_results)
+    if len(db_results)!= 0: print("after db results \n", db_results)
 
 # update database if needed based on recovered information, at the minimum for is_latest and checked_on
 # potentially update file list and checksum if they're not there yet

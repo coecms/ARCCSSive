@@ -28,21 +28,23 @@ import subprocess
 import argparse
 from collections import defaultdict
 from ARCCSSive.data import *
+#from ARCCSSive.CMIP5.Model import VersionFile
+from ARCCSSive.CMIP5.update_db_functions import * 
 
 def parse_input_check():
     ''' Parse input arguments '''
-    parser = argparse.ArgumentParser(description='''Checks all the CMIP5 ensembles
+    parser = argparse.ArgumentParser(description=r'''Checks all the CMIP5 ensembles
              (latest official version) on ESGF nodes, matching the constraints 
-             passed as arguments and compare them to ones available on raijins.
-            All arguments, except the output file name,  can be repeated, for 
-            example to select two variables:
-            -v tas tasmin
+             passed as arguments and compare them to ones available on raijins.||
+             All arguments, except the output file name,  can be repeated, for 
+            example to select two variables:||
+            -v tas tasmin||
             At least one experiment and one variable should be passed all other 
-            arguments are optional.
+            arguments are optional.||
             The script returns all the ensembles satifying the constraints
             [var1 OR var2 OR ..] AND [model1 OR model2 OR ..] AND [exp1 OR exp2 OR ...]
-            AND [mip1 OR mip2 OR ...]
-            Frequency adds all the correspondent mip_tables to the mip_table list
+            AND [mip1 OR mip2 OR ...]||
+            Frequency adds all the correspondent mip_tables to the mip_table list.||
             If a constraint isn't specified for one of the fields automatically all values
             for that field will be selected.''')
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
@@ -65,53 +67,102 @@ def join_varmip(var0,mip0):
     print(comb)
     return comb
 
-def compare_instances(remote,local):
+def compare_instances(db,remote,local):
     ''' Compare remote and local search results they're both a list of dictionaries
         :argument remote: each dict has keys version, files (objs), filenames, tracking_ids, dataset_id 
         :argument local: version, files (objs), filenames, tracking_ids, dataset_id
         :return: remote, local with updated dictionaries
     '''
     local_versions=[x['version'] for x in local]
+    print('In compare, local_versions ',local_versions)
     for ind,ds in enumerate(remote):
         indices = [i for i,x in enumerate(local_versions) if x == ds['version']]
+        print('Found ', len(indices), ' corresponding versions', ds['version'])
         for i in range(len(local)):
             local[i]['checked_on'] = today
             # if version same as latest on esgf 
             if i in indices:
-               local[i]['dataset_id'] = remote['dataset_id']
+               local[i]['dataset_id'] = ds['dataset_id']
                local[i]['is_latest'] = True
-               extra = compare_tracking_ids(ds['tracking_ids'],local[i]['tracking_ids'])
-               if extra==[]:
+               extra = compare_files(db,ds,local[i])
+               print(extra==set([]))
+               if extra==set([]):
                   local[i]['to_update'] = False
                else:
                   local[i]['to_update'] = True
             # if version undefined 
+               print('version same',extra,local[i])
             elif local[i]['version'] in ['NA',r've\d*']:
-               extra = compare_tracking_ids(ds['tracking_ids'],local[i]['tracking_ids'])
-               if extra==[]:
-                  local[i]['version'] = remote['version']
-                  local[i]['dataset_id'] = remote['dataset_id']
+               extra = compare_files(db,ds,local[i])
+               print(extra==set([]))
+               if extra==set([]):
+                  local[i]['version'] = ds['version']
+                  local[i]['dataset_id'] = ds['dataset_id']
                   local[i]['is_latest'] = True
                   local[i]['to_update'] = False
+               else:
+                  local[i]['is_latest'] = False
+               print('version NA or ve',local[i])
             # if version different or undefined but one or more tracking_ids are different
             # assume different version from latest
             # NB what would happen if we fix faulty files? tracking_ids will be same but md5 different, 
             # need to set a standard warning for them
             else:
                   local[i]['is_latest'] = False
+                  print('version different',local[i])
         if len(local)==0 or sum( local[i]['is_latest'] for i in range(len(local)) ) == 0 : 
            remote[ind]['new']=True 
         else:
            remote[ind]['new']=False 
     return remote, local
+
+def compare_files(db,rds,lds):
+    ''' Compare files of remote and local version of a dataset
+        :argument rds: dictionary of remote dataset object selected attributes  
+        :argument lds: dictionary of local version object selected attributes  
+        :return: result set, NB updating VerisonFiles object in databse if calculating checksums 
+    '''
+    extra=set([])
+    print('trackingids from ESGF',rds['tracking_ids'])
+    print('trackingids local',lds['tracking_ids'])
+    print(lds['tracking_ids'] is  None or lds['tracking_ids']==[])
+    if not (None in lds['tracking_ids'] or "" in lds['tracking_ids']):
+        print('should not be here')
+        extra = compare_tracking_ids(rds['tracking_ids'],lds['tracking_ids'])
+    if extra==set([]):
+       local_sums=[]
+       if rds['checksum_type'] in ['md5','MD5']:
+          for f in lds['files']:
+             if f.md5 in ["", None]:
+                 f.md5 = check_hash(lds['path']+"/"+f.filename,'md5')
+                 update_item(db,VersionFile,f.id,{'md5':f.md5})
+             local_sums.append(f.md5) 
+       else:
+          for f in lds['files']:
+             if f.sha256 in ["",None]:
+                 f.sha256=check_hash(lds['path']+"/"+f.filename,'sha256')
+                 update_item(db,VersionFile,f.id,{'sha256':f.sha256})
+             local_sums.append(f.sha256) 
+       extra = compare_checksums(rds['checksums'],local_sums)
+    return extra 
             
 def compare_tracking_ids(remote_ids,local_ids):
-    ''' Compare the lists of the tracking_ids from a remote and a loca version of a dataset
+    ''' Compare the lists of the tracking_ids from a remote and a local version of a dataset
         :argument remote_ids: list of remote tracking_ids  
         :argument local_ids: list of local tracking_ids  
         :return: result set 
     '''
+    if remote_ids==set([]):
+       return set(['no tracking ids found on ESGF'])
     return set(remote_ids).difference(local_ids)
+    
+def compare_checksums(remote_sums,local_sums):
+    ''' Compare the lists of the checksums from a remote and a local version of a dataset
+        :argument remote_sums: list of remote checksums  
+        :argument local_sums: list of local checksums  
+        :return: result set 
+    '''
+    return set(remote_sums).difference(local_sums)
     
 # these functions are to manage drstree and tmp/tree directories
 
