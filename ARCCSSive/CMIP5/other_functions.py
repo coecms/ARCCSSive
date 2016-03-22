@@ -45,8 +45,8 @@ def join_varmip(var0,mip0):
 def compare_instances(db,remote,local):
     ''' Compare remote and local search results they're both a list of dictionaries
         :argument remote: each dict has keys version, files (objs), filenames, tracking_ids, dataset_id 
-        :argument local: version, files (objs), filenames, tracking_ids, dataset_id
-        :return: remote, local with updated dictionaries
+        :argument local:  list of version objects
+        :return: remote, local with updated attributes 
     '''
     # loop through all returned remote datasets
     for ind,ds in enumerate(remote):
@@ -63,26 +63,23 @@ def compare_instances(db,remote,local):
                   v.to_update = True
             # if local dataset_id is the same as remote skip all other checks
             if v.dataset_id==ds['dataset_id']:
-               print("skipping all other checks")
+               pass 
             # if version same as latest on esgf 
             elif v.version == ds['version']:
                v.dataset_id = ds['dataset_id']
                v.is_latest = True
-               print('version same',extra,v.version)
             # if version undefined 
             elif v.version in ['NA',r've\d*']:
                if extra==set([]):
                   v.version = ds['version']
                   v.dataset_id = ds['dataset_id']
                   v.is_latest = True
-               print('version NA or ve',v.version)
             # if version different or undefined but one or more tracking_ids are different
             # assume different version from latest
             # NB what would happen if we fix faulty files? tracking_ids will be same but md5 different, 
             # need to set a standard warning for them
             else:
                v.is_latest = False
-               print('version different',v.version)
     # update local version on database
             db.commit()
     # add to remote dictionary list of local identical versions
@@ -105,7 +102,7 @@ def compare_files(db,rds,v):
        add_bulk_item(db, VersionFile, rows)
     # first compare tracking_ids if all are present in local version
     local_ids=v.tracking_ids()
-    if (local_ids and "" not in local_ids):
+    if (local_ids==True and "" not in local_ids):
         extra = compare_tracking_ids(rds['tracking_ids'],local_ids)
     # if tracking_ids are the same or if they are not present compare checksums
     # calculate checksums and update local db if necessary  

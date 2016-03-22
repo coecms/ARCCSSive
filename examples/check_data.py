@@ -20,11 +20,37 @@ limitations under the License.
 
 from __future__ import print_function
 
-import timing
 from ARCCSSive import CMIP5
 from ARCCSSive.CMIP5.pyesgf_functions import *
 from ARCCSSive.CMIP5.update_db_functions import *
 from ARCCSSive.CMIP5.other_functions import *
+
+def parse_input_check():
+    ''' Parse input arguments '''
+    parser = argparse.ArgumentParser(description=r'''Checks all the CMIP5 ensembles
+             (latest official version) on ESGF nodes, matching the constraints
+             passed as arguments and compare them to ones available on raijins.||
+             All arguments, except the output file name,  can be repeated, for
+            example to select two variables:||
+            -v tas tasmin||
+            At least one experiment and one variable should be passed all other
+            arguments are optional.||
+            The script returns all the ensembles satifying the constraints
+            [var1 OR var2 OR ..] AND [model1 OR model2 OR ..] AND [exp1 OR exp2 OR ...]
+            AND [mip1 OR mip2 OR ...]||
+            Frequency adds all the correspondent mip_tables to the mip_table list.||
+            If a constraint isn't specified for one of the fields automatically all values
+            for that field will be selected.''')
+    parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
+    parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
+    parser.add_argument('-v','--variable', type=str, nargs="*", help='CMIP5 variable', required=True)
+    parser.add_argument('-t','--mip_table', type=str, nargs="*", help='CMIP5 MIP table', required=False)
+    parser.add_argument('-f','--frequency', type=str, nargs="*", help='CMIP5 frequency', required=False)
+    parser.add_argument('-en','--ensemble', type=str, nargs="*", help='CMIP5 ensemble', required=False)
+    parser.add_argument('-ve','--version', type=str, nargs="*", help='CMIP5 version', required=False)
+    parser.add_argument('-o','--output', type=str, nargs=1, help='database output file name', required=False)
+    return vars(parser.parse_args())
+
 
 def assign_constraint():
     ''' Assign default values and input to constraints '''
@@ -48,7 +74,6 @@ def assign_constraint():
 # Should actually use parse_input() function from other_functions.py to build kwargs from input
 #assign constraints
 args=parse_input_check()
-timing.log("finished argparse")
 
 kwargs={"ensemble":["r4i1p1"],"mip":["Amon"], "variable":["tasmax"], "experiment":["historical"],"model":["MIROC5"]}
 # open connection to local database and intiate SQLalchemy session 
@@ -67,7 +92,6 @@ for constraints in combs:
     outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
     db_results=[v for o in outputs for v in o.versions]
-    timing.log("finished DB search")
 # search in ESGF database
     constraints['distrib']=False 
     kwargs=constraints
@@ -80,16 +104,13 @@ for constraints in combs:
        files, checksums, tracking_ids = [],[],[]
        for f in ds.files(): 
           if f.get_attribute('variable')[0]== constraints['variable']:
-             print('found same var as tasmax',f.checksum,f.tracking_id,f)
              files.append(f)
              checksums.append(f.checksum)
              tracking_ids.append(f.tracking_id)
-          #print(checksums,tracking_ids)
        esgf_results.append({'version': "v" + ds.get_attribute('version'), 
              'files':files, 'tracking_ids': tracking_ids, 
              'checksum_type': ds.chksum_type(), 'checksums': checksums,
              'dataset_id':ds.dataset_id })
-    timing.log("finished ESGF search")
         
 # compare local to remote info
     if esgf_results==[]:
@@ -99,8 +120,5 @@ for constraints in combs:
            print("Nothing currently available on ESGF nodes and no local version existsi for constraints:\n",constraints)
     else:
        esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results)
-    #print("after esgf results \n", esgf_results)
-    #if len(db_results)!= 0: print("after db results \n", db_results)
-    timing.log("finished comparing results")
 
 # build table to summarise results
