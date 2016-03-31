@@ -28,7 +28,6 @@ import subprocess
 import argparse
 from collections import defaultdict
 from ARCCSSive.data import *
-#from ARCCSSive.CMIP5.Model import VersionFile
 from ARCCSSive.CMIP5.update_db_functions import * 
 
 
@@ -42,16 +41,32 @@ def join_varmip(var0,mip0):
     print(comb)
     return comb
 
-def compare_instances(db,remote,local):
+def get_instance(dataset_id):
+    ''' Break dataset_id from ESGF search in dictionary of instance attributes '''
+    bits=dataset_id.split(".")
+    return {'model': bits[3],'experiment': bits[4],'mip':bits[7],'ensemble':bits[8]}
+
+def compare_instances(db,remote,local, const_keys):
     ''' Compare remote and local search results they're both a list of dictionaries
+        :argument db: sqlalchemy local db session 
         :argument remote: each dict has keys version, files (objs), filenames, tracking_ids, dataset_id 
         :argument local:  list of version objects
+        :argument const_keys:  list of instance attributes defined by user constraints
         :return: remote, local with updated attributes 
     '''
+    # a list of the unique constraints defining one instance in the database which are not in user constraints
+    #instance_attrs=[x for x in Instance.__table_args__[0].columns.keys()]
+    undefined=[x for x in Instance.__table_args__[0].columns.keys() if x not in const_keys]
+    #undefined=[x for x in instance_attrs if x not in const_keys]
     # loop through all returned remote datasets
     for ind,ds in enumerate(remote):
         # loop through all local versions
+        print(ind,ds['dataset_id'])
+        ds_instance=get_instance(ds['dataset_id'])
         for v in local:
+            dummy=[False for key in undefined if  ds_instance[key] != v.variable.__dict__[key]]
+            if False in dummy:
+               continue
             v.checked_on = today
             # compare files for all cases except if version regular but different from remote 
             if v.version in [ds['version'],'NA',r've\d*']:
@@ -83,7 +98,7 @@ def compare_instances(db,remote,local):
     # update local version on database
             db.commit()
     # add to remote dictionary list of local identical versions
-        remote[ind]['same_as']=[v.id for v in local if v.is_latest] 
+        remote[ind]['same_as']=[v.id for v in local if v.dataset_id == ds['dataset_id']] 
     return remote, local
 
 def compare_files(db,rds,v):

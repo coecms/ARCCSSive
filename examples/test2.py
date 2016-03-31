@@ -24,9 +24,9 @@ import os
 
 #from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile, VersionWarning
 from ARCCSSive import CMIP5
-from pyesgf_functions import *
-from update_db_functions import *
-from other_functions import *
+from ARCCSSive.CMIP5.pyesgf_functions import *
+from ARCCSSive.CMIP5.update_db_functions import *
+from ARCCSSive.CMIP5.other_functions import *
 
 
 
@@ -51,36 +51,47 @@ combs=combine_constraints(**kwargs)
 db_results=[]
 esgf_ds=[]
 esgf=ESGFSearch()
-print(type(esgf))
-print(dir(esgf))
+#print(type(esgf))
+#print(dir(esgf))
 ##or should I use here a dictionary again to have 
 for constraints in combs:
     print(constraints)
     db_results.append(cmip5.outputs(**constraints))
 # this is just a test
-#for o in db_results:
-#    for v in o.versions:
-#       print(v.id,v.is_latest)
+for o in db_results[0]:
+    print(o.__table_args__[0].columns.keys())
+    print(type(Instance.__table_args__[0].columns.keys()))
+    for v in o.versions:
+       ukeys=[x for x in v.variable.__dict__.keys() if True]
+       print(v.id,v.variable.__dict__.keys())
+     #  print(dir(v))
 # search combs in ESGF database
-    esgf.search_node(node_url,**constraints)
-    print(esgf.ds_count())
-    print(esgf.ds_ids())
-    print(esgf.ds_variables())
-    print(esgf.ds_versions())
+    esgf.search_node(**constraints)
+#    print(esgf.ds_count())
+#    print(esgf.ds_ids())
+#    print(esgf.ds_variables())
+#    print(esgf.ds_versions())
+    print(dir(esgf),type(esgf))
     print(esgf.facet_options())
-    #print(esgf.which_facets('frequency'))
-    #print(esgf.facets())
+    for k,v in esgf.facet_options().items():
+         print(k,v.keys())
+ #   print(esgf.which_facets('frequency'))
+ #   print(esgf.facets())
 # not sure this is working either!!!
     esgf.ds_filter(ensemble='r1i1p1')
     print(esgf.ds_ids())
-    #esgf_results.append(esgf.ctx.search())
-    for ds in esgf.get_ds():
+    esgf_results.append(esgf.ctx.search())
+#    for ds in esgf.get_ds():
 # this is just a test
 # now I'm getting the DatasetResult objects
-#for ds in esgf_ds:
-        print(ds.dataset_id)
-        esgf_ds.append(ds)
-print(esgf_ds)
+for ds in esgf_ds:
+#        print(ds.dataset_id)
+        print(dir(ds))
+        #print(ds.urls)
+#        esgf_ds.append(ds)
+#        for f in ds.files():
+#           print(f.download_url)
+#print(esgf_ds)
 
 
 

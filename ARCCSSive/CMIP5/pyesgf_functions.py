@@ -99,7 +99,7 @@ class ESGFSearch(object):
         return self.ctx.constrain(**kwargs)
 
     def which_facets(self, *args):
-        ''' Lists available facets, applies first additional constraints irgsf any
+        ''' Lists available facets, applies first additional constraints if any
         :argument **kwargs: optional constraints to apply, listed in class comment
         :return: A list of available facets ie any parameter key,value pair returned by search
         ''' 
@@ -114,11 +114,10 @@ class ESGFSearch(object):
         ''' 
         return self.ctx.facets_count(*args)
 
-    def facet_options(self, **kwargs): 
+    def facet_options(self): 
         ''' return facets available to narrow down further search results
-        :argument **kwargs: optional constraints to apply, listed in class comment
         ''' 
-        return self.ctx.get_facet_options(**kwargs)
+        return self.ctx.get_facet_options()
 
     def which_fields(self, **kwargs):
         ''' Lists available facets, applies first additional constraints if any

@@ -25,6 +25,11 @@ from ARCCSSive.CMIP5.pyesgf_functions import *
 from ARCCSSive.CMIP5.update_db_functions import *
 from ARCCSSive.CMIP5.other_functions import *
 
+# check python version and then call main()
+if sys.version_info < ( 2, 7):
+    # python too old, kill the script
+    sys.exit("This script requires Python 2.7 or newer!")
+
 def parse_input_check():
     ''' Parse input arguments '''
     parser = argparse.ArgumentParser(description=r'''Checks all the CMIP5 ensembles
@@ -70,12 +75,70 @@ def assign_constraint():
     outfile=args["output"]
     return
 
+def write_table(constraints,remote,local):
+    ''' write a csv table to summarise search
+        constraints
+        remote
+        local 
+    '''
+    exp=constraints['experiment']
+    # length of dictionary gmatrix[exp] is number of var_mip columns
+    # maximum length of list in each dict inside gmatrix[exp] is number of mod/ens rows
+    emat = gmatrix[exp]
+    klist = emat.keys()
+    # check if there are extra variables never published
+    evar = list(set( [np[0] for np in nopub if np[0] not in klist if np[-1]==exp ] ))
+    # calculate ncol,nrow keeping into account var never published
+    ncol = len(klist) +2 + len(evar)
+    nrow = max([len(emat[x]) for x in klist]) +1
+    # open/create a csv file for each experiment
+    try:
+       csv = open(exp+".csv","w")
+    except:
+       print( "Can not open file " + exp + ".csv")
+    csv.write(" model_ensemble/variable," + ",".join(klist+evar) + "\n")
+      # pre-fill all values with "NP", leave 1 column and 1 row for headers
+      # write first two columns with all (mod,ens) pairs
+    col1= [emat[var][i][0] for var in klist for i in range(len(emat[var])) ]
+    col1 = list(set(col1))
+    col1_sort=sorted(col1)
+    # write first column with mod_ens combinations & save row indexes in dict where keys are (mod,ens) combination
+    #  print( col1_sort)
+    for modens in col1_sort:
+        csv.write(modens[0] + "_" + modens[1])
+        for var in klist:
+           line = [item[1].replace(", " , " (")   for item in emat[var] if item[0] == modens]
+           if len(line) > 0:
+               csv.write(", " +  " ".join(line) + ")")
+           else:
+               csv.write(",NP")
+        if len(evar) > 0:
+           for var in evar:
+               csv.write(",NP")
+        csv.write("\n")
+    csv.close()
+    print( "Data written in table ")
+    return
+
+def new_files(remote):
+    ''' return urls of new files to download '''
+    urls=[]
+    # this return too many we need to do it variable by variable
+    for ind,ds in enumerate(remote):
+        if ds['new']:
+           for f in ds.files():
+               urls.append(f.download_url)
+    return urls
+
 
 # Should actually use parse_input() function from other_functions.py to build kwargs from input
 #assign constraints
 args=parse_input_check()
 
-kwargs={"ensemble":["r4i1p1"],"mip":["Amon"], "variable":["tasmax"], "experiment":["historical"],"model":["MIROC5"]}
+# a list fo the standard unique constraints defining one instance in the database
+#instance_attrs=['variable','mip','experiment','model','ensemble']
+kwargs={"mip":["Amon"], "variable":["tasmin"], "experiment":["historical"],"model":["MIROC5"]}
+#kwargs={"mip":["Amon"], "variable":["tasmax","tasmin"], "experiment":["historical"],"model":["MIROC5","CCSM4"]}
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = CMIP5.connect()
 
@@ -93,7 +156,7 @@ for constraints in combs:
 # loop through returned Instance objects
     db_results=[v for o in outputs for v in o.versions]
 # search in ESGF database
-    constraints['distrib']=False 
+    #constraints['distrib']=False 
     kwargs=constraints
     constraints['cmor_table']=constraints.pop('mip')
     esgf.search_node(**constraints)
@@ -119,6 +182,11 @@ for constraints in combs:
        else: 
            print("Nothing currently available on ESGF nodes and no local version existsi for constraints:\n",constraints)
     else:
-       esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results)
+       esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, kwargs.keys())
 
 # build table to summarise results
+    #write_table(constraints,esgf_results,db_results)
+    #urls=newfiles(esgf_results)
+    #download_files(urls)
+    print(esgf_results)
+    print(db_results)
