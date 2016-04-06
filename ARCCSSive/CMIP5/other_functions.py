@@ -55,13 +55,10 @@ def compare_instances(db,remote,local, const_keys):
         :return: remote, local with updated attributes 
     '''
     # a list of the unique constraints defining one instance in the database which are not in user constraints
-    #instance_attrs=[x for x in Instance.__table_args__[0].columns.keys()]
     undefined=[x for x in Instance.__table_args__[0].columns.keys() if x not in const_keys]
-    #undefined=[x for x in instance_attrs if x not in const_keys]
     # loop through all returned remote datasets
     for ind,ds in enumerate(remote):
         # loop through all local versions
-        print(ind,ds['dataset_id'])
         ds_instance=get_instance(ds['dataset_id'])
         for v in local:
             dummy=[False for key in undefined if  ds_instance[key] != v.variable.__dict__[key]]
@@ -78,7 +75,7 @@ def compare_instances(db,remote,local, const_keys):
                   v.to_update = True
             # if local dataset_id is the same as remote skip all other checks
             if v.dataset_id==ds['dataset_id']:
-               pass 
+               v.is_latest = True
             # if version same as latest on esgf 
             elif v.version == ds['version']:
                v.dataset_id = ds['dataset_id']
@@ -198,13 +195,14 @@ def drs_glob(**kwargs):
     """
     value=defaultdict(lambda: "*")
     value.update(kwargs)
-    return '%s/%s/%s/%s/%s/%s'%(
+    return '%s/%s/%s/%s/%s/%s/%s'%(
         value['model'],
         value['experiment'],
         value['frequency'],
         value['realm'],
         value['variable'],
-        value['ensemble'])
+        value['ensemble'],
+        value['version'])
 
 def tree_glob(**kwargs):
     """ Get the glob string matching the directory structure under tmp/tree
@@ -277,15 +275,14 @@ def check_hash(path,hash_type):
       return ""
 
 # functions to manage dictionaries
-def assign_mips(*args):
-    ''' Append the cmip5 mip tables corresponding to the input frequency and/or realm
+def assign_mips(**kwargs):
+    ''' Append the cmip5 mip tables corresponding to the input frequency 
         return updates list of mips '''
-    if not mips: mips=[]
-    if frq:
-       mips.extend(frq_dict[frq]) 
-    if realm:
-       mips.extend(realm_dict[realm]) 
-    return mips
+    if kwargs['mip'] is None: kwargs['mip']=[]
+    if kwargs['frq']:
+       kwargs['mip'].extend([y for x in kwargs['frq'] for y in frq_dict[x]]) 
+    print(kwargs['mip'],type(kwargs['mip']))
+    return list(set([x for x in kwargs['mip']]))
 
 def frequency(mip):
     ''' returns frequency for input mip '''
