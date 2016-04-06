@@ -21,6 +21,7 @@ from __future__ import print_function
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from ARCCSSive.data import *
 
 import os
 import glob
@@ -66,8 +67,6 @@ class Instance(Base):
     model      = Column(String, index=True)
     ensemble   = Column(String)
     realm      = Column(String)
-    #latest     = Column(String)
-    #drstree    = Column(String)
     # these last two are replaced by functions
     # there will be new versions labelled 've' (version estimate) in drstree so using only timestamp to order them
 
@@ -93,12 +92,13 @@ class Instance(Base):
         Returns the drstree path for this instance, if one is not yet available returns None 
         """
         drstreep="/g/data1/ua6/drstree/CMIP5/GCM/" # this should be passed as DRSTREE env var
-        return DRSTREE + "/".join( self.model, 
+        frequency=mip_dict[self.mip][0]
+        return drstreep + "/".join([ self.model, 
                                    self.experiment,
-                                   self.frequency,
+                                   frequency,
                                    self.realm,
                                    self.variable,
-                                   self.ensemble) 
+                                   self.ensemble]) 
 
 # Add alias to deprecated name
 Variable = Instance

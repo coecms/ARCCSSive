@@ -62,13 +62,10 @@ def parse_input():
 def assign_constraints():
     ''' Assign default values and input to constraints '''
     kwargs = parse_input()
-    outfile=kwargs.pop("output")
-    if outfile is None: outfile="download_urls.txt"
     frq = kwargs.pop("frequency")
-    #realm = kwargs.pop("realm")
+    kwargs["mip"] = assign_mips(frq=frq,mip=kwargs["mip"])
     for k,v in kwargs.items():
         if v is None: kwargs.pop(k)
-    kwargs["mip"] = assign_mips(frq=frq,mip=kwargs["mip"])
     return kwargs
 
 
@@ -152,6 +149,8 @@ def new_files(remote):
 
 # Should actually use parse_input() function from other_functions.py to build kwargs from input
 kwargs=assign_constraints()
+outfile=kwargs.pop("output","download_urls.txt")
+fout=open(outfile,"w")
 
 # a list fo the standard unique constraints defining one instance in the database
 # initialize dictionary of exp/matrices
@@ -208,6 +207,7 @@ for constraints in combs:
     if urls!=[]:
       print("These are new files to download:\n")
       print(urls)
+      fout.writelines(x + "\n" for x in urls)
     matrix = result_matrix(matrix,constraints,esgf_results,db_results)
 #write a table to summarise comparison results for each experiment in csv file
 for exp in kwargs['experiment']:

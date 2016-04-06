@@ -281,7 +281,6 @@ def assign_mips(**kwargs):
     if kwargs['mip'] is None: kwargs['mip']=[]
     if kwargs['frq']:
        kwargs['mip'].extend([y for x in kwargs['frq'] for y in frq_dict[x]]) 
-    print(kwargs['mip'],type(kwargs['mip']))
     return list(set([x for x in kwargs['mip']]))
 
 def frequency(mip):
