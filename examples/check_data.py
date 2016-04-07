@@ -150,7 +150,7 @@ def new_files(remote):
 # Should actually use parse_input() function from other_functions.py to build kwargs from input
 kwargs=assign_constraints()
 outfile=kwargs.pop("output","download_urls.txt")
-fout=open(outfile,"w")
+fout=open(outfile[0],"w")
 
 # a list fo the standard unique constraints defining one instance in the database
 # initialize dictionary of exp/matrices
