@@ -1,4 +1,4 @@
-# ihis search CMIP5 data available on raijin that matches constraints passed on by user and return paths for all available versions.
+# This search CMIP5 data available on raijin that matches constraints passed on by user and return paths for all available versions.
 #!/usr/bin/env python
 """
 Copyright 2016 ARC Centre of Excellence for Climate Systems Science
@@ -61,11 +61,6 @@ def assign_constraints():
         if v is None: kwargs.pop(k)
     return kwargs
 
-def write_output():
-    ''' '''
-    return
-
-
 # Calling parse_input() function to build kwargs from external arguments paased by user 
 kwargs=assign_constraints()
 # open output file
@@ -92,18 +87,20 @@ for constraints in combs:
 # search on local DB, return instance_ids
     outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
-    db_results=[v for o in outputs for v in o.versions]
+    db_results=[v for o in outputs for v in o.versions if v.is_latest]
+    if db_results==[]:
+       db_results=[v for o in outputs for v in o.versions if v.version==o.latest()[1]]
 # write result to output file
     if db_results==[]:
        print("No local version exists for constraints:\n",constraints)
     else:
        for v in db_results:
           fout.write(v.version + ", checksum: " + cks[0] + "\n")
-          drspath=v.variable.drstree_path() + "/" + v.version + "/"
+          vpath=v.path + "/"
           if checksum:
-             fout.writelines(drspath + f.filename + ", " + str(f.__getattribute__(cks_type)) + "\n" for f in v.files)
+             fout.writelines(vpath + f.filename + ", " + str(f.__getattribute__(cks_type)) + "\n" for f in v.files)
           else:
-             fout.writelines(drspath + f.filename + "\n" for f in v.files)
+             fout.writelines(vpath + f.filename + "\n" for f in v.files)
 fout.close()
        
 

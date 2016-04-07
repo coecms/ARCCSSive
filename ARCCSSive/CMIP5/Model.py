@@ -67,8 +67,8 @@ class Instance(Base):
     model      = Column(String, index=True)
     ensemble   = Column(String)
     realm      = Column(String)
-    # these last two are replaced by functions
     # there will be new versions labelled 've' (version estimate) in drstree so using only timestamp to order them
+    # order doesn't work if version NA
 
     versions   = relationship('Version', order_by='Version.version', backref='variable')
 
@@ -76,16 +76,28 @@ class Instance(Base):
             UniqueConstraint('variable','experiment','mip','model','ensemble'),
             )
 
+    def latest(self):
+        """
+        Returns latest version/s available on raijin, first check in any version is_latest, then checks date stamp
+        """
+        vlatest=[v for v in self.versions if v.is_latest]
+        if vlatest==[]: 
+           valid=[v for v in self.versions if v!="NA"]
+           vsort=valid.sort(key=lambda x: x.version[:-8])
+           vlatest.append(vsort[-1])
+           i=-2
+           while vsort[i].version==vlatest[1].version:
+              vlatest.append(vsort[i])
+              i+=-1
+        return vlatest
+        
     def filenames(self):
         """
         Returns the file names from the latest version of this variable
 
         :returns: List of file names
         """
-        #return self.versions[-1].filenames()
-        if not self.versions[-1].is_latest: print("Warning this is the latest version on raijin but not the latest published")
-#PA need to add to this the path!!
-        return self.versions[-1].files
+        return self.latest[1].filenames2()
 
     def drstree_path(self):
         """ 
@@ -151,7 +163,7 @@ class Version(Base):
             self.variable.experiment,
             self.variable.ensemble)
 
-    def filenames(self):
+    def build_filepaths(self):
         """
         Returns the list of files matching this version
 
@@ -160,15 +172,14 @@ class Version(Base):
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
          
-    def filenames2(self):
+    def filenames(self):
         """
-        Returns the list of files matching this version
+        Returns the list of filenames for this version
 
         :returns: List of file names
         """
         return [x.filename for x in self.files] 
          
-
     def tracking_ids(self):
         """
         Returns the list of tracking_ids for files in this version

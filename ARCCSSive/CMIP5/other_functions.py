@@ -106,9 +106,9 @@ def compare_files(db,rds,v):
     '''
     extra=set([])
     # if there are no files on db for local version add them
-    if v.filenames2()==[]:
+    if v.filenames()==[]:
        rows=[]
-       for f in filenames():
+       for f in v.build_filepaths():
            checksum=check_hash(f,'sha256')
            rows.append(dict(filename=f.split("/")[-1], sha256=checksum, version_id=v.id))
        add_bulk_item(db, VersionFile, rows)
