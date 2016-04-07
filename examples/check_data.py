@@ -1,5 +1,5 @@
-# This check data available on ESGF and on raijin that matches constraints passed on by user and return a summary.
 #!/usr/bin/env python
+# This check data available on ESGF and on raijin that matches constraints passed on by user and return a summary.
 """
 Copyright 2016 ARC Centre of Excellence for Climate Systems Science
 
@@ -143,7 +143,7 @@ def new_files(remote):
     for ind,ds in enumerate(remote):
         if ds['same_as']==[]:
            for f in ds.files():
-               urls.append(f.download_url)
+               urls.append(",".join([f.download_url,ds.chksum_type(),f.checksum]))
     return urls
 
 
