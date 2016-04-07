@@ -1,5 +1,5 @@
-# This search CMIP5 data available on raijin that matches constraints passed on by user and return paths for all available versions.
 #!/usr/bin/env python
+# This search CMIP5 data available on raijin that matches constraints passed on by user and return paths for all available versions.
 """
 Copyright 2016 ARC Centre of Excellence for Climate Systems Science
 
