@@ -44,7 +44,7 @@ def join_varmip(var0,mip0):
 def get_instance(dataset_id):
     ''' Break dataset_id from ESGF search in dictionary of instance attributes '''
     bits=dataset_id.split(".")
-    return {'model': bits[3],'experiment': bits[4],'mip':bits[7],'ensemble':bits[8]}
+    return {'model': bits[3],'experiment': bits[4],'mip':bits[7],'ensemble':bits[8],'version':bits[9].split("|")[0]}
 
 def compare_instances(db,remote,local, const_keys):
     ''' Compare remote and local search results they're both a list of dictionaries

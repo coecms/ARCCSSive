@@ -142,8 +142,8 @@ def new_files(remote):
     # this return too many we need to do it variable by variable
     for ind,ds in enumerate(remote):
         if ds['same_as']==[]:
-           for f in ds.files():
-               urls.append(",".join([f.download_url,ds.chksum_type(),f.checksum]))
+           for f in ds['files']:
+               urls.append(",".join([f.download_url,ds['checksum_type'],f.checksum]))
     return urls
 
 
