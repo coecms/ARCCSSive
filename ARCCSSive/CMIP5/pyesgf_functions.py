@@ -31,7 +31,7 @@ def logon(openid, password):
     ''' Login on ESGF with credentials, returns connection object '''
     lm=LogonManager()
     try:
-      lm.logon_with_openid(openid, password)
+      lm.logon_with_openid(openid, password, bootstrap=True, update_trustroots=True)
     except:
       e = sys.exc_info()[1]
       print("Logon Error: ",  e)
