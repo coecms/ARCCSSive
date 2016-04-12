@@ -35,18 +35,18 @@ def parse_input():
     ''' Parse input arguments '''
     parser = argparse.ArgumentParser(description=r'''Checks all the CMIP5 ensembles
              (latest official version) on ESGF nodes, matching the constraints
-             passed as arguments and compare them to ones available on raijins.||
+             passed as arguments and compare them to ones available on raijins.
              All arguments, except the output file name,  can be repeated, for
-            example to select two variables:||
-            -v tas tasmin||
+            example to select two variables:
+            -v tas tasmin
             At least one experiment and one variable should be passed all other
-            arguments are optional.||
+            arguments are optional.
             The script returns all the ensembles satifying the constraints
             [var1 OR var2 OR ..] AND [model1 OR model2 OR ..] AND [exp1 OR exp2 OR ...]
-            AND [mip1 OR mip2 OR ...]||
-            Frequency adds all the correspondent mip_tables to the mip_table list.||
+            AND [mip1 OR mip2 OR ...]
+            Frequency adds all the correspondent mip_tables to the mip_table list.
             If a constraint isn't specified for one of the fields automatically all values
-            for that field will be selected.''')
+            for that field will be selected.''',formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
     parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
     parser.add_argument('-v','--variable', type=str, nargs="*", help='CMIP5 variable', required=True)

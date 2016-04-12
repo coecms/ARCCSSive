@@ -21,9 +21,8 @@ limitations under the License.
 from __future__ import print_function
 
 from ARCCSSive import CMIP5
-from ARCCSSive.CMIP5.update_db_functions import *
-from ARCCSSive.CMIP5.other_functions import *
-from collections import defaultdict
+from ARCCSSive.CMIP5.other_functions import combine_constraints 
+import argparse
 import sys
 
 # check python version and then call main()
@@ -33,16 +32,16 @@ if sys.version_info < ( 2, 7):
 
 def parse_input():
     ''' Parse input arguments '''
-    parser = argparse.ArgumentParser(description=r'''Checks all the CMIP5 ensembles
-             available on raijin, matching the constraints passed as arguments.||
+    parser = argparse.ArgumentParser(description='''Checks all the CMIP5 ensembles
+             available on raijin, matching the constraints passed as arguments.
              Accept one value for the required arguments: experiment, model, variable, mip.
              The others are optional and can be repeated:
-            example to select two particular ensembles:||
-            -e r1i1p1 r2i1p1||
+            example to select two particular ensembles:
+            -e r1i1p1 r2i1p1
             The script returns all the ensembles satifying the constraints
-            var1 AND model1 AND exp1  AND mip1  AND other optional constraints||
+            var1 AND model1 AND exp1  AND mip1  AND other optional constraints
             If a constraint isn't specified for one of the fields automatically all values
-            for that field will be selected.''')
+            for that field will be selected.''', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-e','--experiment', type=str, nargs=1, help='CMIP5 experiment', required=True)
     parser.add_argument('-m','--model', type=str, nargs=1, help='CMIP5 model', required=True)
     parser.add_argument('-v','--variable', type=str, nargs=1, help='CMIP5 variable', required=True)
@@ -64,8 +63,7 @@ def assign_constraints():
 # Calling parse_input() function to build kwargs from external arguments paased by user 
 kwargs=assign_constraints()
 # open output file
-outfile=kwargs.pop("output",None)
-if outfile is None: outfile="search_result.txt"
+outfile=kwargs.pop("output",["search_result.txt"])
 fout=open(outfile[0],'w')
 # if checksum_type has been passed add checksum to output
 checksum=False
@@ -74,7 +72,6 @@ if cks[0] in  ["md5","sha256"]:
    checksum=True
    cks_type=cks[0]
 
-# a list fo the standard unique constraints defining one instance in the database
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = CMIP5.connect()
 

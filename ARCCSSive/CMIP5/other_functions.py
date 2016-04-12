@@ -25,7 +25,6 @@ import itertools
 from datetime import date
 import glob
 import subprocess
-import argparse
 from collections import defaultdict
 from ARCCSSive.data import *
 from ARCCSSive.CMIP5.update_db_functions import * 
