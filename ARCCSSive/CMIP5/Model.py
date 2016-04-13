@@ -17,9 +17,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from __future__ import print_function
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from ARCCSSive.data import *
 
 import os
 import glob
@@ -64,7 +66,9 @@ class Instance(Base):
     mip        = Column(String, index=True)
     model      = Column(String, index=True)
     ensemble   = Column(String)
-    latest     = Column(String)
+    realm      = Column(String)
+    # there will be new versions labelled 've' (version estimate) in drstree so using only timestamp to order them
+    # order doesn't work if version NA
 
     versions   = relationship('Version', order_by='Version.version', backref='variable')
 
@@ -72,13 +76,41 @@ class Instance(Base):
             UniqueConstraint('variable','experiment','mip','model','ensemble'),
             )
 
+    def latest(self):
+        """
+        Returns latest version/s available on raijin, first check in any version is_latest, then checks date stamp
+        """
+        vlatest=[v for v in self.versions if v.is_latest]
+        if vlatest==[]: 
+           valid=[v for v in self.versions if v!="NA"]
+           vsort=valid.sort(key=lambda x: x.version[:-8])
+           vlatest.append(vsort[-1])
+           i=-2
+           while vsort[i].version==vlatest[1].version:
+              vlatest.append(vsort[i])
+              i+=-1
+        return vlatest
+        
     def filenames(self):
         """
         Returns the file names from the latest version of this variable
 
         :returns: List of file names
         """
-        return self.versions[-1].filenames()
+        return self.latest[1].filenames2()
+
+    def drstree_path(self):
+        """ 
+        Returns the drstree path for this instance, if one is not yet available returns None 
+        """
+        drstreep="/g/data1/ua6/drstree/CMIP5/GCM/" # this should be passed as DRSTREE env var
+        frequency=mip_dict[self.mip][0]
+        return drstreep + "/".join([ self.model, 
+                                   self.experiment,
+                                   frequency,
+                                   self.realm,
+                                   self.variable,
+                                   self.ensemble]) 
 
 # Add alias to deprecated name
 Variable = Instance
@@ -98,6 +130,14 @@ class Version(Base):
     .. attribute:: variable
 
         :class:`Variable` associated with this version
+
+    .. attribute:: warnings
+
+        List of :class:`VersionWarning` available for this output
+
+    .. attribute:: files
+
+        List of :class:`VersionFile` available for this output
     """
     __tablename__ = 'versions'
     id          = Column(Integer, name='version_id', primary_key = True)
@@ -105,9 +145,13 @@ class Version(Base):
 
     version     = Column(String)
     path        = Column(String)
+    dataset_id  = Column(String)
     is_latest   = Column(Boolean)
     checked_on  = Column(String)
     to_update   = Column(Boolean)
+
+    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
+    files   = relationship('VersionFile', order_by='VersionFile.id', backref='version')
 
     def glob(self):
         """ Get the glob string matching the CMIP5 filename
@@ -119,7 +163,7 @@ class Version(Base):
             self.variable.experiment,
             self.variable.ensemble)
 
-    def filenames(self):
+    def build_filepaths(self):
         """
         Returns the list of files matching this version
 
@@ -127,7 +171,23 @@ class Version(Base):
         """
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
+         
+    def filenames(self):
+        """
+        Returns the list of filenames for this version
 
+        :returns: List of file names
+        """
+        return [x.filename for x in self.files] 
+         
+    def tracking_ids(self):
+        """
+        Returns the list of tracking_ids for files in this version
+
+        :returns: List of tracking_ids
+        """
+        return [x.tracking_id for x in self.files] 
+        
 class VersionWarning(Base):
     """
     Warnings associated with a output version
@@ -142,3 +202,20 @@ class VersionWarning(Base):
 
     def __str__(self):
         return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
+
+
+class VersionFile(Base):
+    """
+    Files associated with a output version
+    """
+    __tablename__ = 'files'
+
+    id           = Column(Integer, name='file_id', primary_key = True)
+    filename     = Column(String)
+    tracking_id  = Column(String)
+    md5          = Column(String)
+    sha256       = Column(String)
+    version_id   = Column(Integer, ForeignKey('versions.version_id'))
+
+    def __str__(self):
+        return '%s'%(self.filename)

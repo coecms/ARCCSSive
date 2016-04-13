@@ -17,11 +17,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
+from __future__ import print_function
 
 import pytest
 from ARCCSSive import CMIP5
 from ARCCSSive.CMIP5.Model import *
 from sqlalchemy.orm.exc import NoResultFound
+from datetime import date
 
 def insert_unique(db, klass, **kwargs):
     """
@@ -35,21 +37,66 @@ def insert_unique(db, klass, **kwargs):
         db.commit()
     return value
 
-def add_item(db, variable, mip, model, experiment, ensemble, path, version):
+def retrieve_item(db, klass, **kwargs):
     """
-    Add a new test item to the DB
+    Retrieve an item into the DB if it can be found
+    """
+    try:
+        value = db.query(klass).filter_by(**kwargs).one()
+    except NoResultFound:
+        print( "Cannot find fixture with ", kwargs)
+    return value
+
+def add_instance_item(db, variable, mip, model, experiment, ensemble, realm):
+    """
+    Add a new test instance item to the DB
     """
     instance = insert_unique(db, Instance,
             variable   = variable,
             mip        = mip,
             model      = model,
             experiment = experiment,
-            ensemble   = ensemble)
+            ensemble   = ensemble,
+            realm      = realm)
+    return instance.id
 
+def add_version_item(db, instance_id, path, is_latest, checked_on, to_update, dataset_id, version):
+#def add_version_item(db, **kwargs):
+    """
+    Add a new test version item to the DB
+    """
+    #version = insert_unique(db, Version,**kwargs)
     version = insert_unique(db, Version,
-            instance_id = instance.id,
+            instance_id = instance_id,
             path        = path,
+            is_latest   = is_latest,
+            checked_on  = checked_on,
+            to_update  = to_update,
+            dataset_id  = dataset_id,
             version     = version)
+    return version.id
+
+def add_warning_item(db, version_id, warning, added_by, added_on):
+    """
+    Add a new test warning item to the DB
+    """
+
+    warning = insert_unique(db, VersionWarning,
+            version_id = version_id,
+            warning     = warning,
+            added_on    = added_on,
+            added_by    = added_by)
+
+def add_file_item(db, version_id, filename, md5, sha256):
+    """
+    Add a new test file item to the DB
+    """
+
+    afile   = insert_unique(db, VersionFile,
+            version_id = version_id,
+            filename     = filename,
+            md5          = md5,
+            sha256       = sha256)
 
 @pytest.fixture(scope="module")
 def session(request, tmpdir_factory):
@@ -60,30 +107,78 @@ def session(request, tmpdir_factory):
 
     # Create some example entries
     db = session.session
-    add_item(db,
-        path       = dira.strpath,
+    added_on=date.today()
+    inst1_id = add_instance_item(db,
         variable   = 'a',
         mip        = 'b',
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v01')
-    add_item(db,
-        path       = dira.strpath,
-        variable   = 'a',
-        mip        = 'b',
-        model      = 'c',
-        experiment = 'd',
-        ensemble   = 'e',
-        version    = 'v02')
-    add_item(db,
-        path       = dirb.strpath,
+        realm      = 'realm')
+    v11_id = add_version_item(db,
+        instance_id = inst1_id,
+        path        = dira.strpath,
+        is_latest   = True,
+        checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
+        version     = 'v01')
+    v12_id = add_version_item(db,
+        instance_id = inst1_id,
+        path        = dira.strpath,
+        is_latest   = False,
+        checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
+        version     = 'v02')
+    inst2_id = add_instance_item(db,
         variable   = 'f',
         mip        = 'g',
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
-        version    = 'v01')
+        realm      = 'realm')
+    v21_id = add_version_item(db,
+        instance_id = inst2_id,
+        path        = dirb.strpath,
+        is_latest   = False,
+        checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
+        version     = 'v01')
+    v22_id = add_version_item(db,
+        instance_id = inst2_id,
+        path        = dirb.strpath,
+        is_latest   = True,
+        checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
+        version     = 'v02')
+    add_warning_item(db,
+        version_id    = v11_id,
+        warning    = 'Test warning for inst1 v01',
+        added_by    = 'someone@example.com',
+        added_on    = added_on)
+    add_warning_item(db,
+        version_id    = v12_id,
+        warning    = 'Test warning for inst1 v02',
+        added_by   = 'someone@example.com',
+        added_on   = added_on)
+    add_file_item(db,
+        version_id    = v22_id,
+        filename   = 'Somefilename',
+        md5        = 'Somemd5',
+        sha256     = 'Somesha256')
+    add_file_item(db,
+        version_id    = v22_id,
+        filename   = 'Anotherfilename',
+        md5        = 'Anothermd5',
+        sha256     = 'Anothersha256')
+    add_warning_item(db,
+        version_id    = v21_id,
+        warning    = 'Test warning for inst2 v01',
+        added_by    = 'anyone@example.com',
+        added_on    = added_on)
     db.commit()
 
     # Close the session

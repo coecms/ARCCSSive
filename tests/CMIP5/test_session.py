@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 from db_fixture import session
+import re
 
 # Tests for the basic list queries
 
@@ -32,6 +33,27 @@ def test_variables(session):
 
 def test_mips(session):
     assert session.mips() == [u'b', u'g']
+
+def test_warnings(session):
+    outs =session.outputs()
+    for o in outs:
+       for v in o.versions:
+          for w in v.warnings:
+             if v.version == u'v02': 
+                my_regex=re.compile('Test warning for inst\d v02')
+                assert my_regex.match(w.warning) is not None
+               # assert w.warning == r'Test warning for inst{d1} v02'    
+                assert w.added_by == u'someone@example.com'
+
+def test_files(session):
+    outs =session.outputs()
+    for o in outs:
+       for v in o.versions:
+          for f in v.files:
+             if v.version == u'v02': 
+                assert f.filename in [u'Somefilename',u'Anotherfilename']    
+                assert f.md5 in [u'Somemd5',u'Anothermd5']
+                assert f.sha256 in [u'Somesha256', u'Anothersha256']
 
 def test_all(session):
     v = session.outputs()
