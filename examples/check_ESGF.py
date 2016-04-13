@@ -25,6 +25,7 @@ from ARCCSSive.CMIP5.pyesgf_functions import *
 from ARCCSSive.CMIP5.update_db_functions import *
 from ARCCSSive.CMIP5.other_functions import *
 from collections import defaultdict
+import argparse
 
 # check python version and then call main()
 if sys.version_info < ( 2, 7):
