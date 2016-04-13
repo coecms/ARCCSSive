@@ -86,7 +86,7 @@ for constraints in combs:
 # loop through returned Instance objects
     db_results=[v for o in outputs for v in o.versions if v.is_latest]
     if db_results==[]:
-       db_results=[v for o in outputs for v in o.versions if v.version==o.latest()[1]]
+       db_results=[v for o in outputs for v in o.versions if v==o.latest()[1]]
 # write result to output file
     if db_results==[]:
        print("No local version exists for constraints:\n",constraints)

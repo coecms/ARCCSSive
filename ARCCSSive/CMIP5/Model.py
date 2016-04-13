@@ -80,14 +80,16 @@ class Instance(Base):
         """
         Returns latest version/s available on raijin, first check in any version is_latest, then checks date stamp
         """
+        if len(self.versions)==1: return self.versions 
         vlatest=[v for v in self.versions if v.is_latest]
         if vlatest==[]: 
-           valid=[v for v in self.versions if v!="NA"]
-           vsort=valid.sort(key=lambda x: x.version[:-8])
-           vlatest.append(vsort[-1])
+           valid=[v for v in self.versions if v.version!="NA"]
+           if valid==[]: return self.versions
+           valid.sort(key=lambda x: x.version[:-8])
+           vlatest.append(valid[-1])
            i=-2
-           while vsort[i].version==vlatest[1].version:
-              vlatest.append(vsort[i])
+           while i>-len(valid) and valid[i].version==vlatest[1]:
+              vlatest.append(valid[i])
               i+=-1
         return vlatest
         
@@ -97,7 +99,7 @@ class Instance(Base):
 
         :returns: List of file names
         """
-        return self.latest[1].filenames2()
+        return self.latest()[0].filenames()
 
     def drstree_path(self):
         """ 
