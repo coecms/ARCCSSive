@@ -143,7 +143,7 @@ class Version(Base):
     """
     __tablename__ = 'versions'
     id          = Column(Integer, name='version_id', primary_key = True)
-    instance_id = Column(Integer, ForeignKey('instances.instance_id'))
+    instance_id = Column(Integer, ForeignKey('instances.instance_id'), index=True)
 
     version     = Column(String)
     path        = Column(String)
@@ -154,6 +154,7 @@ class Version(Base):
 
     warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
     files   = relationship('VersionFile', order_by='VersionFile.id', backref='version')
+
 
     def glob(self):
         """ Get the glob string matching the CMIP5 filename
@@ -200,7 +201,7 @@ class VersionWarning(Base):
     warning    = Column(String)
     added_by   = Column(String)
     added_on   = Column(Date)
-    version_id = Column(Integer, ForeignKey('versions.version_id'))
+    version_id = Column(Integer, ForeignKey('versions.version_id'), index=True)
 
     def __str__(self):
         return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
@@ -217,7 +218,7 @@ class VersionFile(Base):
     tracking_id  = Column(String)
     md5          = Column(String)
     sha256       = Column(String)
-    version_id   = Column(Integer, ForeignKey('versions.version_id'))
+    version_id   = Column(Integer, ForeignKey('versions.version_id'), index = True)
 
     def __str__(self):
         return '%s'%(self.filename)
