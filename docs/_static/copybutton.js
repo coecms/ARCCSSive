@@ -1,3 +1,7 @@
+/*
+ * copybutton.js is from https://docs.python.org/2/_static/copybutton.js
+ */
+
 $(document).ready(function() {
     /* Add a [>>>] button on the top-right corner of code samples to hide
      * the >>> and ... prompts and the output and thus make the code
@@ -27,7 +31,7 @@ $(document).ready(function() {
             var button = $('<span class="copybutton">&gt;&gt;&gt;</span>');
             button.css(button_styles)
             button.attr('title', hide_text);
-            button.data('hidden', 'true');
+            button.data('hidden', 'false');
             jthis.prepend(button);
         }
         // tracebacks (.gt) contain bare text elements that need to be
