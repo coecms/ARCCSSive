@@ -157,7 +157,13 @@ class Version(Base):
 
 
     def glob(self):
-        """ Get the glob string matching the CMIP5 filename
+        """
+        Get the glob string matching the CMIP5 filename
+
+        >>> cmip5  = getfixture('session')
+        >>> versions = cmip5.query(Version)
+        >>> versions[0].glob()
+        u'a_6hrLev_c_d_e*.nc'
         """
         return '%s_%s_%s_%s_%s*.nc'%(
             self.variable.variable,
@@ -171,6 +177,11 @@ class Version(Base):
         Returns the list of files matching this version
 
         :returns: List of file names
+
+        >>> cmip5  = getfixture('session')
+        >>> versions = cmip5.query(Version)
+        >>> versions[0].build_filepaths()
+        []
         """
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
@@ -180,6 +191,11 @@ class Version(Base):
         Returns the list of filenames for this version
 
         :returns: List of file names
+
+        >>> cmip5  = getfixture('session')
+        >>> versions = cmip5.query(Version)
+        >>> versions[0].filenames()
+        []
         """
         return [x.filename for x in self.files] 
          
@@ -188,6 +204,11 @@ class Version(Base):
         Returns the list of tracking_ids for files in this version
 
         :returns: List of tracking_ids
+
+        >>> cmip5  = getfixture('session')
+        >>> versions = cmip5.query(Version)
+        >>> versions[0].tracking_ids()
+        []
         """
         return [x.tracking_id for x in self.files] 
         

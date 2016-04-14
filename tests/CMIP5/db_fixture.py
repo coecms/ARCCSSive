@@ -110,7 +110,7 @@ def session(request, tmpdir_factory):
     added_on=date.today()
     inst1_id = add_instance_item(db,
         variable   = 'a',
-        mip        = 'b',
+        mip        = '6hrLev',
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',
@@ -133,7 +133,7 @@ def session(request, tmpdir_factory):
         version     = 'v02')
     inst2_id = add_instance_item(db,
         variable   = 'f',
-        mip        = 'g',
+        mip        = 'cfMon',
         model      = 'c',
         experiment = 'd',
         ensemble   = 'e',

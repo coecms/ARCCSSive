@@ -53,7 +53,7 @@ class Session(object):
         :return: An iterable returning :py:class:`Model.File`
             matching the search query
         """
-        pass
+        raise NotImplementedError
 
     def models(self):
         """ Get the list of all models in the dataset
@@ -106,9 +106,9 @@ def connect(path = None):
 
     Example::
 
-        from ARCCSSive import CMIP5
-        session = CMIP5.DB.connect()
-        outputs = session.query()
+    >>> from ARCCSSive import CMIP5
+    >>> session = CMIP5.DB.connect()
+    >>> outputs = session.query()
     """
 
     if path is None:

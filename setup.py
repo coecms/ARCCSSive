@@ -22,13 +22,15 @@ import meta
 
 requirements = [
         'SQLAlchemy',
+        'esgf-pyclient',
+        'mock',
         ]
 
 setup(
         name             = 'ARCCSSive',
         version          = meta.version,
         url              = 'https://github.com/coecms/ARCCSSive',
-        packages         = find_packages(),
+        packages         = find_packages(exclude=['tests*']),
         package_data     = {
                 '': ['data/*'],
             },

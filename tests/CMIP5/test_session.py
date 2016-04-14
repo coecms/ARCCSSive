@@ -17,8 +17,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from db_fixture import session
 import re
+from db_fixture import session
 
 # Tests for the basic list queries
 
@@ -32,7 +32,7 @@ def test_variables(session):
     assert session.variables() == [u'a', u'f']
 
 def test_mips(session):
-    assert session.mips() == [u'b', u'g']
+    assert session.mips() == [u'6hrLev', u'cfMon']
 
 def test_warnings(session):
     outs =session.outputs()
@@ -55,6 +55,14 @@ def test_files(session):
                 assert f.md5 in [u'Somemd5',u'Anothermd5']
                 assert f.sha256 in [u'Somesha256', u'Anothersha256']
 
+def test_files_2(session):
+    """
+    Can we get at the files directly?
+    """
+    files = session.files(model='c')
+    assert files.count > 0
+    assert files.filename
+
 def test_all(session):
     v = session.outputs()
 
@@ -67,13 +75,37 @@ def test_all(session):
     
     assert v[1].variable == u'f'
 
-def test_query(session):
-    vars = session.outputs(mip = 'g')
+def test_query_outputs(session):
+    vars = session.outputs(mip = 'cfMon')
     assert vars.count() == 1
-    assert vars[0].mip == 'g'
+    assert vars[0].mip == 'cfMon'
 
 def test_filenames(session):
     outs = session.outputs()
     for o in outs:
         for f in o.filenames():
             assert f
+
+def test_to_str(session):
+    """
+    Can we call the function?
+    """
+    from ARCCSSive.CMIP5.Model import *
+    q = session.query(VersionWarning)
+    assert str(q[0])
+    q = session.query(VersionFile)
+    assert str(q[0]) == q[0].filename
+
+def test_drstree_path(session):
+    """
+    Can we call the function?
+    """
+    q = session.outputs()
+    assert q[0].drstree_path() is not None
+
+def test_latest(session):
+    """
+    Can we call the function?
+    """
+    q = session.outputs()
+    assert q[0].latest().version is not None
