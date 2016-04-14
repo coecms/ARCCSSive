@@ -131,6 +131,7 @@ def session(request, tmpdir_factory):
         to_update  = False,
         dataset_id  = 'someid',
         version     = 'v02')
+
     inst2_id = add_instance_item(db,
         variable   = 'f',
         mip        = 'cfMon',
@@ -179,6 +180,27 @@ def session(request, tmpdir_factory):
         warning    = 'Test warning for inst2 v01',
         added_by    = 'anyone@example.com',
         added_on    = added_on)
+
+    inst = add_instance_item(db,
+        variable   = 'tas',
+        mip        = 'Amon',
+        model      = 'ACCESS1-3',
+        experiment = 'rcp45',
+        ensemble   = 'r1i1p1',
+        realm      = 'realm')
+    vers = add_version_item(db,
+        instance_id = inst,
+        path        = dirb.strpath,
+        is_latest   = False,
+        checked_on  = added_on,
+        to_update   = False,
+        dataset_id  = 'someid',
+        version     = '2001')
+    add_file_item(db,
+        version_id    = vers,
+        filename   = 'example.nc',
+        md5        = None,
+        sha256     = None)
     db.commit()
 
     # Close the session

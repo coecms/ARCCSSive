@@ -23,16 +23,16 @@ from db_fixture import session
 # Tests for the basic list queries
 
 def test_models(session):
-    assert session.models() == [u'c']
+    assert session.models() == ['ACCESS1-3', 'c']
 
 def test_experiments(session):
-    assert session.experiments() == [u'd']
+    assert session.experiments() == ['d', 'rcp45']
 
 def test_variables(session):
-    assert session.variables() == [u'a', u'f']
+    assert session.variables() == ['a', 'f', 'tas']
 
 def test_mips(session):
-    assert session.mips() == [u'6hrLev', u'cfMon']
+    assert session.mips() == ['6hrLev', 'Amon', 'cfMon']
 
 def test_warnings(session):
     outs =session.outputs()
@@ -55,18 +55,10 @@ def test_files(session):
                 assert f.md5 in [u'Somemd5',u'Anothermd5']
                 assert f.sha256 in [u'Somesha256', u'Anothersha256']
 
-def test_files_2(session):
-    """
-    Can we get at the files directly?
-    """
-    files = session.files(model='c')
-    assert files.count > 0
-    assert files.filename
-
 def test_all(session):
     v = session.outputs()
 
-    assert v.count() == 2
+    assert v.count() == 3
 
     assert v[0].variable == u'a'
     assert len(v[0].versions) == 2
@@ -103,9 +95,3 @@ def test_drstree_path(session):
     q = session.outputs()
     assert q[0].drstree_path() is not None
 
-def test_latest(session):
-    """
-    Can we call the function?
-    """
-    q = session.outputs()
-    assert q[0].latest().version is not None

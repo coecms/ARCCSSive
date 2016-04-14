@@ -106,9 +106,9 @@ def connect(path = None):
 
     Example::
 
-    >>> from ARCCSSive import CMIP5
-    >>> session = CMIP5.DB.connect()
-    >>> outputs = session.query()
+    >>> from ARCCSSive import CMIP5 
+    >>> cmip5   = CMIP5.DB.connect() # doctest: +SKIP
+    >>> outputs = cmip5.query() # doctest: +SKIP
     """
 
     if path is None:

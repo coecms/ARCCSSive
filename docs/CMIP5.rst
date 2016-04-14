@@ -39,6 +39,7 @@ You can then loop over the search results in normal Python fashion::
 
     >>> for o in outputs:
     ...     print o.model, o.filenames()
+    ACCESS1-3 [u'example.nc']
 
 Examples
 --------
@@ -57,6 +58,7 @@ Get files from a single model variable
 
     >>> for f in outputs.first().filenames():
     ...     print f
+    example.nc
 
 
 Get files from all models for a specific variable
@@ -85,8 +87,6 @@ SQLalchemy's `filter() <http://docs.sqlalchemy.org/en/rel_1_0/orm/tutorial.html#
     >>> from ARCCSSive.CMIP5.Model import *
     >>> from sqlalchemy import *
 
-    >>> cmip5 = CMIP5.connect()
-
     >>> outputs = cmip5.outputs(
     ...     experiment = 'rcp45',
     ...     model      = 'ACCESS1-3',
@@ -104,20 +104,19 @@ ARCCSSive:
 
     >>> from ARCCSSive.CMIP5.Model import *
 
-    >>> outputs = cmip5.versions(
     >>> res = cmip5.query(Version) \
     ...         .join(Instance) \
-    ...         .filter_by(
-    ...     model      = 'ACCESS1-3',
-    ...     version    = 'v20120413',
-    ...     experiment = 'rcp45',
-    ...     mip        = 'Amon',
-    ...     ensemble   = 'r1i1p1')
+    ...         .filter(
+    ...     Version.version     == 'v20120413',
+    ...     Instance.model      == 'ACCESS1-3',
+    ...     Instance.experiment == 'rcp45',
+    ...     Instance.mip        == 'Amon',
+    ...     Instance.ensemble   == 'r1i1p1')
 
     >>> # This returns a sequence of Version, get the variable information from
     >>> # the .variable property
     >>> for o in res:
-    ...     print print o.variable.model, o.variable.variable, o.filenames()
+    ...     print o.variable.model, o.variable.variable, o.filenames()
 
 Compare model results between two experiments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,10 +130,8 @@ Link two sets of outputs together using joins:
     >>> from sqlalchemy.orm import aliased
     >>> from sqlalchemy import *
 
-    >>> cmip5 = CMIP5.connect()
-
     >>> # Create aliases for the historical and rcp variables, so we can
-    >>> distinguish them in the query
+    >>> # distinguish them in the query
     >>> histInstance = aliased(Instance)
     >>> rcpInstance  = aliased(Instance)
     >>> rcp_hist  = cmip5.query(rcpInstance, histInstance).join(

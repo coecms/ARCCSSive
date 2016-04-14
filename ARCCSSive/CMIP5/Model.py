@@ -140,6 +140,12 @@ class Version(Base):
     .. attribute:: files
 
         List of :class:`VersionFile` available for this output
+
+    .. testsetup::
+
+        >>> cmip5  = getfixture('session')
+
+    >>> version = cmip5.query(Version).first()
     """
     __tablename__ = 'versions'
     id          = Column(Integer, name='version_id', primary_key = True)
@@ -160,9 +166,12 @@ class Version(Base):
         """
         Get the glob string matching the CMIP5 filename
 
-        >>> cmip5  = getfixture('session')
-        >>> versions = cmip5.query(Version)
-        >>> versions[0].glob()
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.glob()
         u'a_6hrLev_c_d_e*.nc'
         """
         return '%s_%s_%s_%s_%s*.nc'%(
@@ -178,9 +187,12 @@ class Version(Base):
 
         :returns: List of file names
 
-        >>> cmip5  = getfixture('session')
-        >>> versions = cmip5.query(Version)
-        >>> versions[0].build_filepaths()
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.build_filepaths()
         []
         """
         g = os.path.join(self.path, self.glob())
@@ -192,9 +204,12 @@ class Version(Base):
 
         :returns: List of file names
 
-        >>> cmip5  = getfixture('session')
-        >>> versions = cmip5.query(Version)
-        >>> versions[0].filenames()
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.filenames()
         []
         """
         return [x.filename for x in self.files] 
@@ -205,9 +220,12 @@ class Version(Base):
 
         :returns: List of tracking_ids
 
-        >>> cmip5  = getfixture('session')
-        >>> versions = cmip5.query(Version)
-        >>> versions[0].tracking_ids()
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.tracking_ids()
         []
         """
         return [x.tracking_id for x in self.files] 
