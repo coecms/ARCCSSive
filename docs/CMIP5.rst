@@ -3,6 +3,9 @@ CMIP5
 
 .. default-domain:: py
 .. module:: ARCCSSive.CMIP5
+.. testsetup::
+
+    >>> import six
 
 The CMIP5 module provides tools for searching through the CMIP5 data stored on NCI's `/g/data` filesystem
 
@@ -38,7 +41,7 @@ model outputs:
 You can then loop over the search results in normal Python fashion::
 
     >>> for o in outputs:
-    ...     print o.model, o.filenames()
+    ...     six._print(o.model, o.filenames())
     ACCESS1-3 [u'example.nc']
 
 Examples
@@ -57,7 +60,7 @@ Get files from a single model variable
     ...     ensemble   = 'r1i1p1')
 
     >>> for f in outputs.first().filenames():
-    ...     print f
+    ...     six._print(f)
     example.nc
 
 
@@ -146,7 +149,7 @@ Link two sets of outputs together using joins:
     ...         )
 
     >>> for r, h in rcp_hist:
-    ...     print r.versions[-1].path, h.versions[-1].path
+    ...     six._print(r.versions[-1].path, h.versions[-1].path)
 
 API
 ---

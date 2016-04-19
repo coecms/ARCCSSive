@@ -24,6 +24,7 @@ requirements = [
         'SQLAlchemy',
         'esgf-pyclient',
         'mock',
+        'six',
         ]
 
 setup(
