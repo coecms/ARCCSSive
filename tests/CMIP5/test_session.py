@@ -82,7 +82,7 @@ def test_to_str(session):
     """
     Can we call the function?
     """
-    from ARCCSSive.CMIP5.Model import *
+    from ARCCSSive.CMIP5.Model import VersionWarning, VersionFile
     q = session.query(VersionWarning)
     assert str(q[0])
     q = session.query(VersionFile)

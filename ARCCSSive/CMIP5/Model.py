@@ -168,11 +168,12 @@ class Version(Base):
 
         .. testsetup::
 
+            >>> import six
             >>> cmip5  = getfixture('session')
             >>> version = cmip5.query(Version).first()
 
-        >>> version.glob()
-        u'a_6hrLev_c_d_e*.nc'
+        >>> six.print_(version.glob())
+        a_6hrLev_c_d_e*.nc
         """
         return '%s_%s_%s_%s_%s*.nc'%(
             self.variable.variable,

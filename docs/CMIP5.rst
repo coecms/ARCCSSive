@@ -41,8 +41,8 @@ model outputs:
 You can then loop over the search results in normal Python fashion::
 
     >>> for o in outputs:
-    ...     six.print_(o.model, o.filenames())
-    ACCESS1-3 [u'example.nc']
+    ...     six.print_(o.model, *o.filenames())
+    ACCESS1-3 example.nc
 
 Examples
 --------
