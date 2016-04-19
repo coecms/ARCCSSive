@@ -41,7 +41,7 @@ model outputs:
 You can then loop over the search results in normal Python fashion::
 
     >>> for o in outputs:
-    ...     six._print(o.model, o.filenames())
+    ...     six.print_(o.model, o.filenames())
     ACCESS1-3 [u'example.nc']
 
 Examples
@@ -60,7 +60,7 @@ Get files from a single model variable
     ...     ensemble   = 'r1i1p1')
 
     >>> for f in outputs.first().filenames():
-    ...     six._print(f)
+    ...     six.print_(f)
     example.nc
 
 
@@ -149,7 +149,7 @@ Link two sets of outputs together using joins:
     ...         )
 
     >>> for r, h in rcp_hist:
-    ...     six._print(r.versions[-1].path, h.versions[-1].path)
+    ...     six.print_(r.versions[-1].path, h.versions[-1].path)
 
 API
 ---
