@@ -119,7 +119,7 @@ ARCCSSive:
     >>> # This returns a sequence of Version, get the variable information from
     >>> # the .variable property
     >>> for o in res:
-    ...     print o.variable.model, o.variable.variable, o.filenames()
+    ...     six.print_(o.variable.model, o.variable.variable, o.filenames())
 
 Compare model results between two experiments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

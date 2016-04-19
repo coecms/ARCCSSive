@@ -18,7 +18,7 @@ limitations under the License.
 """
 
 import re
-from db_fixture import session
+from .db_fixture import session
 
 # Tests for the basic list queries
 
