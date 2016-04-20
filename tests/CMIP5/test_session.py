@@ -17,22 +17,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from db_fixture import session
 import re
+from .db_fixture import session
 
 # Tests for the basic list queries
 
 def test_models(session):
-    assert session.models() == [u'c']
+    assert session.models() == ['ACCESS1-3', 'c']
 
 def test_experiments(session):
-    assert session.experiments() == [u'd']
+    assert session.experiments() == ['d', 'rcp45']
 
 def test_variables(session):
-    assert session.variables() == [u'a', u'f']
+    assert session.variables() == ['a', 'f', 'tas']
 
 def test_mips(session):
-    assert session.mips() == [u'b', u'g']
+    assert session.mips() == ['6hrLev', 'Amon', 'cfMon']
 
 def test_warnings(session):
     outs =session.outputs()
@@ -58,7 +58,7 @@ def test_files(session):
 def test_all(session):
     v = session.outputs()
 
-    assert v.count() == 2
+    assert v.count() == 3
 
     assert v[0].variable == u'a'
     assert len(v[0].versions) == 2
@@ -67,13 +67,31 @@ def test_all(session):
     
     assert v[1].variable == u'f'
 
-def test_query(session):
-    vars = session.outputs(mip = 'g')
+def test_query_outputs(session):
+    vars = session.outputs(mip = 'cfMon')
     assert vars.count() == 1
-    assert vars[0].mip == 'g'
+    assert vars[0].mip == 'cfMon'
 
 def test_filenames(session):
     outs = session.outputs()
     for o in outs:
         for f in o.filenames():
             assert f
+
+def test_to_str(session):
+    """
+    Can we call the function?
+    """
+    from ARCCSSive.CMIP5.Model import VersionWarning, VersionFile
+    q = session.query(VersionWarning)
+    assert str(q[0])
+    q = session.query(VersionFile)
+    assert str(q[0]) == q[0].filename
+
+def test_drstree_path(session):
+    """
+    Can we call the function?
+    """
+    q = session.outputs()
+    assert q[0].drstree_path() is not None
+

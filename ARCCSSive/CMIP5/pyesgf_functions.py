@@ -19,13 +19,13 @@ limitations under the License.
 """
 
 from __future__ import print_function
-import sys
 
 from pyesgf.logon import LogonManager
 from pyesgf.search import SearchConnection
 from pyesgf.search.results import DatasetResult as DatasetResult
 from pyesgf.search.results import FileResult as FileResult
 
+import sys
 
 def logon(openid, password):
     ''' Login on ESGF with credentials, returns connection object '''

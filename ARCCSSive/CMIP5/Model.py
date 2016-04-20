@@ -140,10 +140,16 @@ class Version(Base):
     .. attribute:: files
 
         List of :class:`VersionFile` available for this output
+
+    .. testsetup::
+
+        >>> cmip5  = getfixture('session')
+
+    >>> version = cmip5.query(Version).first()
     """
     __tablename__ = 'versions'
     id          = Column(Integer, name='version_id', primary_key = True)
-    instance_id = Column(Integer, ForeignKey('instances.instance_id'))
+    instance_id = Column(Integer, ForeignKey('instances.instance_id'), index=True)
 
     version     = Column(String)
     path        = Column(String)
@@ -155,8 +161,19 @@ class Version(Base):
     warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
     files   = relationship('VersionFile', order_by='VersionFile.id', backref='version')
 
+
     def glob(self):
-        """ Get the glob string matching the CMIP5 filename
+        """
+        Get the glob string matching the CMIP5 filename
+
+        .. testsetup::
+
+            >>> import six
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> six.print_(version.glob())
+        a_6hrLev_c_d_e*.nc
         """
         return '%s_%s_%s_%s_%s*.nc'%(
             self.variable.variable,
@@ -170,6 +187,14 @@ class Version(Base):
         Returns the list of files matching this version
 
         :returns: List of file names
+
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.build_filepaths()
+        []
         """
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
@@ -179,6 +204,14 @@ class Version(Base):
         Returns the list of filenames for this version
 
         :returns: List of file names
+
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.filenames()
+        []
         """
         return [x.filename for x in self.files] 
          
@@ -187,6 +220,14 @@ class Version(Base):
         Returns the list of tracking_ids for files in this version
 
         :returns: List of tracking_ids
+
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.tracking_ids()
+        []
         """
         return [x.tracking_id for x in self.files] 
         
@@ -200,7 +241,7 @@ class VersionWarning(Base):
     warning    = Column(String)
     added_by   = Column(String)
     added_on   = Column(Date)
-    version_id = Column(Integer, ForeignKey('versions.version_id'))
+    version_id = Column(Integer, ForeignKey('versions.version_id'), index=True)
 
     def __str__(self):
         return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
@@ -217,7 +258,7 @@ class VersionFile(Base):
     tracking_id  = Column(String)
     md5          = Column(String)
     sha256       = Column(String)
-    version_id   = Column(Integer, ForeignKey('versions.version_id'))
+    version_id   = Column(Integer, ForeignKey('versions.version_id'), index = True)
 
     def __str__(self):
         return '%s'%(self.filename)
