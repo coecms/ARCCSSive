@@ -23,8 +23,8 @@ from __future__ import print_function
 from ARCCSSive import CMIP5
 from ARCCSSive.CMIP5.pyesgf_functions import *
 from ARCCSSive.CMIP5.update_db_functions import *
-#from ARCCSSive.CMIP5.other_functions import *
-from other_functions2 import *
+from ARCCSSive.CMIP5.other_functions import *
+#from other_functions2 import *
 from collections import defaultdict
 import argparse
 from datetime import datetime 
@@ -158,7 +158,6 @@ def new_files(remote):
 
 # assign constraints from input
 kwargs,admin=assign_constraints()
-print(admin)
 # define directoryi where requests for downloads are stored
 outdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
 
@@ -216,11 +215,13 @@ for constraints in combs:
     urls=new_files(esgf_results)
     if urls!=[]:
       outfile="_".join(["request",os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
-      fout=open(outdir+"/"+outfile,"w")
+      fout=open(outfile,"w")
       print("These are new files to download:\n")
       for s in urls:
          print(s.split("'")[0])
          fout.writelines("'" +s + "'\n")
+    request=input("submit a request to download these files? Y/N")
+    if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
     matrix = result_matrix(matrix,constraints,esgf_results,db_results)
 #write a table to summarise comparison results for each experiment in csv file
 for exp in kwargs['experiment']:

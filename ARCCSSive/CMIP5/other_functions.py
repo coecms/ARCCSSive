@@ -45,14 +45,20 @@ def get_instance(dataset_id):
     bits=dataset_id.split(".")
     return {'model': bits[3],'experiment': bits[4],'mip':bits[7],'ensemble':bits[8],'version':bits[9].split("|")[0]}
 
-def compare_instances(db,remote,local, const_keys):
+def compare_instances(db,remote,local,const_keys,admin):
     ''' Compare remote and local search results they're both a list of dictionaries
         :argument db: sqlalchemy local db session 
         :argument remote: each dict has keys version, files (objs), filenames, tracking_ids, dataset_id 
         :argument local:  list of version objects
         :argument const_keys:  list of instance attributes defined by user constraints
+        :argument admin:  boolean if True user is admin and can update db directly, optherwise new info saved in log file
         :return: remote, local with updated attributes 
     '''
+    global flog, logfile
+    logdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
+    if not admin:
+       logfile=logdir+"log_" + os.environ['USER'] + today.replace("/","") + ".txt"
+       print(logfile)
     # a list of the unique constraints defining one instance in the database which are not in user constraints
     undefined=[x for x in Instance.__table_args__[0].columns.keys() if x not in const_keys]
     # loop through all returned remote datasets
@@ -66,12 +72,13 @@ def compare_instances(db,remote,local, const_keys):
             v.checked_on = today
             # compare files for all cases except if version regular but different from remote 
             if v.version in [ds['version'],'NA',r've\d*']:
-               extra = compare_files(db,ds,v)
+               extra = compare_files(db,ds,v,admin)
                # if tracking_ids or checksums are same
                if extra==set([]):
                   v.to_update = False
                else:
                   v.to_update = True
+                  if not admin: write_log(" ".join(["update"]+ds_instance.items()+[v.version,v.path]))
             # if local dataset_id is the same as remote skip all other checks
             if v.dataset_id==ds['dataset_id']:
                v.is_latest = True
@@ -91,13 +98,27 @@ def compare_instances(db,remote,local, const_keys):
             # need to set a standard warning for them
             else:
                v.is_latest = False
+               if v.version > ds['version']: 
+                  print("Warning!!!")
+                  print(" ".join(["Local version",v.version,"is more recent than the latest version",ds['version'], "found on ESGF"]))
+               if v.dataset_id is None: v.dataset_id = "NA"
     # update local version on database
-            db.commit()
+            if admin: 
+               db.commit()
+            else:
+               if db.dirty:
+                 line=["version"]+ds_instance.values()[:-1]+[v.version,str(v.id),v.dataset_id,str(v.is_latest),v.checked_on,"\n"]
+                 write_log(" ".join(line))
+                
     # add to remote dictionary list of local identical versions
         remote[ind]['same_as']=[v.id for v in local if v.dataset_id == ds['dataset_id']] 
+    try:
+       flog.close()
+    except:
+       pass
     return remote, local
 
-def compare_files(db,rds,v):
+def compare_files(db,rds,v,admin):
     ''' Compare files of remote and local version of a dataset
         :argument rds: dictionary of remote dataset object selected attributes  
         :argument v:  local version object   
@@ -110,7 +131,7 @@ def compare_files(db,rds,v):
        for f in v.build_filepaths():
            checksum=check_hash(f,'sha256')
            rows.append(dict(filename=f.split("/")[-1], sha256=checksum, version_id=v.id))
-       add_bulk_item(db, VersionFile, rows)
+    if admin:   add_bulk_item(db, VersionFile, rows)
     # first compare tracking_ids if all are present in local version
     local_ids=v.tracking_ids()
     if (local_ids==True and "" not in local_ids):
@@ -123,13 +144,19 @@ def compare_files(db,rds,v):
           for f in v.files:
              if f.md5 in ["", None]:
                  f.md5 = check_hash(v.path+"/"+f.filename,'md5')
-                 update_item(db,VersionFile,f.id,{'md5':f.md5})
+                 if admin: 
+                    update_item(db,VersionFile,f.id,{'md5':f.md5})
+                 else:
+                    write_log(" ".join(['md5',str(f.id),f.md5,"\n"]))
              local_sums.append(f.md5) 
        else:
           for f in v.files:
              if f.sha256 in ["",None]:
                  f.sha256=check_hash(v.path+"/"+f.filename,'sha256')
-                 update_item(db,VersionFile,f.id,{'sha256':f.sha256})
+                 if admin: 
+                    update_item(db,VersionFile,f.id,{'sha256':f.sha256})
+                 else:
+                    write_log(" ".join(['sha256',str(f.id),f.sha256,"\n"]))
              local_sums.append(f.sha256) 
        extra = compare_checksums(rds['checksums'],local_sums)
     return extra 
@@ -285,6 +312,18 @@ def assign_mips(**kwargs):
 def frequency(mip):
     ''' returns frequency for input mip '''
     return  mip_dict[mip]
+
+def write_log(line):
+    ''' add str to log file, open new file if does not exist yet '''
+    global logfile,flog
+    try:
+      flog.write(line)
+    except:
+      flog=open(logfile,"a")
+      flog.write(line)
+    return
+      
+      
      
 # this should be taken by setting environment variable DRSTREE
 # define root cirectory for drstree and /tmp/tree
