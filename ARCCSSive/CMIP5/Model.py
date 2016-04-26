@@ -28,6 +28,7 @@ import glob
 
 Base = declarative_base()
 
+
 class Instance(Base):
     """
     A model variable from a specific run
@@ -59,40 +60,42 @@ class Instance(Base):
         List of :class:`Version` available for this output
     """
     __tablename__ = 'instances'
-    id         = Column(Integer, name='instance_id', primary_key = True)
+    id = Column(Integer, name='instance_id', primary_key=True)
 
-    variable   = Column(String, index=True)
+    variable = Column(String, index=True)
     experiment = Column(String, index=True)
-    mip        = Column(String, index=True)
-    model      = Column(String, index=True)
-    ensemble   = Column(String)
-    realm      = Column(String)
+    mip = Column(String, index=True)
+    model = Column(String, index=True)
+    ensemble = Column(String)
+    realm = Column(String)
     # there will be new versions labelled 've' (version estimate) in drstree so using only timestamp to order them
     # order doesn't work if version NA
 
-    versions   = relationship('Version', order_by='Version.version', backref='variable')
+    versions = relationship('Version', order_by='Version.version', backref='variable')
 
     __table_args__ = (
-            UniqueConstraint('variable','experiment','mip','model','ensemble'),
-            )
+        UniqueConstraint('variable', 'experiment', 'mip', 'model', 'ensemble'),
+    )
 
     def latest(self):
         """
         Returns latest version/s available on raijin, first check in any version is_latest, then checks date stamp
         """
-        if len(self.versions)==1: return self.versions 
-        vlatest=[v for v in self.versions if v.is_latest]
-        if vlatest==[]: 
-           valid=[v for v in self.versions if v.version!="NA"]
-           if valid==[]: return self.versions
-           valid.sort(key=lambda x: x.version[:-8])
-           vlatest.append(valid[-1])
-           i=-2
-           while i>-len(valid) and valid[i].version==vlatest[1]:
-              vlatest.append(valid[i])
-              i+=-1
+        if len(self.versions) == 1:
+            return self.versions
+        vlatest = [v for v in self.versions if v.is_latest]
+        if vlatest == []:
+            valid = [v for v in self.versions if v.version != "NA"]
+            if valid == []:
+                return self.versions
+            valid.sort(key=lambda x: x.version[:-8])
+            vlatest.append(valid[-1])
+            i = -2
+            while i > -len(valid) and valid[i].version == vlatest[1]:
+                vlatest.append(valid[i])
+                i += -1
         return vlatest
-        
+
     def filenames(self):
         """
         Returns the file names from the latest version of this variable
@@ -105,17 +108,18 @@ class Instance(Base):
         """ 
         Returns the drstree path for this instance, if one is not yet available returns None 
         """
-        drstreep="/g/data1/ua6/drstree/CMIP5/GCM/" # this should be passed as DRSTREE env var
-        frequency=mip_dict[self.mip][0]
-        return drstreep + "/".join([ self.model, 
-                                   self.experiment,
-                                   frequency,
-                                   self.realm,
-                                   self.variable,
-                                   self.ensemble]) 
+        drstreep = "/g/data1/ua6/drstree/CMIP5/GCM/"  # this should be passed as DRSTREE env var
+        frequency = mip_dict[self.mip][0]
+        return drstreep + "/".join([self.model,
+                                    self.experiment,
+                                    frequency,
+                                    self.realm,
+                                    self.variable,
+                                    self.ensemble])
 
 # Add alias to deprecated name
 Variable = Instance
+
 
 class Version(Base):
     """
@@ -148,19 +152,18 @@ class Version(Base):
     >>> version = cmip5.query(Version).first()
     """
     __tablename__ = 'versions'
-    id          = Column(Integer, name='version_id', primary_key = True)
+    id = Column(Integer, name='version_id', primary_key=True)
     instance_id = Column(Integer, ForeignKey('instances.instance_id'), index=True)
 
-    version     = Column(String)
-    path        = Column(String)
-    dataset_id  = Column(String)
-    is_latest   = Column(Boolean)
-    checked_on  = Column(String)
-    to_update   = Column(Boolean)
+    version = Column(String)
+    path = Column(String)
+    dataset_id = Column(String)
+    is_latest = Column(Boolean)
+    checked_on = Column(String)
+    to_update = Column(Boolean)
 
-    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
-    files   = relationship('VersionFile', order_by='VersionFile.id', backref='version')
-
+    warnings = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
+    files = relationship('VersionFile', order_by='VersionFile.id', backref='version')
 
     def glob(self):
         """
@@ -175,7 +178,7 @@ class Version(Base):
         >>> six.print_(version.glob())
         a_6hrLev_c_d_e*.nc
         """
-        return '%s_%s_%s_%s_%s*.nc'%(
+        return '%s_%s_%s_%s_%s*.nc' % (
             self.variable.variable,
             self.variable.mip,
             self.variable.model,
@@ -198,7 +201,7 @@ class Version(Base):
         """
         g = os.path.join(self.path, self.glob())
         return glob.glob(g)
-         
+
     def filenames(self):
         """
         Returns the list of filenames for this version
@@ -213,8 +216,8 @@ class Version(Base):
         >>> version.filenames()
         []
         """
-        return [x.filename for x in self.files] 
-         
+        return [x.filename for x in self.files]
+
     def tracking_ids(self):
         """
         Returns the list of tracking_ids for files in this version
@@ -229,22 +232,23 @@ class Version(Base):
         >>> version.tracking_ids()
         []
         """
-        return [x.tracking_id for x in self.files] 
-        
+        return [x.tracking_id for x in self.files]
+
+
 class VersionWarning(Base):
     """
     Warnings associated with a output version
     """
     __tablename__ = 'warnings'
 
-    id         = Column(Integer, name='warning_id', primary_key = True)
-    warning    = Column(String)
-    added_by   = Column(String)
-    added_on   = Column(Date)
+    id = Column(Integer, name='warning_id', primary_key=True)
+    warning = Column(String)
+    added_by = Column(String)
+    added_on = Column(Date)
     version_id = Column(Integer, ForeignKey('versions.version_id'), index=True)
 
     def __str__(self):
-        return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
+        return u'%s (%s): %s' % (self.added_on, self.added_by, self.warning)
 
 
 class VersionFile(Base):
@@ -253,12 +257,12 @@ class VersionFile(Base):
     """
     __tablename__ = 'files'
 
-    id           = Column(Integer, name='file_id', primary_key = True)
-    filename     = Column(String)
-    tracking_id  = Column(String)
-    md5          = Column(String)
-    sha256       = Column(String)
-    version_id   = Column(Integer, ForeignKey('versions.version_id'), index = True)
+    id = Column(Integer, name='file_id', primary_key=True)
+    filename = Column(String)
+    tracking_id = Column(String)
+    md5 = Column(String)
+    sha256 = Column(String)
+    version_id = Column(Integer, ForeignKey('versions.version_id'), index=True)
 
     def __str__(self):
-        return '%s'%(self.filename)
+        return '%s' % (self.filename)

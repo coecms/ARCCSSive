@@ -35,6 +35,7 @@ def search_item(db, klass, **kwargs):
         return False
     return item
 
+
 def insert_unique(db, klass, **kwargs):
     """
     Insert an item into the DB if it can't be found
@@ -42,38 +43,41 @@ def insert_unique(db, klass, **kwargs):
     Returns id, True if new item, id False if existing
     """
     item = search_item(db, klass, **kwargs)
-    new=False
+    new = False
     if not item:
         item = klass(**kwargs)
         db.add(item)
-        new=True
-        #print("before",item.id)
-        db.commit() 
-        #print("after",item.id)
+        new = True
+        # print("before",item.id)
+        db.commit()
+        # print("after",item.id)
     return item, new
+
 
 def update_item_old(db, klass, item_id, **kwargs):
     """
     Update an existing item into the DB 
     NB need to commit before terminating session
     """
-    item=search_item(db, klass, id=item_id)
+    item = search_item(db, klass, id=item_id)
     if not item:
-       print("Warning cannot update item does not exist yet") 
-       return 
-    for k,v in kwargs.items():
+        print("Warning cannot update item does not exist yet")
+        return
+    for k, v in kwargs.items():
         item.k = v
     # is this correct only to update?? surely not!
     db.add(item)
     db.commit()
     return item
 
+
 def add_bulk_items(db, klass, rows):
     """Batched INSERT statements via the ORM "bulk", using dictionaries.
        input: rows is a list of dictionaries """
-    db.bulk_insert_mappings(klass,rows) 
+    db.bulk_insert_mappings(klass, rows)
     db.commit()
     return
+
 
 def update_item(db, klass, item_id, newvalues):
     '''
@@ -82,7 +86,7 @@ def update_item(db, klass, item_id, newvalues):
     db.commit()
     return
 
+
 def commit_changes(db):
     ''' Commit changes to database '''
     return db.commit()
-

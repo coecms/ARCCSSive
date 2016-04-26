@@ -28,6 +28,7 @@ from ARCCSSive.CMIP5.Model import Base, Instance
 
 SQASession = sessionmaker()
 
+
 class Session(object):
     """Holds a connection to the catalog
 
@@ -99,7 +100,7 @@ class Session(object):
         return self.query(Instance).filter_by(**kwargs)
 
 
-def connect(path = None):
+def connect(path=None):
     """Connect to the CMIP5 catalog
 
     :return: A new :py:class:`Session`
@@ -125,4 +126,3 @@ def connect(path = None):
     connection = Session()
     connection.session = SQASession()
     return connection
-
