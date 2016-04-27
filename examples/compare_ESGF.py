@@ -220,8 +220,11 @@ for constraints in combs:
       for s in urls:
          print(s.split("'")[0])
          fout.writelines("'" +s + "'\n")
-    request=input("submit a request to download these files? Y/N")
-    if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
+      if sys.version_info < ( 3, 0 ):
+         request=raw_input("submit a request to download these files? Y/N \n")
+      else:
+         request=input("submit a request to download these files? Y/N \n")
+      if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
     matrix = result_matrix(matrix,constraints,esgf_results,db_results)
 #write a table to summarise comparison results for each experiment in csv file
 for exp in kwargs['experiment']:
