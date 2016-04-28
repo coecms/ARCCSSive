@@ -25,6 +25,7 @@ import itertools
 from datetime import date
 import glob
 import subprocess
+import re
 from collections import defaultdict
 from ARCCSSive.data import *
 from ARCCSSive.CMIP5.update_db_functions import * 
@@ -134,7 +135,7 @@ def compare_files(db,rds,v,admin):
        for f in v.build_filepaths():
            checksum=check_hash(f,'sha256')
            rows.append(dict(filename=f.split("/")[-1], sha256=checksum, version_id=v.id))
-    if admin:   add_bulk_item(db, VersionFile, rows)
+    if admin:   add_bulk_items(db, VersionFile, rows)
     # first compare tracking_ids if all are present in local version
     local_ids=v.tracking_ids()
     if (local_ids==True and "" not in local_ids):
