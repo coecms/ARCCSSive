@@ -31,7 +31,10 @@ from ARCCSSive.CMIP5.update_db_functions import *
 
 
 def combine_constraints(**kwargs):
-   ''' Return a set of dictionaries, one for each constraints combination '''
+   ''' Works out any possible combination given lists of constraints
+       :argument dictionary, keys are fields and values are lists of values for each field
+       :return: a set of dictionaries, one for each constraints combination i
+   '''
    return (dict(itertools.izip(kwargs, x)) for x in itertools.product(*kwargs.itervalues()))
 
 def join_varmip(var0,mip0):
@@ -167,9 +170,7 @@ def compare_tracking_ids(remote_ids,local_ids):
         :argument local_ids: list of local tracking_ids  
         :return: result set 
     '''
-    if remote_ids==set([]):
-       return set(['no tracking ids found on ESGF'])
-    return set(remote_ids).difference(local_ids)
+    return set(remote_ids).symmetric_difference(local_ids)
     
 def compare_checksums(remote_sums,local_sums):
     ''' Compare the lists of the checksums from a remote and a local version of a dataset
@@ -177,7 +178,7 @@ def compare_checksums(remote_sums,local_sums):
         :argument local_sums: list of local checksums  
         :return: result set 
     '''
-    return set(remote_sums).difference(local_sums)
+    return set(remote_sums).symmetric_difference(local_sums)
     
 # these functions are to manage drstree and tmp/tree directories
 
