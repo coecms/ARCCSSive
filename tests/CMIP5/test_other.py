@@ -42,3 +42,28 @@ def test_compare_tracking_ids():
     output=[set([]),set(['abc123']),set(local)]
     for i in range(3):
        assert compare_tracking_ids(remote[i],local)==output[i]
+
+def test_compare_checksums():
+    local=['34rth678','de45t','abc123']
+    # remote checksums same as local, different, empty
+    remote=[['34rth678','de45t','abc123'],['34rth678','de45t'],[]]
+    output=[set([]),set(['abc123']),set(local)]
+    for i in range(3):
+       assert compare_checksums(remote[i],local)==output[i]
+
+def test_assign_mips():
+    data=[{'mip':['Amon','Omon'],'frq':['3hr']},{'mip':[],'frq':['3hr','fx']}] 
+    output=[['Amon','Omon','3hr','3hrLev','cf3hr','cfSites'],['3hr','3hrLev','cf3hr','cfSites','fx']]
+    for i in range(2):
+       assert set(assign_mips(**data[i]))==set(output[i])
+
+def test_list_drs_versions():
+    drstree_path='/home/581/pxp581/BNU-ESM/amip/mon/atmos/pr/r1i1p1/'
+    assert set(list_drs_versions(drstree_path))==set(['v20120304','v20110201','v20150203'])
+
+
+def test_list_drs_files():
+    drstree_path='/home/581/pxp581/BNU-ESM/amip/mon/atmos/pr/r1i1p1/v20110201/'
+    assert set(list_drs_files(drstree_path))==set(['f1.nc','f2.nc','f3.nc'])
+
+def 

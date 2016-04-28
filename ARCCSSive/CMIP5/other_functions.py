@@ -314,6 +314,7 @@ def frequency(mip):
     ''' returns frequency for input mip '''
     return  mip_dict[mip]
 
+# functions to write logs
 def write_log(line):
     ''' add str to log file, open new file if does not exist yet '''
     global logfile,flog
