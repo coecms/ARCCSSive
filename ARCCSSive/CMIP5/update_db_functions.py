@@ -47,9 +47,7 @@ def insert_unique(db, klass, **kwargs):
         item = klass(**kwargs)
         db.add(item)
         new=True
-        #print("before",item.id)
         db.commit() 
-        #print("after",item.id)
     return item, new
 
 def update_item_old(db, klass, item_id, **kwargs):
