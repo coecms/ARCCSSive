@@ -3,8 +3,8 @@
 # for each instance there should be at least one version in "version" table 
 # for each version add at least one file in table "files" 
 
-from update_db_functions import *
-from other_functions import *
+from ARCCSSive.CMIP5.update_db_functions import *
+from ARCCSSive.CMIP5.other_functions import *
 #NB drstree root dir is also defined there
 from ARCCSSive import CMIP5
 
@@ -37,7 +37,7 @@ for inst in instances:
     if kw_instance:
        versions = list_drs_versions(inst) 
        # add instance to db if not already existing
-       inst_obj,new = insert_unique(db, Instance, **kw_instance)
+       inst_obj,new = insert_unique_item(db, Instance, **kw_instance)
        print(inst)
        print(inst_obj.id,new)
        #P use following two lines  if tmp/tree

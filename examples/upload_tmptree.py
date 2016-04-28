@@ -5,7 +5,7 @@
 
 import argparse
 from collections import defaultdict
-from update_db_functions import *
+from ARCCSSive.CMIP5.update_db_functions import *
 #NB tmptree root dir is also defined there
 from ARCCSSive import CMIP5
 
