@@ -292,7 +292,7 @@ def tree_path(drspath):
     return "/".join(path.split("/")[:-1])
 
 def check_hash(path,hash_type):
-    ''' Execute md5sum/sha256sum on file on tree and return True,f same as in wget file '''
+    ''' Execute md5sum/sha256sum on file on tree and return checksum value '''
     hash_cmd="md5sum"
     if hash_type in ["SHA256","sha256"]: hash_cmd="sha256sum"
     try:
