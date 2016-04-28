@@ -3,9 +3,12 @@
 # for each instance there should be at least one version in "version" table 
 # for each version add at least one file in table "files" 
 
+from __future__ import print_function
+
 import argparse
 from collections import defaultdict
 from ARCCSSive.CMIP5.update_db_functions import *
+from ARCCSSive.CMIP5.other_functions import *
 #NB tmptree root dir is also defined there
 from ARCCSSive import CMIP5
 
@@ -42,7 +45,7 @@ for kw_instance in instances:
        for f in files:
            checksum=check_hash(v_obj.path+"/"+f,'md5')
            rows.append(dict(filename=f, md5=checksum, version_id=v_obj.id))
-       add_bulk_item(db, VersionFile, rows)
+       add_bulk_items(db, VersionFile, rows)
     else:
            kw_files['version_id']=v_obj.id
            for f in files:

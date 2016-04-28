@@ -3,6 +3,8 @@
 # for each instance there should be at least one version in "version" table 
 # for each version add at least one file in table "files" 
 
+from __future__ import print_function
+
 from ARCCSSive.CMIP5.update_db_functions import *
 from ARCCSSive.CMIP5.other_functions import *
 #NB drstree root dir is also defined there
@@ -19,8 +21,8 @@ kwargs=defaultdict(lambda: "*")
 kwargs=dict(model="IPSL-CM5A-MR", experiment="amip", frequency="mon")
 
 #loop through entire drstree or a subdir by using constraints **kwargs
-instances=list_dsrtree(**kwargs)
-print instances
+instances=list_drstree(**kwargs)
+print(instances)
 #for each instance individuated add instance row
 for inst in instances:
 # call file_details to retrieve experiment, variable, model etc. from filename
@@ -32,12 +34,12 @@ for inst in instances:
     kw_files={}
     frequency, kw_instance = drs_details(inst)
     kw_instance['mip'] = get_mip(inst)
-    #print kw_instance
+    #print(kw_instance)
 # make sure details list isn't empty
     if kw_instance:
        versions = list_drs_versions(inst) 
        # add instance to db if not already existing
-       inst_obj,new = insert_unique_item(db, Instance, **kw_instance)
+       inst_obj,new = insert_unique(db, Instance, **kw_instance)
        print(inst)
        print(inst_obj.id,new)
        #P use following two lines  if tmp/tree
@@ -49,7 +51,7 @@ for inst in instances:
            kw_version['version'] = v
            files = list_drs_files(inst+"/"+v) 
            kw_version['path'] = tree_path("/".join([inst,v,files[0]])) 
-           #print kw_version.items()
+           #print(kw_version.items())
            v_obj,new = insert_unique(db, Version, **kw_version)
            print(v)
            print(v_obj.id,new)
@@ -58,7 +60,7 @@ for inst in instances:
               for f in files:
                  checksum=check_hash(v_obj.path+"/"+f,'md5')
                  rows.append(dict(filename=f, md5=checksum, version_id=v_obj.id))
-                 add_bulk_item(db, VersionFile, rows)
+                 add_bulk_items(db, VersionFile, rows)
            else:
               kw_files['version_id']=v_obj.id
               for f in files:
