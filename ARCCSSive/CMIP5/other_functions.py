@@ -33,11 +33,11 @@ from ARCCSSive.CMIP5.Model import Instance, VersionFile
 
 
 def combine_constraints(**kwargs):
-   ''' Works out any possible combination given lists of constraints
-       :argument dictionary, keys are fields and values are lists of values for each field
-       :return: a set of dictionaries, one for each constraints combination i
-   '''
-   return (dict(itertools.izip(kwargs, x)) for x in itertools.product(*kwargs.itervalues()))
+    ''' Works out any possible combination given lists of constraints
+        :argument dictionary, keys are fields and values are lists of values for each field
+        :return: a set of dictionaries, one for each constraints combination i
+    '''
+    return (dict(itertools.izip(kwargs, x)) for x in itertools.product(*kwargs.itervalues()))
 
 def join_varmip(var0,mip0):
     ''' List all combinations of selected variables and mips '''
@@ -77,7 +77,7 @@ def compare_instances(db,remote,local,const_keys,admin):
             # compare files for all cases except if version regular but different from remote 
             if v.version in [ds['version'],'NA',r've\d*']:
                 extra = compare_files(db,ds,v,admin)
-               # if tracking_ids or checksums are same
+                # if tracking_ids or checksums are same
                 if extra==set([]):
                     v.to_update = False
                 else:
@@ -142,7 +142,7 @@ def compare_files(db,rds,v,admin):
                 write_log("new file "+ str(r) + "\n")
     # first compare tracking_ids if all are present in local version
     local_ids=v.tracking_ids()
-    if (local_ids==True and "" not in local_ids):
+    if (local_ids and "" not in local_ids):
         extra = compare_tracking_ids(rds['tracking_ids'],local_ids)
     # if tracking_ids are the same or if they are not present compare checksums
     # calculate checksums and update local db if necessary  
@@ -211,11 +211,11 @@ def list_tmpdir(flist):
     return inst_list
 
 def file_glob(**kwargs):
-        """ Get the glob string matching the CMIP5 filename
-        """
-        value=defaultdict(lambda: "*")
-        value.update(kwargs)
-        return '%s_%s_%s_%s_%s*.nc'%(
+    """ Get the glob string matching the CMIP5 filename
+    """
+    value=defaultdict(lambda: "*")
+    value.update(kwargs)
+    return '%s_%s_%s_%s_%s*.nc'%(
             value['variable'],
             value[ 'mip'],
             value['model'],

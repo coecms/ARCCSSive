@@ -21,7 +21,7 @@ limitations under the License.
 from __future__ import print_function
 
 from ARCCSSive import CMIP5
-from ARCCSSive.CMIP5.Model import *
+from ARCCSSive.CMIP5.Model import Instance 
 # connect to the database
 db=CMIP5.connect()
 #search database instances

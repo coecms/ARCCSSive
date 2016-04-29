@@ -38,37 +38,36 @@ for inst in instances:
     #print(kw_instance)
 # make sure details list isn't empty
     if kw_instance:
-       versions = list_drs_versions(inst) 
-       # add instance to db if not already existing
-       inst_obj,new = insert_unique(db, Instance, **kw_instance)
-       print(inst)
-       print(inst_obj.id,new)
-       #P use following two lines  if tmp/tree
-       #kw_version['version'] = find_version(bits[:-1], version)
-       #kw_version['path'] = '/'.join(bits[:-1])
-       kw_version['instance_id'] = inst_obj.id
-       for v in versions:
-       # add version to db if not already existing
-           kw_version['version'] = v
-           files = list_drs_files(inst+"/"+v) 
-           kw_version['path'] = tree_path("/".join([inst,v,files[0]])) 
-           #print(kw_version.items())
-           v_obj,new = insert_unique(db, Version, **kw_version)
-           print(v)
-           print(v_obj.id,new)
-           if v_obj.filenames==[]: 
-              rows=[]
-              for f in files:
-                 checksum=check_hash(v_obj.path+"/"+f,'md5')
-                 rows.append(dict(filename=f, md5=checksum, version_id=v_obj.id))
-                 add_bulk_items(db, VersionFile, rows)
-           else:
-              kw_files['version_id']=v_obj.id
-              for f in files:
-                 kw_files['filename']=f
-                 kw_files['md5']=check_hash(v_obj.path+"/"+f,'md5')
-                 insert_unique(db, VersionFile, **kw_files)
-       
+        versions = list_drs_versions(inst) 
+        # add instance to db if not already existing
+        inst_obj,new = insert_unique(db, Instance, **kw_instance)
+        print(inst)
+        print(inst_obj.id,new)
+        #P use following two lines  if tmp/tree
+        #kw_version['version'] = find_version(bits[:-1], version)
+        #kw_version['path'] = '/'.join(bits[:-1])
+        kw_version['instance_id'] = inst_obj.id
+        for v in versions:
+            # add version to db if not already existing
+            kw_version['version'] = v
+            files = list_drs_files(inst+"/"+v) 
+            kw_version['path'] = tree_path("/".join([inst,v,files[0]])) 
+            #print(kw_version.items())
+            v_obj,new = insert_unique(db, Version, **kw_version)
+            print(v)
+            print(v_obj.id,new)
+            if v_obj.filenames==[]: 
+                rows=[]
+                for f in files:
+                    checksum=check_hash(v_obj.path+"/"+f,'md5')
+                    rows.append(dict(filename=f, md5=checksum, version_id=v_obj.id))
+                    add_bulk_items(db, VersionFile, rows)
+            else:
+                kw_files['version_id']=v_obj.id
+                for f in files:
+                    kw_files['filename']=f
+                    kw_files['md5']=check_hash(v_obj.path+"/"+f,'md5')
+                    insert_unique(db, VersionFile, **kw_files)
 
 # need to have function to map bits of path to db instance fields!!
     #model,experiment,variable,mip,ensemble

@@ -83,14 +83,14 @@ class Instance(Base):
         if len(self.versions)==1: return self.versions 
         vlatest=[v for v in self.versions if v.is_latest]
         if vlatest==[]: 
-           valid=[v for v in self.versions if v.version!="NA"]
-           if valid==[]: return self.versions
-           valid.sort(key=lambda x: x.version[:-8])
-           vlatest.append(valid[-1])
-           i=-2
-           while i>-len(valid) and valid[i].version==vlatest[1]:
-              vlatest.append(valid[i])
-              i+=-1
+            valid=[v for v in self.versions if v.version!="NA"]
+            if valid==[]: return self.versions
+            valid.sort(key=lambda x: x.version[:-8])
+            vlatest.append(valid[-1])
+            i=-2
+            while i>-len(valid) and valid[i].version==vlatest[1]:
+                vlatest.append(valid[i])
+                i+=-1
         return vlatest
         
     def filenames(self):

@@ -117,9 +117,6 @@ def write_table(matrix,exp):
     # maximum length of list in each dict inside matrix[exp] is number of mod/ens rows
     emat = matrix[exp]
     klist = emat.keys()
-    # calculate ncol,nrow 
-    ncol = len(klist) +2 
-    nrow = max([len(emat[x]) for x in klist]) +1
     # open/create a csv file for each experiment
     try:
         csv = open(exp+".csv","w")

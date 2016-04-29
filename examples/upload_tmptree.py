@@ -47,8 +47,8 @@ for kw_instance in instances:
         add_bulk_items(db, VersionFile, rows)
     else:
         kw_files['version_id']=v_obj.id
-            for f in files:
-                kw_files['filename']=f
-                #kw_files['md5']=check_hash(v_obj.path+"/"+f,'md5')
-                insert_unique(db, VersionFile, **kw_files)
+        for f in files:
+            kw_files['filename']=f
+            #kw_files['md5']=check_hash(v_obj.path+"/"+f,'md5')
+            insert_unique(db, VersionFile, **kw_files)
        
