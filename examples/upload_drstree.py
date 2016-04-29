@@ -5,14 +5,15 @@
 
 from __future__ import print_function
 
-from ARCCSSive.CMIP5.update_db_functions import *
+from ARCCSSive.CMIP5.update_db_functions import insert_unique, add_bulk_items
 from ARCCSSive.CMIP5.other_functions import *
-#NB drstree root dir is also defined there
-from ARCCSSive import CMIP5
+#NB tmptree root dir is also defined there
+from ARCCSSive.CMIP5 import DB
+from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile
 
 
 # open local database using ARCSSive interface
-conn = CMIP5.DB.connect()
+conn = DB.connect()
 db = conn.session
 
 #kwargs={"institute":"BCC","model":"bcc-csm1-1-m", "experiment":"historical"}

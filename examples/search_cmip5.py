@@ -69,8 +69,8 @@ fout=open(outfile[0],'w')
 checksum=False
 cks = kwargs.pop("checksum",["None"])
 if cks[0] in  ["md5","sha256"]:
-   checksum=True
-   cks_type=cks[0]
+    checksum=True
+    cks_type=cks[0]
 
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = CMIP5.connect()
@@ -86,18 +86,18 @@ for constraints in combs:
 # loop through returned Instance objects
     db_results=[v for o in outputs for v in o.versions if v.is_latest]
     if db_results==[]:
-       db_results=[v for o in outputs for v in o.versions if v==o.latest()[0]]
+        db_results=[v for o in outputs for v in o.versions if v==o.latest()[0]]
 # write result to output file
     if db_results==[]:
-       print("No local version exists for constraints:\n",constraints)
+        print("No local version exists for constraints:\n",constraints)
     else:
-       for v in db_results:
-          fout.write(v.version + ", checksum: " + cks[0] + "\n")
-          vpath=v.path + "/"
-          if checksum:
-             fout.writelines(vpath + f.filename + ", " + str(f.__getattribute__(cks_type)) + "\n" for f in v.files)
-          else:
-             fout.writelines(vpath + f.filename + "\n" for f in v.files)
+        for v in db_results:
+            fout.write(v.version + ", checksum: " + cks[0] + "\n")
+            vpath=v.path + "/"
+            if checksum:
+                fout.writelines(vpath + f.filename + ", " + str(f.__getattribute__(cks_type)) + "\n" for f in v.files)
+            else:
+                fout.writelines(vpath + f.filename + "\n" for f in v.files)
 fout.close()
        
 

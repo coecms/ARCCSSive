@@ -31,10 +31,10 @@ def logon(openid, password):
     ''' Login on ESGF with credentials, returns connection object '''
     lm=LogonManager()
     try:
-      lm.logon_with_openid(openid, password, bootstrap=True, update_trustroots=True)
+        lm.logon_with_openid(openid, password, bootstrap=True, update_trustroots=True)
     except:
-      e = sys.exc_info()[1]
-      print("Logon Error: ",  e)
+        e = sys.exc_info()[1]
+        print("Logon Error: ",  e)
     return lm 
 
 def logoff(lm):
@@ -119,12 +119,12 @@ class ESGFSearch(object):
         ''' 
         return self.ctx.get_facet_options()
 
-    def which_fields(self, **kwargs):
-        ''' Lists available facets, applies first additional constraints if any
-        :argument **kwargs: optional constraints to apply, listed in class comment
-        :return: A list of available facets ie any parameter key,value pair returned by search
-        ''' 
-        return self.ctx.fields()
+    #def which_fields(self, **kwargs):
+    #    ''' Lists available facets, applies first additional constraints if any
+    #    :argument **kwargs: optional constraints to apply, listed in class comment
+    #    :return: A list of available facets ie any parameter key,value pair returned by search
+    #    ''' 
+    #    return self.ctx.fields()
 
     def ds_count(self): 
         ''' return number of datasets in search result '''
@@ -193,12 +193,3 @@ DatasetResult.get_attribute = get_attribute
 # Adding methods to FileResult class
 FileResult.list_attributes = list_attributes
 FileResult.get_attribute = get_attribute
-
-#print ctx.hit_count
-    #this add further constraints ctx.constrain(**constraints)
-#print ctx.facets()
-#print ctx.search.results()
-#print ctx.get_facet_options()
-    # ds is a DatasetResult obj pyesgf.search.results.DatasetResult(json,context)
-    # json is the original representation of result and context is the SearchContext that generated the result
-      

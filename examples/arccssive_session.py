@@ -29,31 +29,31 @@ outputs=db.outputs(variable='tas',model='MIROC5',experiment='historical',mip='Am
 
 # loop through result instance objects returned by search
 for o in outputs:
-        model = o.model
-        print(model) 
-        files = o.filenames()
-        print(files) 
-        fpath = o.drstree_path()
-        print(fpath)
+    model = o.model
+    print(model) 
+    files = o.filenames()
+    print(files) 
+    fpath = o.drstree_path()
+    print(fpath)
 # loops through result version objects related to instance
-        for v in o.versions:
-            if v.is_latest: print("latest available version on ESGF as of ",v.checked_on)
+    for v in o.versions:
+        if v.is_latest: print("latest available version on ESGF as of ",v.checked_on)
 
 # search without specifying variables and then use filter to select only two
 outputs=db.outputs(model='MIROC5',experiment='historical',mip='Amon',ensemble='r1i1p1')\
-              .filter(Instance.variable.in_(['tas','pr']))
+        .filter(Instance.variable.in_(['tas','pr']))
 
 # loop through result instance objects returned by search
 for o in outputs:
-        var = o.variable
-        print(var)
-        files = o.filenames()
-        print(files)
-        fpath = o.drstree_path()
-        print(fpath)
+    var = o.variable
+    print(var)
+    files = o.filenames()
+    print(files)
+    fpath = o.drstree_path()
+    print(fpath)
 # loops through result version objects related to instance
-        for v in o.versions:
+    for v in o.versions:
 # print message if version is latest on ESGF
-            if v.is_latest: (print "latest available version on ESGF as of ",v.checked_on)
+        if v.is_latest: print("latest available version on ESGF as of ",v.checked_on)
 # print checksum for first file listed
-        print(o.versions[0].files[0].sha256)
+    print(o.versions[0].files[0].sha256)

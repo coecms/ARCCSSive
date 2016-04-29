@@ -20,14 +20,14 @@ limitations under the License.
 
 from __future__ import print_function
 
-from ARCCSSive import CMIP5
-from ARCCSSive.CMIP5.pyesgf_functions import *
-from ARCCSSive.CMIP5.update_db_functions import *
+from ARCCSSive.CMIP5 import connect
+from ARCCSSive.CMIP5.pyesgf_functions import ESGFSearch 
+#from ARCCSSive.CMIP5.update_db_functions import *
 from ARCCSSive.CMIP5.other_functions import *
-#from other_functions2 import *
 from collections import defaultdict
 import argparse
 from datetime import datetime 
+import sys
 
 # check python version and then call main()
 if sys.version_info < ( 2, 7):
@@ -68,9 +68,9 @@ def assign_constraints():
     admin = kwargs.pop("admin")
     # check if this is an authorised user
     if admin:
-       if os.environ['USER'] not in ['pxp581','tae599']:
-          print(os.environ['USER'] + " is not an authorised admin")
-          sys.exit()
+        if os.environ['USER'] not in ['pxp581','tae599']:
+            print(os.environ['USER'] + " is not an authorised admin")
+            sys.exit()
     frq = kwargs.pop("frequency")
     kwargs["mip"] = assign_mips(frq=frq,mip=kwargs["mip"])
     for k,v in kwargs.items():
@@ -84,7 +84,7 @@ def format_cell(v_obj):
     if value[0:2]=="ve": value+=" (estimate) "
     if value=="NA": value="version not defined"
     if v_obj.is_latest: 
-       value += " latest "
+        value += " latest "
     if v_obj.to_update: value += " to update "
     return value + " | "
 
@@ -100,8 +100,8 @@ def result_matrix(matrix,constraints,remote,local):
         cell_value[(v.variable.mip,(v.variable.model,v.variable.ensemble))]+= format_cell(v)
     for ds in remote:
         if ds['same_as']==[]:
-           inst=get_instance(ds['dataset_id'])
-           cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['version'] + " latest new | " 
+            inst=get_instance(ds['dataset_id'])
+            cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['version'] + " latest new | " 
     for k,val in cell_value.items():
         exp_dict[(var,k[0])].append([k[1],val])
     matrix[exp]=exp_dict
@@ -122,9 +122,9 @@ def write_table(matrix,exp):
     nrow = max([len(emat[x]) for x in klist]) +1
     # open/create a csv file for each experiment
     try:
-       csv = open(exp+".csv","w")
+        csv = open(exp+".csv","w")
     except:
-       print( "Can not open file " + exp + ".csv")
+        print( "Can not open file " + exp + ".csv")
     csv.write(" model_ensemble/variable," + ",".join(["_".join(x) for x in klist]) + "\n")
       # pre-fill all values with "NP", leave 1 column and 1 row for headers
       # write first two columns with all (mod,ens) pairs
@@ -135,11 +135,11 @@ def write_table(matrix,exp):
     for modens in col1_sort:
         csv.write(modens[0] + "_" + modens[1])
         for var in klist:
-           line = [item[1].replace(", " , " (")   for item in emat[var] if item[0] == modens]
-           if len(line) > 0:
-               csv.write(", " +  " ".join(line) )
-           else:
-               csv.write(",NP")
+            line = [item[1].replace(", " , " (")   for item in emat[var] if item[0] == modens]
+            if len(line) > 0:
+                csv.write(", " +  " ".join(line) )
+            else:
+                csv.write(",NP")
         csv.write("\n")
     csv.close()
     print( "Data written in table for experiment: ",exp)
@@ -151,21 +151,21 @@ def new_files(remote):
     # this return too many we need to do it variable by variable
     for ind,ds in enumerate(remote):
         if ds['same_as']==[]:
-           for f in ds['files']:
-               urls.append("' '".join([f.filename,f.download_url,ds['checksum_type'].upper(),f.checksum]))
+            for f in ds['files']:
+                urls.append("' '".join([f.filename,f.download_url,ds['checksum_type'].upper(),f.checksum]))
     return urls
 
 
 # assign constraints from input
 kwargs,admin=assign_constraints()
-# define directoryi where requests for downloads are stored
+# define directoryii where requests for downloads are stored
 outdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
 
 # a list fo the standard unique constraints defining one instance in the database
 # initialize dictionary of exp/matrices
 matrix=defaultdict(lambda: defaultdict(list))
 # open connection to local database and intiate SQLalchemy session 
-cmip5 = CMIP5.connect()
+cmip5 = connect()
 
 # get constraints combination
 combs=combine_constraints(**kwargs)
@@ -191,43 +191,43 @@ for constraints in combs:
     for ds in esgf.get_ds():
 # append to results list of version dictionaries containing useful info 
 # NB search should return only one latest, not replica version if any
-       files, checksums, tracking_ids = [],[],[]
-       for f in ds.files(): 
-          if f.get_attribute('variable')[0]== constraints['variable']:
-             files.append(f)
-             checksums.append(f.checksum)
-             tracking_ids.append(f.tracking_id)
-       esgf_results.append({'version': "v" + ds.get_attribute('version'), 
-             'files':files, 'tracking_ids': tracking_ids, 
-             'checksum_type': ds.chksum_type(), 'checksums': checksums,
-             'dataset_id':ds.dataset_id })
+        files, checksums, tracking_ids = [],[],[]
+        for f in ds.files(): 
+            if f.get_attribute('variable')[0]== constraints['variable']:
+                files.append(f)
+                checksums.append(f.checksum)
+                tracking_ids.append(f.tracking_id)
+        esgf_results.append({'version': "v" + ds.get_attribute('version'), 
+            'files':files, 'tracking_ids': tracking_ids, 
+            'checksum_type': ds.chksum_type(), 'checksums': checksums,
+            'dataset_id':ds.dataset_id })
         
 # compare local to remote info
     if esgf_results==[]:
-       if db_results!=[]:
-           print("Found local version but none is currently available on ESGF nodes for constraints:\n",constraints)
-       else: 
-           print("Nothing currently available on ESGF nodes and no local version exists for constraints:\n",constraints)
+        if db_results!=[]:
+            print("Found local version but none is currently available on ESGF nodes for constraints:\n",constraints)
+        else: 
+            print("Nothing currently available on ESGF nodes and no local version exists for constraints:\n",constraints)
     else:
-       esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, orig_args.keys(), admin)
+        esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, orig_args.keys(), admin)
 
 # build table to summarise results
     urls=new_files(esgf_results)
     if urls!=[]:
-      outfile="_".join(["request",os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
-      fout=open(outfile,"w")
-      print("These are new files to download:\n")
-      for s in urls:
-         print(s.split("'")[0])
-         fout.writelines("'" +s + "'\n")
-      if sys.version_info < ( 3, 0 ):
-         request=raw_input("submit a request to download these files? Y/N \n")
-      else:
-         request=input("submit a request to download these files? Y/N \n")
-      if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
+        outfile="_".join(["request",os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
+        fout=open(outfile,"w")
+        print("These are new files to download:\n")
+        for s in urls:
+            print(s.split("'")[0])
+            fout.writelines("'" +s + "'\n")
+        if sys.version_info < ( 3, 0 ):
+            request=raw_input("submit a request to download these files? Y/N \n")
+        else:
+            request=input("submit a request to download these files? Y/N \n")
+        if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
     if esgf_results != [] or db_results != []:
-       matrix = result_matrix(matrix,constraints,esgf_results,db_results)
+        matrix = result_matrix(matrix,constraints,esgf_results,db_results)
 #write a table to summarise comparison results for each experiment in csv file
 if matrix:
-   for exp in kwargs['experiment']:
-       write_table(matrix,exp)
+    for exp in kwargs['experiment']:
+        write_table(matrix,exp)

@@ -21,7 +21,7 @@ limitations under the License.
 from __future__ import print_function
 
 from sqlalchemy.orm.exc import NoResultFound
-from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile, VersionWarning
+#from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile, VersionWarning
 
 
 def search_item(db, klass, **kwargs):
@@ -50,22 +50,6 @@ def insert_unique(db, klass, **kwargs):
         db.commit() 
     return item, new
 
-def update_item_old(db, klass, item_id, **kwargs):
-    """
-    Update an existing item into the DB 
-    NB need to commit before terminating session
-    """
-    item=search_item(db, klass, id=item_id)
-    if not item:
-       print("Warning cannot update item does not exist yet") 
-       return 
-    for k,v in kwargs.items():
-        item.k = v
-    # is this correct only to update?? surely not!
-    db.add(item)
-    db.commit()
-    return item
-
 def add_bulk_items(db, klass, rows):
     """Batched INSERT statements via the ORM "bulk", using dictionaries.
        input: rows is a list of dictionaries """
@@ -74,7 +58,12 @@ def add_bulk_items(db, klass, rows):
     return
 
 def update_item(db, klass, item_id, newvalues):
-    '''
+    '''Update database item 
+       :argument: db database SQLalchemy connection session 
+       :argument: klass class representing table objects
+       :argument: item_id the id for row to update
+       :argument: newvalues a dictionary with the column keys, values to be updated
+       :return nothing
     '''
     db.query(klass).filter_by(id=item_id).update(newvalues)
     db.commit()
