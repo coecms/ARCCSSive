@@ -21,8 +21,7 @@ limitations under the License.
 from __future__ import print_function
 
 from ARCCSSive.CMIP5 import connect
-from ARCCSSive.CMIP5.pyesgf_functions import ESGFSearch 
-#from ARCCSSive.CMIP5.update_db_functions import *
+#from ARCCSSive.CMIP5.pyesgf_functions import ESGFSearch 
 from ARCCSSive.CMIP5.other_functions import *
 from collections import defaultdict
 import argparse
@@ -73,9 +72,10 @@ def assign_constraints():
             sys.exit()
     frq = kwargs.pop("frequency")
     kwargs["mip"] = assign_mips(frq=frq,mip=kwargs["mip"])
-    for k,v in kwargs.items():
-        if v is None: kwargs.pop(k)
-    return kwargs,admin
+    newkwargs=kwargs
+    for k,v in list(kwargs.items()):
+        if v is None: newkwargs.pop(k)
+    return newkwargs,admin
 
 
 def format_cell(v_obj):

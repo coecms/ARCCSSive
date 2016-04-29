@@ -40,7 +40,7 @@ def combine_constraints(**kwargs):
     try:
         return (dict(itertools.izip(kwargs, x)) for x in itertools.product(*kwargs.itervalues()))
     except:
-        return (dict(itertools.zip(kwargs, x)) for x in itertools.product(*kwargs.values()))
+        return (dict(zip(kwargs, x)) for x in itertools.product(*kwargs.values()))
 
 def join_varmip(var0,mip0):
     ''' List all combinations of selected variables and mips '''
