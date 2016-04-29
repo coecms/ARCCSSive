@@ -21,7 +21,7 @@ limitations under the License.
 from __future__ import print_function
 
 from ARCCSSive.CMIP5 import connect
-#from ARCCSSive.CMIP5.pyesgf_functions import ESGFSearch 
+from ARCCSSive.CMIP5.pyesgf_functions import ESGFSearch 
 from ARCCSSive.CMIP5.other_functions import *
 from collections import defaultdict
 import argparse
