@@ -58,10 +58,9 @@ def compare_instances(db,remote,local,const_keys,admin):
         :argument admin:  boolean if True user is admin and can update db directly, optherwise new info saved in log file
         :return: remote, local with updated attributes 
     '''
-    global flog, logfile
     logdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
     if not admin:
-       logfile=logdir+"log_" + os.environ['USER'] + today.replace("/","") + ".txt"
+       logfile=logdir+"log_" + os.environ['USER'] + "_" + today.replace("-","") + ".txt"
        print(logfile)
     # a list of the unique constraints defining one instance in the database which are not in user constraints
     undefined=[x for x in Instance.__table_args__[0].columns.keys() if x not in const_keys]
@@ -338,5 +337,5 @@ drstree="/g/data1/ua8/cmip-download/drstree/CMIP5/GCM/"
 tmptree="/g/data1/ua6/unofficial-ESG-replica/tmp/tree/"
 
 # define date string for current date
-today = date.today().strftime('%d/%m/%Y')
+today = date.today().strftime('%Y-%m-%d')
 

@@ -225,7 +225,9 @@ for constraints in combs:
       else:
          request=input("submit a request to download these files? Y/N \n")
       if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
-    matrix = result_matrix(matrix,constraints,esgf_results,db_results)
+    if esgf_results != [] or db_results != []:
+       matrix = result_matrix(matrix,constraints,esgf_results,db_results)
 #write a table to summarise comparison results for each experiment in csv file
-for exp in kwargs['experiment']:
-    write_table(matrix,exp)
+if matrix:
+   for exp in kwargs['experiment']:
+       write_table(matrix,exp)

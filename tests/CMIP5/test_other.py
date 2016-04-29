@@ -65,5 +65,3 @@ def test_list_drs_versions():
 def test_list_drs_files():
     drstree_path='/home/581/pxp581/BNU-ESM/amip/mon/atmos/pr/r1i1p1/v20110201/'
     assert set(list_drs_files(drstree_path))==set(['f1.nc','f2.nc','f3.nc'])
-
-def 
