@@ -19,6 +19,7 @@ limitations under the License.
 
 import pytest
 from ARCCSSive.CMIP5.other_functions import *
+from .drs_fixture import drstree
 
 def test_frequency():
     assert frequency('Amon') == ['mon']
@@ -59,28 +60,10 @@ def test_assign_mips():
        assert set(assign_mips(**data[i]))==set(output[i])
 
 def test_list_drs_versions(drstree):
-    assert set(list_drs_versions(drstree_path))==set(['v20120304','v20110201','v20150203'])
+    drs_path=drstree[0]
+    assert set(list_drs_versions(drs_path))==set(['v20120304','v20110201','v20150203'])
 
 def test_list_drs_files(drstree):
-    assert set(list_drs_files(drstree_path))==set(['f1.nc','f2.nc','f3.nc'])
+    files_path=drstree[1]
+    assert set(list_drs_files(files_path))==set(['f1.nc','f2.nc','f3.nc'])
 
-
-# create temporary drstree like directory to test drstree functions
-@pytest.fixture(scope="module")
-def drstree(tmpdir_factory):
-    path = 'BNU-ESM/amip/mon/atmos/pr/r1i1p1'.split("/")
-    drs = tmpdir_factory.mktemp(path[0], numbered=False)
-    base = str(tmpdir_factory.getbasetemp())
-    print(dir(drs))
-    for i in range(1,len(path)): 
-        drs = drs.mkdir( path[i])
-        #dir = tmpdir_factory.mktemp(dir.replace(base,"")).join(path[1])
-    #    base = tmpdir_factory.getbasetemp()
-    
-    print(drs,base)
-    v1dir = drs.mkdir('v20120304')
-    v2dir = drs.mkdir('v20110201')
-    v3dir = drs.mkdir('v20150203')
-    f1dir = tmpdir_factory.mktemp(v2dir).join('f1.nc')
-    f2dir = tmpdir_factory.mktemp(v2dir).join('f2.nc')
-    f3dir = tmpdir_factory.mktemp(v2dir).join('f3.nc')
