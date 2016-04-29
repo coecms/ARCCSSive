@@ -37,7 +37,10 @@ def combine_constraints(**kwargs):
         :argument dictionary, keys are fields and values are lists of values for each field
         :return: a set of dictionaries, one for each constraints combination i
     '''
-    return (dict(itertools.izip(kwargs, x)) for x in itertools.product(*kwargs.itervalues()))
+    try:
+        return (dict(itertools.izip(kwargs, x)) for x in itertools.product(*kwargs.itervalues()))
+    except:
+        return (dict(itertools.izip(kwargs, x)) for x in itertools.product(*kwargs.values()))
 
 def join_varmip(var0,mip0):
     ''' List all combinations of selected variables and mips '''
@@ -59,6 +62,7 @@ def compare_instances(db,remote,local,const_keys,admin):
         :argument admin:  boolean if True user is admin and can update db directly, optherwise new info saved in log file
         :return: remote, local with updated attributes 
     '''
+    global logfile
     logdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
     if not admin:
         logfile=logdir+"log_" + os.environ['USER'] + "_" + today.replace("-","") + ".txt"
@@ -82,7 +86,9 @@ def compare_instances(db,remote,local,const_keys,admin):
                     v.to_update = False
                 else:
                     v.to_update = True
-                    if not admin: write_log(" ".join(["update"]+ds_instance.items()+[v.version,v.path]))
+                    if not admin: 
+                        ds_info=[str(x) for x in ds_instance.items()]
+                        write_log(" ".join(["update"]+ds_info+[v.version,v.path,"\n"]))
             # if local dataset_id is the same as remote skip all other checks
             if v.dataset_id==ds['dataset_id']:
                 v.is_latest = True
@@ -322,7 +328,7 @@ def frequency(mip):
 # functions to write logs
 def write_log(line):
     ''' add str to log file, open new file if does not exist yet '''
-    global logfile,flog
+    global flog
     try:
         flog.write(line)
     except:
