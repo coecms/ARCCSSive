@@ -18,6 +18,7 @@ limitations under the License.
 """
 
 from ARCCSSive.CMIP5.update_db_functions import *
+from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile
 from .db_fixture import session
 
 def test_search_item(session):
