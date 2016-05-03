@@ -148,8 +148,12 @@ def new_files(remote):
     # this return too many we need to do it variable by variable
     for ind,ds in enumerate(remote):
         if ds['same_as']==[]:
+            ctype=ds['checksum_type']
             for f in ds['files']:
-                urls.append("' '".join([f.filename,f.download_url,ds['checksum_type'].upper(),f.checksum]))
+                if ctype is None: 
+                    urls.append("' '".join([f.filename,f.download_url,"None","None"]))
+                else:
+                    urls.append("' '".join([f.filename,f.download_url,ctype.upper(),f.checksum]))
     return urls
 
 
@@ -173,16 +177,21 @@ for constraints in combs:
     db_results=[]
     esgf_results=[]
     print(constraints)
+    orig_args=constraints.copy()
 # search on local DB, return instance_ids
-    outputs=cmip5.outputs(**constraints)
+    if constraints['experiment']=='decadal':
+        exp=constraints.pop('experiment')
+        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp))
+    else:
+        outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
     db_results=[v for o in outputs for v in o.versions]
 # search in ESGF database
 # you can use the key 'distrib'=False to search only one node 
 # you can use the key 'node' to pass a different node url from default pcmdi
 # for more info look at pyesgf module documentation
-    orig_args=constraints
     constraints['cmor_table']=constraints.pop('mip')
+    if exp: constraints['query']=exp+"%"
     esgf.search_node(**constraints)
 # loop returned DatasetResult objects
     for ds in esgf.get_ds():
