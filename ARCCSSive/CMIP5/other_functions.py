@@ -213,7 +213,7 @@ def list_tmpdir(flist):
     lines=f.readlines()
     for line in lines[1:]:
         values=line[:-1].split(',')
-        inst_list.append( {keys[i]:values[i] for i in range(len(keys))} )
+        inst_list.append(dict(zip(keys, values)))
     return inst_list
 
 def file_glob(**kwargs):
