@@ -182,7 +182,8 @@ for constraints in combs:
 # you can use the key 'distrib'=False to search only one node 
 # you can use the key 'node' to pass a different node url from default pcmdi
 # for more info look at pyesgf module documentation
-    constraints['cmor_table']=constraints.pop('mip')
+    if 'mip' in constraints.keys():
+        constraints['cmor_table']=constraints.pop('mip')
     esgf.search_node(**constraints)
 # loop returned DatasetResult objects
     for ds in esgf.get_ds():
