@@ -74,7 +74,7 @@ def assign_constraints():
     kwargs["mip"] = assign_mips(frq=frq,mip=kwargs["mip"])
     newkwargs=kwargs
     for k,v in list(kwargs.items()):
-        if v is None: newkwargs.pop(k)
+        if v is None or v==[]: newkwargs.pop(k)
     return newkwargs,admin
 
 
@@ -173,6 +173,7 @@ for constraints in combs:
     db_results=[]
     esgf_results=[]
     print(constraints)
+    orig_args=constraints.copy()
 # search on local DB, return instance_ids
     outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
@@ -181,7 +182,6 @@ for constraints in combs:
 # you can use the key 'distrib'=False to search only one node 
 # you can use the key 'node' to pass a different node url from default pcmdi
 # for more info look at pyesgf module documentation
-    orig_args=constraints
     constraints['cmor_table']=constraints.pop('mip')
     esgf.search_node(**constraints)
 # loop returned DatasetResult objects
