@@ -19,10 +19,19 @@ limitations under the License.
 
 from subprocess import Popen, PIPE
 
-# Version of the current repository
-describe = Popen(['git','describe','--always','--dirty'],stdout=PIPE)
-version  = describe.communicate()[0].decode('utf-8').strip()
+def git_describe():
+    proc = Popen(['git','describe','--always','--long'],stdout=PIPE)
+    desc  = proc.communicate()[0].decode('utf-8').strip()
+    ihash  = desc.rindex('-')
+    ichange = desc.rindex('-',0,ihash)
+    return (desc[0:ichange],desc[ichange+1:ihash],desc[ihash+1:-1])
 
-# Most recent release
-describe = Popen(['git','describe','--abbrev=0'],stdout=PIPE)
-release  = describe.communicate()[0].decode('utf-8').strip()
+def pep440():
+    tag, changes, hash = git_describe()
+    if changes == 0:
+        return tag
+    else:
+        return "%s.dev%s+%s"%(tag,changes,hash)
+
+version = pep440()
+release,_,_ = git_describe()
