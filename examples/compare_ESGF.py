@@ -180,8 +180,8 @@ for constraints in combs:
     orig_args=constraints.copy()
 # search on local DB, return instance_ids
     if constraints['experiment']=='decadal':
-        exp=constraints.pop('experiment')
-        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp))
+        exp0=constraints.pop('experiment')
+        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0))
     else:
         outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
@@ -191,7 +191,7 @@ for constraints in combs:
 # you can use the key 'node' to pass a different node url from default pcmdi
 # for more info look at pyesgf module documentation
     constraints['cmor_table']=constraints.pop('mip')
-    if exp: constraints['query']=exp+"%"
+    if 'exp0' in locals(): constraints['query']=exp0+"%"
     esgf.search_node(**constraints)
 # loop returned DatasetResult objects
     for ds in esgf.get_ds():
