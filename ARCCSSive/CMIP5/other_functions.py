@@ -117,7 +117,8 @@ def compare_instances(db,remote,local,const_keys,admin):
                 db.commit()
             else:
                 if db.dirty:
-                    line=["version"]+ds_instance.values()[:-1]+[v.version,str(v.id),v.dataset_id,str(v.is_latest),v.checked_on,"\n"]
+                    line=["version"]+ds_instance.values()[:-1]+[v.version,str(v.id),str(v.dataset_id),
+                          str(v.is_latest),str(v.checked_on),"\n"]
                     write_log(" ".join(line))
                 
     # add to remote dictionary list of local identical versions

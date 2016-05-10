@@ -39,16 +39,16 @@ for kw_instance in instances:
     files = list_drs_files(kw_version['path']) 
     #print(kw_version.items())
     v_obj,new = insert_unique(db, Version, **kw_version)
-    if v_obj.filenames2()==[]: 
+    if v_obj.filenames()==[]: 
         rows=[]
         for f in files:
-            checksum=check_hash(v_obj.path+"/"+f,'md5')
-            rows.append(dict(filename=f, md5=checksum, version_id=v_obj.id))
+            checksum=check_hash(v_obj.path+"/"+f,'sha256')
+            rows.append(dict(filename=f, sha256=checksum, version_id=v_obj.id))
         add_bulk_items(db, VersionFile, rows)
     else:
         kw_files['version_id']=v_obj.id
         for f in files:
             kw_files['filename']=f
-            #kw_files['md5']=check_hash(v_obj.path+"/"+f,'md5')
+            kw_files['sha256']=check_hash(v_obj.path+"/"+f,'sha256')
             insert_unique(db, VersionFile, **kw_files)
        
