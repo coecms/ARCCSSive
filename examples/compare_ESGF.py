@@ -55,7 +55,6 @@ def parse_input():
     parser.add_argument('-v','--variable', type=str, nargs="*", help='CMIP5 variable', required=True)
     parser.add_argument('-t','--mip', type=str, nargs="*", help='CMIP5 MIP table', required=False)
     parser.add_argument('-f','--frequency', type=str, nargs="*", help='CMIP5 frequency', required=False)
-    #parser.add_argument('-r','--realm', type=str, nargs="*", help='CMIP5 realm', required=False)
     parser.add_argument('-en','--ensemble', type=str, nargs="*", help='CMIP5 ensemble', required=False)
     parser.add_argument('-ve','--version', type=str, nargs="*", help='CMIP5 version', required=False)
     return vars(parser.parse_args())
@@ -81,6 +80,7 @@ def assign_constraints():
 def format_cell(v_obj):
     ''' return a formatted cell value for one combination of var_mip and mod_ens '''
     value=v_obj.version
+    if v_obj.experiment[0:6]=='decadal': value=v_obj.experiment[7:] + " " + v_obj.version
     if value[0:2]=="ve": value+=" (estimate) "
     if value=="NA": value="version not defined"
     if v_obj.is_latest: 
@@ -101,7 +101,10 @@ def result_matrix(matrix,constraints,remote,local):
     for ds in remote:
         if ds['same_as']==[]:
             inst=get_instance(ds['dataset_id'])
+            if exp == 'decadal':
+                cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['experiment'][7:] + " " 
             cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['version'] + " latest new | " 
+            
     for k,val in cell_value.items():
         exp_dict[(var,k[0])].append([k[1],val])
     matrix[exp]=exp_dict
@@ -148,8 +151,12 @@ def new_files(remote):
     # this return too many we need to do it variable by variable
     for ind,ds in enumerate(remote):
         if ds['same_as']==[]:
+            ctype=ds['checksum_type']
             for f in ds['files']:
-                urls.append("' '".join([f.filename,f.download_url,ds['checksum_type'].upper(),f.checksum]))
+                if ctype is None: 
+                    urls.append("' '".join([f.filename,f.download_url,"None","None"]))
+                else:
+                    urls.append("' '".join([f.filename,f.download_url,ctype.upper(),f.checksum]))
     return urls
 
 
@@ -175,7 +182,11 @@ for constraints in combs:
     print(constraints)
     orig_args=constraints.copy()
 # search on local DB, return instance_ids
-    outputs=cmip5.outputs(**constraints)
+    if constraints['experiment']=='decadal':
+        exp0=constraints.pop('experiment')
+        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0))
+    else:
+        outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
     db_results=[v for o in outputs for v in o.versions]
 # search in ESGF database
@@ -184,6 +195,7 @@ for constraints in combs:
 # for more info look at pyesgf module documentation
     if 'mip' in constraints.keys():
         constraints['cmor_table']=constraints.pop('mip')
+    if 'exp0' in locals(): constraints['query']=exp0+"%"
     esgf.search_node(**constraints)
 # loop returned DatasetResult objects
     for ds in esgf.get_ds():
@@ -224,7 +236,7 @@ for constraints in combs:
             request=input("submit a request to download these files? Y/N \n")
         if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
     if esgf_results != [] or db_results != []:
-        matrix = result_matrix(matrix,constraints,esgf_results,db_results)
+        matrix = result_matrix(matrix,orig_args,esgf_results,db_results)
 #write a table to summarise comparison results for each experiment in csv file
 if matrix:
     for exp in kwargs['experiment']:
