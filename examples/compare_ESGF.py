@@ -81,6 +81,7 @@ def assign_constraints():
 def format_cell(v_obj):
     ''' return a formatted cell value for one combination of var_mip and mod_ens '''
     value=v_obj.version
+    if v_obj.experiment[0:6]=='decadal': value=v_obj.experiment[7:] + " " + v_obj.version
     if value[0:2]=="ve": value+=" (estimate) "
     if value=="NA": value="version not defined"
     if v_obj.is_latest: 
@@ -101,7 +102,10 @@ def result_matrix(matrix,constraints,remote,local):
     for ds in remote:
         if ds['same_as']==[]:
             inst=get_instance(ds['dataset_id'])
+            if exp == 'decadal':
+                cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['experiment'][7:] + " " 
             cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['version'] + " latest new | " 
+            
     for k,val in cell_value.items():
         exp_dict[(var,k[0])].append([k[1],val])
     matrix[exp]=exp_dict
@@ -232,7 +236,7 @@ for constraints in combs:
             request=input("submit a request to download these files? Y/N \n")
         if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
     if esgf_results != [] or db_results != []:
-        matrix = result_matrix(matrix,constraints,esgf_results,db_results)
+        matrix = result_matrix(matrix,orig_args,esgf_results,db_results)
 #write a table to summarise comparison results for each experiment in csv file
 if matrix:
     for exp in kwargs['experiment']:
