@@ -88,7 +88,7 @@ class Instance(Base):
             valid.sort(key=lambda x: x.version[:-8])
             vlatest.append(valid[-1])
             i=-2
-            while i>-len(valid) and valid[i].version==vlatest[1]:
+            while i>-len(valid) and valid[i].version==vlatest[0]:
                 vlatest.append(valid[i])
                 i+=-1
         return vlatest
