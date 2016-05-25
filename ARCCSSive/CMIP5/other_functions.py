@@ -148,32 +148,33 @@ def compare_files(db,rds,v,admin):
             for r in rows:
                 write_log("new file "+ str(r) + "\n")
     # first compare tracking_ids if all are present in local version
-    local_ids=v.tracking_ids()
-    if (local_ids and "" not in local_ids):
+    local_ids=[x for x in v.tracking_ids() if x not in [None,""]]
+    if len(local_ids)>0:
         extra = compare_tracking_ids(rds['tracking_ids'],local_ids)
     # if tracking_ids are the same or if they are not present compare checksums
     # calculate checksums and update local db if necessary  
     if extra==set([]):
         local_sums=[]
-        if rds['checksum_type'] in ['md5','MD5']:
-            for f in v.files:
-                if f.md5 in ["", None]:
-                    f.md5 = check_hash(v.path+"/"+f.filename,'md5')
-                    if admin: 
-                        update_item(db,VersionFile,f.id,{'md5':f.md5})
-                    else:
-                        write_log(" ".join(['md5',str(f.id),f.md5,"\n"]))
-                local_sums.append(f.md5) 
-        else:
-            for f in v.files:
-                if f.sha256 in ["",None]:
-                    f.sha256=check_hash(v.path+"/"+f.filename,'sha256')
-                    if admin: 
-                        update_item(db,VersionFile,f.id,{'sha256':f.sha256})
-                    else:
-                        write_log(" ".join(['sha256',str(f.id),f.sha256,"\n"]))
-                local_sums.append(f.sha256) 
+        cktype=str(rds['checksum_type']).lower()
+        for f in v.files:
+            try:
+                cksum=f.__dict__[cktype] 
+            except:
+                cksum=None
+            if cksum in ["",None]:
+                cksum=check_hash(v.path+"/"+f.filename,cktype)
+                if admin: 
+                    update_item(db,VersionFile,f.id,{cktype:cksum})
+                    #after updating you lose the file obj
+                else:
+                    write_log(" ".join([cktype,str(f.id),cksum,"\n"]))
+            local_sums.append(cksum) 
         extra = compare_checksums(rds['checksums'],local_sums)
+        #if extra!=set([]):
+        #    print(extra)
+        #    files_update=[x.filename for x in v.files for y in list(extra) if x.__dict__[cktype]==y]
+        #    files_update.extend([x.filename for x in rds.files for y in list(extra) if x.checksum==y]) 
+        #    print(files_update)
     return extra 
             
 def compare_tracking_ids(remote_ids,local_ids):

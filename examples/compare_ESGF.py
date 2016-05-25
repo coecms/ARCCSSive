@@ -77,10 +77,10 @@ def assign_constraints():
     return newkwargs,admin
 
 
-def format_cell(v_obj):
+def format_cell(v_obj,exp):
     ''' return a formatted cell value for one combination of var_mip and mod_ens '''
     value=v_obj.version
-    if v_obj.experiment[0:6]=='decadal': value=v_obj.experiment[7:] + " " + v_obj.version
+    if exp[0:6]=='decadal': value=exp[7:] + " " + v_obj.version
     if value[0:2]=="ve": value+=" (estimate) "
     if value=="NA": value="version not defined"
     if v_obj.is_latest: 
@@ -97,7 +97,7 @@ def result_matrix(matrix,constraints,remote,local):
     exp_dict=matrix[exp]
     cell_value=defaultdict(str)
     for v in local:
-        cell_value[(v.variable.mip,(v.variable.model,v.variable.ensemble))]+= format_cell(v)
+        cell_value[(v.variable.mip,(v.variable.model,v.variable.ensemble))]+= format_cell(v,exp)
     for ds in remote:
         if ds['same_as']==[]:
             inst=get_instance(ds['dataset_id'])
