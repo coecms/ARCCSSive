@@ -27,7 +27,7 @@ import glob
 import subprocess
 import re
 from collections import defaultdict
-from ARCCSSive.data import *
+from ARCCSSive.data import mip_dict, frq_dict 
 from ARCCSSive.CMIP5.update_db_functions import add_bulk_items, update_item 
 from ARCCSSive.CMIP5.Model import Instance, VersionFile
 
@@ -159,7 +159,8 @@ def compare_files(db,rds,v,admin):
         for f in v.files:
             try:
                 cksum=f.__dict__[cktype] 
-            except:
+            except TypeError:
+                print("typeeror is fine")
                 cksum=None
             if cksum in ["",None]:
                 cksum=check_hash(v.path+"/"+f.filename,cktype)
@@ -170,11 +171,6 @@ def compare_files(db,rds,v,admin):
                     write_log(" ".join([cktype,str(f.id),cksum,"\n"]))
             local_sums.append(cksum) 
         extra = compare_checksums(rds['checksums'],local_sums)
-        #if extra!=set([]):
-        #    print(extra)
-        #    files_update=[x.filename for x in v.files for y in list(extra) if x.__dict__[cktype]==y]
-        #    files_update.extend([x.filename for x in rds.files for y in list(extra) if x.checksum==y]) 
-        #    print(files_update)
     return extra 
             
 def compare_tracking_ids(remote_ids,local_ids):

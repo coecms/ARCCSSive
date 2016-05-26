@@ -22,3 +22,4 @@ from ARCCSSive.data import *
 def test_pickle():
     assert len(mip_dict.keys()) > 0
     assert len(frq_dict.keys()) > 0
+    assert len(model_names_dict.keys()) > 0

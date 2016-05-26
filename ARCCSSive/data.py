@@ -27,6 +27,7 @@ def _read_pickle():
 
     mip_dict = pickle.load(pickle_stream)
     frq_dict = pickle.load(pickle_stream)
-    return mip_dict, frq_dict
+    model_names_dict = pickle.load(pickle_stream)
+    return mip_dict, frq_dict, model_names_dict
 
-mip_dict, frq_dict = _read_pickle()
+mip_dict, frq_dict, model_names_dict ()

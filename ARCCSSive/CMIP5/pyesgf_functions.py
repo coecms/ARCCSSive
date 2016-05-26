@@ -24,6 +24,7 @@ from pyesgf.logon import LogonManager
 from pyesgf.search import SearchConnection
 from pyesgf.search.results import DatasetResult as DatasetResult
 from pyesgf.search.results import FileResult as FileResult
+from ARCCSSive.data import model_names_dict
 
 import sys
 
@@ -78,11 +79,21 @@ class ESGFSearch(object):
         node, distrib = ["http://pcmdi.llnl.gov/esg-search",True]
         if "node" in kwargs.keys(): node = kwargs.pop('node')
         if "distrib" in kwargs.keys(): distrib = kwargs.pop('distrib')
-        
+        kwargs['model']=self.model_names(kwargs['model']) 
         self.conn = SearchConnection(node, distrib=distrib)
         self.ctx = self.conn.new_context(project='CMIP5', latest=True, 
                                            replica=False, **kwargs)
         return 
+
+    def model_names(self, model):
+        ''' Returns model with valid name for ESGF search api
+        :argument model: string model name passed as constraint
+        :return: a string of correct model name where two names exist for same model
+        ''' 
+        if model in model_names_dict.keys():
+            return  model_names_dict[model]
+        else:
+            return model
 
     def get_ds(self, **kwargs):
         ''' Returns list of dataset objects selected by search_node, further constraints can be applied  
