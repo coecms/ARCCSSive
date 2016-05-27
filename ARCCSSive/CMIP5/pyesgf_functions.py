@@ -79,7 +79,8 @@ class ESGFSearch(object):
         node, distrib = ["http://pcmdi.llnl.gov/esg-search",True]
         if "node" in kwargs.keys(): node = kwargs.pop('node')
         if "distrib" in kwargs.keys(): distrib = kwargs.pop('distrib')
-        kwargs['model']=self.model_names(kwargs['model']) 
+        if 'model' in kwargs.keys():
+            kwargs['model']=self.model_names(kwargs['model']) 
         self.conn = SearchConnection(node, distrib=distrib)
         self.ctx = self.conn.new_context(project='CMIP5', latest=True, 
                                            replica=False, **kwargs)

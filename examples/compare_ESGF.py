@@ -162,7 +162,7 @@ def new_files(remote):
 
 # assign constraints from input
 kwargs,admin=assign_constraints()
-# define directoryii where requests for downloads are stored
+# define directory where requests for downloads are stored
 outdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
 
 # a list fo the standard unique constraints defining one instance in the database
@@ -230,6 +230,7 @@ for constraints in combs:
         for s in urls:
             print(s.split("'")[0])
             fout.writelines("'" +s + "'\n")
+        fout.close()
         if sys.version_info < ( 3, 0 ):
             request=raw_input("submit a request to download these files? Y/N \n")
         else:

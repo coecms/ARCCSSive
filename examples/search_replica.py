@@ -42,13 +42,12 @@ def parse_input():
             var1 AND model1 AND exp1  AND mip1  AND other optional constraints
             If a constraint isn't specified for one of the fields automatically all values
             for that field will be selected.''', formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument('-e','--experiment', type=str, nargs=1, help='CMIP5 experiment', required=True)
-    parser.add_argument('-m','--model', type=str, nargs=1, help='CMIP5 model', required=True)
-    parser.add_argument('-v','--variable', type=str, nargs=1, help='CMIP5 variable', required=True)
-    parser.add_argument('-t','--mip', type=str, nargs=1, help='CMIP5 MIP table', required=True)
+    parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
+    parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
+    parser.add_argument('-v','--variable', type=str, nargs="*", help='CMIP5 variable', required=True)
+    parser.add_argument('-t','--mip', type=str, nargs="*", help='CMIP5 MIP table', required=False)
     parser.add_argument('-en','--ensemble', type=str, nargs="*", help='CMIP5 ensemble', required=False)
     parser.add_argument('-ve','--version', type=str, nargs="*", help='CMIP5 version', required=False)
-    parser.add_argument('-c','--checksum', type=str, nargs=1, help='checksum_type: md5 or sha256', required=False)
     parser.add_argument('-o','--output', type=str, nargs=1, help='output file name', required=False)
     return vars(parser.parse_args())
 
@@ -65,12 +64,6 @@ kwargs=assign_constraints()
 # open output file
 outfile=kwargs.pop("output",["search_result.txt"])
 fout=open(outfile[0],'w')
-# if checksum_type has been passed add checksum to output
-checksum=False
-cks = kwargs.pop("checksum",["None"])
-if cks[0] in  ["md5","sha256"]:
-    checksum=True
-    cks_type=cks[0]
 
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = CMIP5.connect()
@@ -84,20 +77,16 @@ for constraints in combs:
 # search on local DB, return instance_ids
     outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
-    db_results=[v for o in outputs for v in o.versions if v.is_latest]
-    if db_results==[]:
-        db_results=[v for o in outputs for v in o.versions if v==o.latest()[0]]
+    for o in outputs:
+        db_results=[v for v in o.versions if v.is_latest]
+        if db_results==[]:
+           db_results=[v for o in outputs for v in o.versions if v==o.latest()[0]]
 # write result to output file
     if db_results==[]:
         print("No local version exists for constraints:\n",constraints)
     else:
         for v in db_results:
-            fout.write(v.version + ", checksum: " + cks[0] + "\n")
-            vpath=v.path + "/"
-            if checksum:
-                fout.writelines(vpath + f.filename + ", " + str(f.__getattribute__(cks_type)) + "\n" for f in v.files)
-            else:
-                fout.writelines(vpath + f.filename + "\n" for f in v.files)
+            fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
 fout.close()
        
 
