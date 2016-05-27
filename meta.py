@@ -20,7 +20,7 @@ limitations under the License.
 from subprocess import Popen, PIPE
 
 def git_describe():
-    proc = Popen(['git','describe','--always','--long'],stdout=PIPE)
+    proc = Popen(['git','describe','--tags','--always','--long'],stdout=PIPE)
     desc  = proc.communicate()[0].decode('utf-8').strip()
     ihash  = desc.rindex('-')
     ichange = desc.rindex('-',0,ihash)
@@ -28,7 +28,7 @@ def git_describe():
 
 def pep440():
     tag, changes, hash = git_describe()
-    if changes == 0:
+    if changes == '0':
         return tag
     else:
         return "%s.dev%s+%s"%(tag,changes,hash)
