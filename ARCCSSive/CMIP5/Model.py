@@ -88,7 +88,7 @@ class Instance(Base):
             valid.sort(key=lambda x: x.version[:-8])
             vlatest.append(valid[-1])
             i=-2
-            while i>-len(valid) and valid[i].version==vlatest[0]:
+            while i>=-len(valid) and valid[i].version[:-8]==vlatest[0].version[:-8]:
                 vlatest.append(valid[i])
                 i+=-1
         return vlatest
@@ -158,8 +158,10 @@ class Version(Base):
     checked_on  = Column(String)
     to_update   = Column(Boolean)
 
-    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
-    files   = relationship('VersionFile', order_by='VersionFile.id', backref='version')
+    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', 
+                              backref='version', cascade="all, delete-orphan", passive_deletes=True)
+    files   = relationship('VersionFile', order_by='VersionFile.id', 
+                            backref='version', cascade="all, delete-orphan", passive_deletes=True)
 
 
     def glob(self):
