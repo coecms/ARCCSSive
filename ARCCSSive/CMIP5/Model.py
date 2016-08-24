@@ -85,10 +85,10 @@ class Instance(Base):
         if vlatest==[]: 
             valid=[v for v in self.versions if v.version!="NA"]
             if valid==[]: return self.versions
-            valid.sort(key=lambda x: x.version[:-8])
+            valid.sort(key=lambda x: x.version[-8:])
             vlatest.append(valid[-1])
             i=-2
-            while i>=-len(valid) and valid[i].version[:-8]==vlatest[0].version[:-8]:
+            while i>=-len(valid) and valid[i].version[-8:]==vlatest[0].version[-8:]:
                 vlatest.append(valid[i])
                 i+=-1
         return vlatest
