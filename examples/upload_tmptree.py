@@ -12,6 +12,7 @@ from ARCCSSive.CMIP5.other_functions import list_tmpdir, list_drs_files, check_h
 from ARCCSSive.CMIP5 import DB 
 from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile 
 import cdms2
+import os
 
 
 def check_netcdf(fpath):
@@ -35,8 +36,8 @@ def check_netcdf(fpath):
 
 
 # open local database using ARCSSive interface
-conn = DB.connect()
-db = conn.session
+cmip5 = DB.connect()
+db = cmip5.session
 flist = "$HOME/fileslist.csv"
 
 #loop through entire drstree or a subdir by using constraints **kwargs

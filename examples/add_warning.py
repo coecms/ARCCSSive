@@ -21,7 +21,7 @@ limitations under the License.
 from __future__ import print_function
 
 from ARCCSSive.CMIP5 import connect
-from ARCCSSive.CMIP5.Model import VersionWarning
+from ARCCSSive.CMIP5.Model import Instance, VersionWarning
 from ARCCSSive.CMIP5.other_functions import combine_constraints, assign_mips
 from ARCCSSive.CMIP5.update_db_functions import insert_unique
 import argparse
@@ -92,6 +92,7 @@ outdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
 
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = connect()
+db=cmip5.session
 
 # if version/s defined take it out of constraints
 vers_cnstr=None
@@ -138,6 +139,6 @@ for constraints in combs:
                fout.close()
             else:
                # if admin add warning directly to database, commit happens in function 
-               for v in db_result:
+               for v in db_results:
                    insert_unique( db, VersionWarning, **{'version_id':v.id, 'warning':warning, 
                                  'added_by':email, 'added_on':datetime.now().strftime("%Y%m%d")} )
