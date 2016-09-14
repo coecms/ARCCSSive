@@ -118,11 +118,11 @@ def session(request, tmpdir_factory):
     v11_id = add_version_item(db,
         instance_id = inst1_id,
         path        = dira.strpath,
-        is_latest   = True,
+        is_latest   = False,
         checked_on  = added_on,
         to_update  = False,
         dataset_id  = 'someid',
-        version     = 'v01')
+        version     = 'v20111201')
     v12_id = add_version_item(db,
         instance_id = inst1_id,
         path        = dira.strpath,
@@ -130,7 +130,15 @@ def session(request, tmpdir_factory):
         checked_on  = added_on,
         to_update  = False,
         dataset_id  = 'someid',
-        version     = 'v02')
+        version     = 'v20120101')
+    v13_id = add_version_item(db,
+        instance_id = inst1_id,
+        path        = dira.strpath,
+        is_latest   = False,
+        checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
+        version     = 'NA')
 
     inst2_id = add_instance_item(db,
         variable   = 'f',
@@ -142,27 +150,27 @@ def session(request, tmpdir_factory):
     v21_id = add_version_item(db,
         instance_id = inst2_id,
         path        = dirb.strpath,
-        is_latest   = False,
-        checked_on  = added_on,
-        to_update  = False,
-        dataset_id  = 'someid',
-        version     = 'v01')
-    v22_id = add_version_item(db,
-        instance_id = inst2_id,
-        path        = dirb.strpath,
         is_latest   = True,
         checked_on  = added_on,
         to_update  = False,
         dataset_id  = 'someid',
-        version     = 'v02')
+        version     = 'v20111201')
+    v22_id = add_version_item(db,
+        instance_id = inst2_id,
+        path        = dirb.strpath,
+        is_latest   = False,
+        checked_on  = added_on,
+        to_update  = False,
+        dataset_id  = 'someid',
+        version     = 'v20120101')
     add_warning_item(db,
         version_id    = v11_id,
-        warning    = 'Test warning for inst1 v01',
+        warning    = 'Test warning for inst1 v20111201',
         added_by    = 'someone@example.com',
         added_on    = added_on)
     add_warning_item(db,
         version_id    = v12_id,
-        warning    = 'Test warning for inst1 v02',
+        warning    = 'Test warning for inst1 v20120101',
         added_by   = 'someone@example.com',
         added_on   = added_on)
     add_file_item(db,
@@ -177,7 +185,7 @@ def session(request, tmpdir_factory):
         sha256     = 'Anothersha256')
     add_warning_item(db,
         version_id    = v21_id,
-        warning    = 'Test warning for inst2 v01',
+        warning    = 'Test warning for inst2 v20111201',
         added_by    = 'anyone@example.com',
         added_on    = added_on)
 
@@ -195,7 +203,7 @@ def session(request, tmpdir_factory):
         checked_on  = added_on,
         to_update   = False,
         dataset_id  = 'someid',
-        version     = '2001')
+        version     = 'v20130507')
     add_file_item(db,
         version_id    = vers,
         filename   = 'example.nc',
