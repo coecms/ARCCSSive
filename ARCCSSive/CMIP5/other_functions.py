@@ -26,7 +26,7 @@ from datetime import date
 import glob
 import subprocess
 import re
-import cdms2
+#import cdms2 to open netcdf files
 from collections import defaultdict
 from ARCCSSive.data import mip_dict, frq_dict 
 from ARCCSSive.CMIP5.update_db_functions import add_bulk_items, update_item 

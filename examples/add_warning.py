@@ -132,13 +132,13 @@ for constraints in combs:
             request=input("Do you want to proceed? Y/N \n")
         if request == "Y":
             if not admin:
-               # if not admin write date/e-mail/message and list of version ids to file
-               fout=open(outdir+"warning_"+os.environ['USER']+"_"+datetime.now().strftime("%Y%m%dT%H%M")+".txt", 'w')
-               fout.write(",".join([datetime.now().strftime("%Y%m%d"),email,warning]))
-               fout.write(","+",".join([str(v.id) for v in db_results]))
-               fout.close()
+                # if not admin write date/e-mail/message and list of version ids to file
+                fout=open(outdir+"warning_"+os.environ['USER']+"_"+datetime.now().strftime("%Y%m%dT%H%M")+".txt", 'w')
+                fout.write(",".join([datetime.now().strftime("%Y%m%d"),email,warning]))
+                fout.write(","+",".join([str(v.id) for v in db_results]))
+                fout.close()
             else:
-               # if admin add warning directly to database, commit happens in function 
-               for v in db_results:
-                   insert_unique( db, VersionWarning, **{'version_id':v.id, 'warning':warning, 
+                # if admin add warning directly to database, commit happens in function 
+                for v in db_results:
+                    insert_unique( db, VersionWarning, **{'version_id':v.id, 'warning':warning, 
                                  'added_by':email, 'added_on':datetime.now().strftime("%Y%m%d")} )
