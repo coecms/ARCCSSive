@@ -44,7 +44,7 @@ class Instance(Base):
 
     .. attribute:: mip
 
-        MIP table specifying output frequency
+        MIP table specifying output frequency and realm
 
     .. attribute:: model
 
@@ -53,6 +53,10 @@ class Instance(Base):
     .. attribute:: ensemble
 
         Ensemble member
+
+    .. attribute:: realm
+
+        Realm: ie atmos, ocean
 
     .. attribute:: versions
 
@@ -67,7 +71,7 @@ class Instance(Base):
     model      = Column(String, index=True)
     ensemble   = Column(String)
     realm      = Column(String)
-    # there will be new versions labelled 've' (version estimate) in drstree so using only timestamp to order them
+    # Missing versions are labelled NA in database and v20110427 in drstree, this is CMOR documentation date
     # order doesn't work if version NA
 
     versions   = relationship('Version', order_by='Version.version', backref='variable')
@@ -85,7 +89,7 @@ class Instance(Base):
         if vlatest==[]: 
             valid=[v for v in self.versions if v.version!="NA"]
             if valid==[]: return self.versions
-            valid.sort(key=lambda x: x.version[:-8])
+            valid.sort(key=lambda x: x.version[-8:])
             vlatest.append(valid[-1])
             i=-2
             while i>-len(valid) and valid[i].version==vlatest[0]:
@@ -105,14 +109,14 @@ class Instance(Base):
         """ 
         Returns the drstree path for this instance, if one is not yet available returns None 
         """
-        drstreep="/g/data1/ua6/drstree/CMIP5/GCM/" # this should be passed as DRSTREE env var
+        drs_root="/g/data1/ua6/drstree/CMIP5/" # this should be passed as DRSTREE env var
         frequency=mip_dict[self.mip][0]
-        return drstreep + "/".join([ self.model, 
-                                   self.experiment,
-                                   frequency,
-                                   self.realm,
-                                   self.variable,
-                                   self.ensemble]) 
+        return drs_root + "/".join([ self.model, 
+                                     self.experiment,
+                                     frequency,
+                                     self.realm,
+                                     self.variable,
+                                     self.ensemble]) 
 
 # Add alias to deprecated name
 Variable = Instance
@@ -158,8 +162,10 @@ class Version(Base):
     checked_on  = Column(String)
     to_update   = Column(Boolean)
 
-    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', backref='version')
-    files   = relationship('VersionFile', order_by='VersionFile.id', backref='version')
+    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', 
+                              backref='version', cascade="all, delete-orphan", passive_deletes=True)
+    files   = relationship('VersionFile', order_by='VersionFile.id', 
+                            backref='version', cascade="all, delete-orphan", passive_deletes=True)
 
 
     def glob(self):

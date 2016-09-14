@@ -76,14 +76,15 @@ class ESGFSearch(object):
         :argument **kwargs: optional constraints to apply, listed in class comment
         :return: 
         ''' 
-        node, distrib = ["http://pcmdi.llnl.gov/esg-search",True]
+        node, distrib, replica = ["http://pcmdi.llnl.gov/esg-search",True, False]
         if "node" in kwargs.keys(): node = kwargs.pop('node')
         if "distrib" in kwargs.keys(): distrib = kwargs.pop('distrib')
+        if "replica" in kwargs.keys(): replica = kwargs.pop('replica')
         if 'model' in kwargs.keys():
             kwargs['model']=self.model_names(kwargs['model']) 
         self.conn = SearchConnection(node, distrib=distrib)
         self.ctx = self.conn.new_context(project='CMIP5', latest=True, 
-                                           replica=False, **kwargs)
+                                           replica=replica, **kwargs)
         return 
 
     def model_names(self, model):

@@ -193,10 +193,13 @@ for constraints in combs:
 # you can use the key 'distrib'=False to search only one node 
 # you can use the key 'node' to pass a different node url from default pcmdi
 # for more info look at pyesgf module documentation
+    esgfargs=constraints
     if 'mip' in constraints.keys():
-        constraints['cmor_table']=constraints.pop('mip')
-    if 'exp0' in locals(): constraints['query']=exp0+"%"
-    esgf.search_node(**constraints)
+        esgfargs['cmor_table']=esgfargs.pop('mip')
+    if 'exp0' in locals(): esgfargs['query']=exp0+"%"
+    esgfargs['replica']=False
+    esgf.search_node(**esgfargs)
+    print("Found ",esgf.ds_count(),"simulations for constraints")
 # loop returned DatasetResult objects
     for ds in esgf.get_ds():
 # append to results list of version dictionaries containing useful info 
@@ -207,12 +210,17 @@ for constraints in combs:
                 files.append(f)
                 checksums.append(f.checksum)
                 tracking_ids.append(f.tracking_id)
+                if "256" in ds.chksum_type():
+                    chksum_type="sha256"
+                else:
+                    chksum_type="md5"
         esgf_results.append({'version': "v" + ds.get_attribute('version'), 
             'files':files, 'tracking_ids': tracking_ids, 
-            'checksum_type': ds.chksum_type(), 'checksums': checksums,
+            'checksum_type': chksum_type, 'checksums': checksums,
             'dataset_id':ds.dataset_id })
         
 # compare local to remote info
+    print("Finished to retrieve remote data")
     if esgf_results==[]:
         if db_results!=[]:
             print("Found local version but none is currently available on ESGF nodes for constraints:\n",constraints)

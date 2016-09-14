@@ -135,38 +135,43 @@ def compare_files(db,rds,v,admin):
         :argument v:  local version object   
         :return: result set, NB updating VerisonFiles object in databse if calculating checksums 
     '''
-    extra=set([])
+    extra=None
+    local_files_num=len(v.files)
     # if there are no files on db for local version add them
-    if v.filenames()==[]:
+    if v.files()==[]:
         rows=[]
         for f in v.build_filepaths():
-            checksum=check_hash(f,'sha256')
-            rows.append(dict(filename=f.split("/")[-1], sha256=checksum, version_id=v.id))
+            rows.append(dict(filename=f.split("/")[-1], version_id=v.id))
         if admin:   
             add_bulk_items(db, VersionFile, rows)
         else:
             for r in rows:
                 write_log("new file "+ str(r) + "\n")
+        local_files_num=len(rows)
     # first compare tracking_ids if all are present in local version
+    # if a file is INVALID or missing skip both tracking-id and checksums comparison
     local_ids=[x for x in v.tracking_ids() if x not in [None,""]]
+    if "INVALID" not in local_ids or local_files_num != len(rds['files']):
+        return extra
     if len(local_ids)>0:
         extra = compare_tracking_ids(rds['tracking_ids'],local_ids)
-    # if tracking_ids are the same or if they are not present compare checksums
     # calculate checksums and update local db if necessary  
-    if extra==set([]):
+    # uncomment this to check also if tracking_ids are the same
+    #if extra is None or  extra==set([]):
+    # if tracking_ids are not present compare checksums
+    if extra is None:
         local_sums=[]
         cktype=str(rds['checksum_type']).lower()
         for f in v.files:
             try:
                 cksum=f.__dict__[cktype] 
-            except TypeError:
-                print("typeeror is fine")
+            except (TypeError, KeyError):
+                #print("type or key error ",cktype)
                 cksum=None
             if cksum in ["",None]:
                 cksum=check_hash(v.path+"/"+f.filename,cktype)
                 if admin: 
                     update_item(db,VersionFile,f.id,{cktype:cksum})
-                    #after updating you lose the file obj
                 else:
                     write_log(" ".join([cktype,str(f.id),cksum,"\n"]))
             local_sums.append(cksum) 
@@ -276,6 +281,23 @@ def find_version(bits,string):
         return 'not_specified'
     else:
         return dummy[0]
+
+def get_trackid(fpath):
+    ''' Return trackid from netcdf file '''
+    # open netcdf file
+    try:
+        f = cdms2.open(fpath,'r')
+    except:
+        print("INVALID NETCDF,%s" % fpath)
+        return "INVALID" 
+    # read tracking id attribute
+    try:
+        trackid=f.tracking_id
+    except:
+        trackid=None
+    # close file
+    f.close()
+    return trackid
 
 def list_drs_versions(path):
     ''' Returns matching string if found in directory structure '''
