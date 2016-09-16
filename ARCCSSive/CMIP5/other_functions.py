@@ -139,7 +139,7 @@ def compare_files(db,rds,v,admin):
     extra=None
     local_files_num=len(v.files)
     # if there are no files on db for local version add them
-    if v.files()==[]:
+    if v.files==[]:
         rows=[]
         for f in v.build_filepaths():
             rows.append(dict(filename=f.split("/")[-1], version_id=v.id))

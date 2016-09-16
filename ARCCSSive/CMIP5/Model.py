@@ -107,7 +107,7 @@ class Instance(Base):
 
     def drstree_path(self):
         """ 
-        Returns the drstree path for this instance, if one is not yet available returns None 
+        Returns the drstree path for this instance latest version 
         """
         drs_root="/g/data1/ua6/drstree/CMIP5/" # this should be passed as DRSTREE env var
         frequency=mip_dict[self.mip][0]
@@ -116,7 +116,7 @@ class Instance(Base):
                                      frequency,
                                      self.realm,
                                      self.variable,
-                                     self.ensemble]) 
+                                     self.ensemble]) + "/latest" 
 
 # Add alias to deprecated name
 Variable = Instance
@@ -236,6 +236,16 @@ class Version(Base):
         []
         """
         return [x.tracking_id for x in self.files] 
+
+    def drstree_path(self):
+        """ 
+        Returns the drstree path for this particular version 
+        """
+        if self.version!='NA':
+            version=self.version
+        else:
+            version='v20110427'
+        return self.variable.drstree_path().replace('latest',version)
         
 class VersionWarning(Base):
     """
@@ -267,4 +277,4 @@ class VersionFile(Base):
     version_id   = Column(Integer, ForeignKey('versions.version_id'), index = True)
 
     def __str__(self):
-        return '%s'%(self.filename)
+        return '%s'%(self.filename  
