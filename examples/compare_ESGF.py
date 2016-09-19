@@ -229,7 +229,8 @@ for constraints in combs:
     esgfargs=constraints
     if 'mip' in constraints.keys():
         esgfargs['cmor_table']=esgfargs.pop('mip')
-    if 'exp0' in locals(): esgfargs['query']=exp0+"%"
+    if 'exp0' in locals():
+        esgfargs['query']=exp0+"%"
     esgfargs['replica']=False
     esgf.search_node(**esgfargs)
     print("Found ",esgf.ds_count(),"simulations for constraints")
@@ -237,10 +238,10 @@ for constraints in combs:
 # using multiprocessing Pool to parallelise process_file
 # using 8 here as it is the number ov VCPU on VDI
     if esgf.ds_count()>=1:
-       results=esgf.get_ds()
-       async_results = Pool(8).map_async(retrieve_ds, results)
-       for ds_info in async_results.get():
-           esgf_results.append(ds_info)
+        results=esgf.get_ds()
+        async_results = Pool(1).map_async(retrieve_ds, results)
+        for ds_info in async_results.get():
+            esgf_results.append(ds_info)
 
 # append to results list of version dictionaries containing useful info 
 # NB search should return only one latest, not replica version if any

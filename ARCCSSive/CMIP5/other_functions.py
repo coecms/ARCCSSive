@@ -222,20 +222,23 @@ def list_tmpdir(flist):
 
 def list_logfile(flist):
     ''' this read from file list of instances from download log file and return the ones matching constraints '''
-    keys=['variable','mip','model','experiment','ensemble','realm','version','path','chk_type','files']
+    keys=['variable','mip','model','experiment','ensemble','realm','version','path','cks_type','files']
     file_keys=['filename','tracking_id','checksum']
     f=open(flist,'r')
     inst_list=[]
+    file_list=[]
     lines=f.readlines()
-    values=lines[0].split(',')
+    values=lines[0].replace("\n","").split(',')
     var=values[0]
     ds_dict=dict(zip(keys[:-1], values))
     for line in lines[1:]:
-        values=line[:-1].split(',')
-        while values[0]!=var:
-            ds_dict['files']=dict(zip(file_keys, values))
+        values=line.replace("\n","")[:-1].split(',')
+        if values[0]!=var:
+            file_list.append(dict(zip(file_keys, values)))
         else:
+            ds_dict['files']=file_list
             inst_list.append(ds_dict)
+            file_list=[]
             ds_dict=dict(zip(keys[:-1], values))
     f.close()
     return inst_list
