@@ -306,22 +306,22 @@ def find_version(bits,string):
     else:
         return dummy[0]
 
-def get_trackid(fpath):
-    ''' Return trackid from netcdf file '''
-    # open netcdf file
-    try:
-        f = cdms2.open(fpath,'r')
-    except:
-        print("INVALID NETCDF,%s" % fpath)
-        return "INVALID" 
-    # read tracking id attribute
-    try:
-        trackid=f.tracking_id
-    except:
-        trackid=None
-    # close file
-    f.close()
-    return trackid
+#def get_trackid(fpath):
+#    ''' Return trackid from netcdf file '''
+#    # open netcdf file
+#    try:
+#        f = cdms2.open(fpath,'r')
+#    except:
+#        print("INVALID NETCDF,%s" % fpath)
+#        return "INVALID" 
+#    # read tracking id attribute
+#    try:
+#        trackid=f.tracking_id
+#    except:
+#        trackid=None
+#    # close file
+#    f.close()
+#    return trackid
 
 def list_drs_versions(path):
     ''' Returns matching string if found in directory structure '''
