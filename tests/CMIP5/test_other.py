@@ -67,3 +67,8 @@ def test_list_drs_files(drstree):
     files_path=drstree[1]
     assert set(list_drs_files(files_path))==set(['f1.nc','f2.nc','f3.nc'])
 
+def test_get_instance():
+    dataset_id='cmip5.output1.MIROC.MIROC-ESM-CHEM.rcp45.mon.atmos.Amon.r3i1p1.v20150209|esgf-data1.diasjp.net'
+    inst_dict={'model':'MIROC-ESM-CHEM','experiment':'rcp45','realm':'atmos','mip':'Amon',
+               'ensemble':'r3i1p1','version':'v20150209'}
+    assert get_instance(dataset_id)==inst_dict

@@ -27,6 +27,7 @@ from collections import defaultdict
 import argparse
 from datetime import datetime 
 import sys
+from multiprocessing import Pool
 
 # check python version and then call main()
 if sys.version_info < ( 2, 7):
@@ -145,19 +146,51 @@ def write_table(matrix,exp):
     print( "Data written in table for experiment: ",exp)
     return
 
-def new_files(remote):
+
+def new_files(remote,var):
     ''' return urls of new files to download '''
     urls=[]
+    dataset_info=[]
     # this return too many we need to do it variable by variable
     for ind,ds in enumerate(remote):
+        if 'same_as' not in ds.keys(): continue 
         if ds['same_as']==[]:
+            inst=get_instance(ds['dataset_id'])
             ctype=ds['checksum_type']
+            # found dataset local path from download url, replace thredds with /g/data1/ua6/unof...
+            first=ds['files'][0]
+            path="/".join(first.download_url.split("/")[1:-1])
+            ds_string=",".join([var,inst['mip'],inst['model'],inst['experiment'],
+                               inst['ensemble'],inst['realm'],inst['version'],
+                               "/g/data1/ua6/unofficial-ESG-replica/tmp/tree/"+path])+"\n"
+            dataset_info.append(ds_string)
             for f in ds['files']:
                 if ctype is None: 
                     urls.append("' '".join([f.filename,f.download_url,"None","None"]))
+                    dataset_info.append(",".join([f.filename,f.tracking_id,"None","None"])+"\n")
                 else:
                     urls.append("' '".join([f.filename,f.download_url,ctype.upper(),f.checksum]))
-    return urls
+                    dataset_info.append(",".join([f.filename,f.tracking_id,ctype.lower(),f.checksum])+"\n")
+    return urls,dataset_info
+
+
+def retrieve_ds(ds):
+    ''' Retrieve info from a remote dataset object '''
+    files, checksums, tracking_ids = [],[],[]
+    for f in ds.files(): 
+        if f.get_attribute('variable')[0]== constraints['variable']:
+            files.append(f)
+            checksums.append(f.checksum)
+            tracking_ids.append(f.tracking_id)
+            if "256" in ds.chksum_type():
+                chksum_type="sha256"
+            else:
+                chksum_type="md5"
+    ds_info= {'version': "v" + ds.get_attribute('version'), 
+        'files':files, 'tracking_ids': tracking_ids, 
+        'checksum_type': chksum_type, 'checksums': checksums,
+        'dataset_id':ds.dataset_id }
+    return ds_info
 
 
 # assign constraints from input
@@ -201,23 +234,16 @@ for constraints in combs:
     esgf.search_node(**esgfargs)
     print("Found ",esgf.ds_count(),"simulations for constraints")
 # loop returned DatasetResult objects
-    for ds in esgf.get_ds():
+# using multiprocessing Pool to parallelise process_file
+# using 8 here as it is the number ov VCPU on VDI
+    if esgf.ds_count()>=1:
+       results=esgf.get_ds()
+       async_results = Pool(8).map_async(retrieve_ds, results)
+       for ds_info in async_results.get():
+           esgf_results.append(ds_info)
+
 # append to results list of version dictionaries containing useful info 
 # NB search should return only one latest, not replica version if any
-        files, checksums, tracking_ids = [],[],[]
-        for f in ds.files(): 
-            if f.get_attribute('variable')[0]== constraints['variable']:
-                files.append(f)
-                checksums.append(f.checksum)
-                tracking_ids.append(f.tracking_id)
-                if "256" in ds.chksum_type():
-                    chksum_type="sha256"
-                else:
-                    chksum_type="md5"
-        esgf_results.append({'version': "v" + ds.get_attribute('version'), 
-            'files':files, 'tracking_ids': tracking_ids, 
-            'checksum_type': chksum_type, 'checksums': checksums,
-            'dataset_id':ds.dataset_id })
         
 # compare local to remote info
     print("Finished to retrieve remote data")
@@ -227,13 +253,24 @@ for constraints in combs:
         else: 
             print("Nothing currently available on ESGF nodes and no local version exists for constraints:\n",constraints)
     else:
-        esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, orig_args.keys(), admin)
+        print(esgf.ds_count(),"instances were found on ESGF and ",outputs.count()," on the local database")
+        if sys.version_info < ( 3, 0 ):
+            request=raw_input("Do you want to proceed with comparison or print current results? Y/N \n")
+        else:
+            request=input("Do you want to proceed with comparison or print current results? Y/N \n")
+        if request == "Y":
+            esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, orig_args.keys(), admin)
 
 # build table to summarise results
-    urls=new_files(esgf_results)
+    urls,dataset_info=new_files(esgf_results,constraints['variable'])
     if urls!=[]:
-        outfile="_".join(["request",os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
+        user_date="_".join([os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
+        outfile="request_"+user_date
         fout=open(outfile,"w")
+        ds_info=open(outdir+"new-ds-info_"+user_date,'w')
+        for line in dataset_info:
+            ds_info.write(line)
+        ds_info.close()
         print("These are new files to download:\n")
         for s in urls:
             print(s.split("'")[0])

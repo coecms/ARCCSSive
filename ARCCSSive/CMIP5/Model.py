@@ -277,4 +277,4 @@ class VersionFile(Base):
     version_id   = Column(Integer, ForeignKey('versions.version_id'), index = True)
 
     def __str__(self):
-        return '%s'%(self.filename  
+        return '%s'%(self.filename)

@@ -52,7 +52,7 @@ def join_varmip(var0,mip0):
 def get_instance(dataset_id):
     ''' Break dataset_id from ESGF search in dictionary of instance attributes '''
     bits=dataset_id.split(".")
-    return {'model': bits[3],'experiment': bits[4],'mip':bits[7],'ensemble':bits[8],'version':bits[9].split("|")[0]}
+    return {'model': bits[3],'experiment': bits[4],'realm':bits[6],'mip':bits[7],'ensemble':bits[8],'version':bits[9].split("|")[0]}
 
 def compare_instances(db,remote,local,const_keys,admin):
     ''' Compare remote and local search results they're both a list of dictionaries
@@ -210,14 +210,34 @@ def list_tmpdir(flist):
     ''' this read from file list of instances on tmp/tree and return the ones matching constraints '''
 # skip first line
 # variable,mip_table,model,experiment,ensemble,realm,version,path
-    keys=['variable','mip','model','experiment',
-             'ensemble', 'realm', 'version', 'path']
+    keys=['variable','mip','model','experiment','ensemble','realm','version','path']
     f=open(flist,'r')
     inst_list=[]
     lines=f.readlines()
     for line in lines[1:]:
         values=line[:-1].split(',')
         inst_list.append(dict(zip(keys, values)))
+    f.close()
+    return inst_list
+
+def list_logfile(flist):
+    ''' this read from file list of instances from download log file and return the ones matching constraints '''
+    keys=['variable','mip','model','experiment','ensemble','realm','version','path','chk_type','files']
+    file_keys=['filename','tracking_id','checksum']
+    f=open(flist,'r')
+    inst_list=[]
+    lines=f.readlines()
+    values=lines[0].split(',')
+    var=values[0]
+    ds_dict=dict(zip(keys[:-1], values))
+    for line in lines[1:]:
+        values=line[:-1].split(',')
+        while values[0]!=var:
+            ds_dict['files']=dict(zip(file_keys, values))
+        else:
+            inst_list.append(ds_dict)
+            ds_dict=dict(zip(keys[:-1], values))
+    f.close()
     return inst_list
 
 def file_glob(**kwargs):
