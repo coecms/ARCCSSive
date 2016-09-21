@@ -80,13 +80,13 @@ for constraints in combs:
     for o in outputs:
         db_results=[v for v in o.versions if v.is_latest]
         if db_results==[]:
-           db_results=[v for o in outputs for v in o.versions if v==o.latest()[0]]
+            db_results=[v for o in outputs for v in o.versions if v==o.latest()[0]]
 # write result to output file
-    if db_results==[]:
-        print("No local version exists for constraints:\n",constraints)
-    else:
-        for v in db_results:
-            fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
+        if db_results==[]:
+            print("No local version exists for constraints:\n",constraints)
+        else:
+            for v in db_results:
+                fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
 fout.close()
        
 
