@@ -85,7 +85,7 @@ def format_cell(v_obj,exp):
     if value[0:2]=="ve": value+=" (estimate) "
     if value=="NA": value="version not defined"
     if v_obj.is_latest: 
-        value += " latest "
+        value += " latest on" + v_obj.checked_on
     if v_obj.to_update: value += " to update "
     return value + " | "
 
@@ -182,7 +182,9 @@ def retrieve_ds(ds):
             files.append(f)
             checksums.append(f.checksum)
             tracking_ids.append(f.tracking_id)
-            if "256" in ds.chksum_type():
+            if ds.chksum_type() is None:
+                chksum_type=None
+            elif "256" in ds.chksum_type():
                 chksum_type="sha256"
             else:
                 chksum_type="md5"
@@ -190,6 +192,7 @@ def retrieve_ds(ds):
         'files':files, 'tracking_ids': tracking_ids, 
         'checksum_type': chksum_type, 'checksums': checksums,
         'dataset_id':ds.dataset_id }
+    print(ds_info)
     return ds_info
 
 
@@ -231,7 +234,7 @@ for constraints in combs:
         esgfargs['cmor_table']=esgfargs.pop('mip')
     if 'exp0' in locals():
         esgfargs['query']=exp0+"%"
-    esgfargs['replica']=False
+    esgfargs['replica']=True
     esgf.search_node(**esgfargs)
     print("Found ",esgf.ds_count(),"simulations for constraints")
 # loop returned DatasetResult objects
