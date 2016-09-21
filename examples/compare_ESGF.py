@@ -49,7 +49,10 @@ def parse_input():
             AND [mip1 OR mip2 OR ...]
             Frequency adds all the correspondent mip_tables to the mip_table list.
             If a constraint isn't specified for one of the fields automatically all values
-            for that field will be selected.''',formatter_class=argparse.RawTextHelpFormatter)
+            for that field will be selected.
+            NB this script uses Pool module to parallelise downloading information from the ESGF.
+               You can choose to use more than one cpu by changing parameter at line 247 from 1 to ncpus available.
+               Please do not do this on raijin unless you're submit job to queuee.''',formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-a','--admin', action='store_true', default=False, help='running script as admin', required=False)
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
     parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
@@ -234,7 +237,7 @@ for constraints in combs:
         esgfargs['cmor_table']=esgfargs.pop('mip')
     if 'exp0' in locals():
         esgfargs['query']=exp0+"%"
-    esgfargs['replica']=True
+    esgfargs['replica']=False
     esgf.search_node(**esgfargs)
     print("Found ",esgf.ds_count(),"simulations for constraints")
 # loop returned DatasetResult objects
