@@ -95,10 +95,10 @@ def test_drstree_path(session):
     """
     q = session.outputs()
     assert q[0].drstree_path() is not None
-    assert q[0].drstree_path() ==  "/g/data1/ua6/drstree/CMIP5/c/d/6hr/realm/a/e/latest"
+    assert q[0].drstree_path() ==  "/g/data1/r87/DRSv2/CMIP5/c/d/6hr/realm/e/a/latest"
     # write assertion for drstree_path() function for version object if version is 'NA" should use v20110427
-    assert q[0].versions[0].drstree_path() ==  "/g/data1/ua6/drstree/CMIP5/c/d/6hr/realm/a/e/v20110427"
-    assert q[0].versions[2].drstree_path() ==  "/g/data1/ua6/drstree/CMIP5/c/d/6hr/realm/a/e/v20120101"
+    assert q[0].versions[0].drstree_path() ==  "/g/data1/r87/DRSv2/CMIP5/c/d/6hr/realm/e/a/v20110427"
+    assert q[0].versions[2].drstree_path() ==  "/g/data1/r87/DRSv2/CMIP5/c/d/6hr/realm/e/a/v20120101"
 
 def test_latest(session):
     """

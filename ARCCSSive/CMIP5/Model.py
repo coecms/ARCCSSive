@@ -109,14 +109,15 @@ class Instance(Base):
         """ 
         Returns the drstree path for this instance latest version 
         """
-        drs_root="/g/data1/ua6/drstree/CMIP5/" # this should be passed as DRSTREE env var
+        #drs_root="/g/data1/ua6/drstree/CMIP5/" # this should be passed as DRSTREE env var
+        drs_root="/g/data1/r87/DRSv2/CMIP5/" # pointing to temporary location for new drstree 
         frequency=mip_dict[self.mip][0]
         return drs_root + "/".join([ self.model, 
                                      self.experiment,
                                      frequency,
                                      self.realm,
-                                     self.variable,
-                                     self.ensemble]) + "/latest" 
+                                     self.ensemble,
+                                     self.variable]) + "/latest" 
 
 # Add alias to deprecated name
 Variable = Instance

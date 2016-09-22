@@ -52,7 +52,7 @@ def parse_input():
             for that field will be selected.
             NB this script uses Pool module to parallelise downloading information from the ESGF.
                You can choose to use more than one cpu by changing parameter at line 247 from 1 to ncpus available.
-               Please do not do this on raijin unless you're submit job to queuee.''',formatter_class=argparse.RawTextHelpFormatter)
+               Please do not do this on raijin unless you're submitting job to queue.''',formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-a','--admin', action='store_true', default=False, help='running script as admin', required=False)
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
     parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
