@@ -14,7 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from __future__ import print_function
+import sys
 
-import pkg_resources
 __name__ = 'ARCCSSive'
-__version__ = pkg_resources.get_distribution(__name__).version
+
+# pkg_resources isn't working properly in 2.7.3
+if sys.version_info > (2,7,3):
+    import pkg_resources
+    __version__ = pkg_resources.get_distribution(__name__).version
+else:
+    __version__ = 'unknown'
