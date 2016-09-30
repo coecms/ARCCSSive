@@ -195,7 +195,6 @@ def retrieve_ds(ds):
         'files':files, 'tracking_ids': tracking_ids, 
         'checksum_type': chksum_type, 'checksums': checksums,
         'dataset_id':ds.dataset_id }
-    print(ds_info)
     return ds_info
 
 
