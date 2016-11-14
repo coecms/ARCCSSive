@@ -160,20 +160,21 @@ def new_files(remote,var):
         if ds['same_as']==[]:
             inst=get_instance(ds['dataset_id'])
             ctype=ds['checksum_type']
+            if ctype is None: ctype="None" 
             # found dataset local path from download url, replace thredds with /g/data1/ua6/unof...
             first=ds['files'][0]
             path="/".join(first.download_url.split("/")[1:-1])
             ds_string=",".join([var,inst['mip'],inst['model'],inst['experiment'],
-                               inst['ensemble'],inst['realm'],inst['version'],
-                               "/g/data1/ua6/unofficial-ESG-replica/tmp/tree/"+path])+"\n"
+                               inst['ensemble'],inst['realm'],inst['version'],ds['dataset_id'],
+                               "/g/data1/ua6/unofficial-ESG-replica/tmp/tree"+path,ctype])+"\n"
             dataset_info.append(ds_string)
             for f in ds['files']:
-                if ctype is None: 
+                if ctype=="None": 
                     urls.append("' '".join([f.filename,f.download_url,"None","None"]))
-                    dataset_info.append(",".join([f.filename,f.tracking_id,"None","None"])+"\n")
+                    dataset_info.append(",".join([f.filename,f.tracking_id,"None"])+"\n")
                 else:
                     urls.append("' '".join([f.filename,f.download_url,ctype.upper(),f.checksum]))
-                    dataset_info.append(",".join([f.filename,f.tracking_id,ctype.lower(),f.checksum])+"\n")
+                    dataset_info.append(",".join([f.filename,f.tracking_id,f.checksum])+"\n")
     return urls,dataset_info
 
 
@@ -195,7 +196,6 @@ def retrieve_ds(ds):
         'files':files, 'tracking_ids': tracking_ids, 
         'checksum_type': chksum_type, 'checksums': checksums,
         'dataset_id':ds.dataset_id }
-    print(ds_info)
     return ds_info
 
 
