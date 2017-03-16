@@ -69,21 +69,24 @@ class ESGFSearch(object):
     def search_node(self, **kwargs):
         ''' Opens search connection and creates search context object self.ctx 
             by default searches CMIP5 latest version, not replica
-        :argument node: primary node to search 
-                        default "http://pcmdi.llnl.gov/esg-search" 
-        :argument distrib: default True search across all nodes 
-                           both these arguments can be passed as part of **kwargs
         :argument **kwargs: optional constraints to apply, listed in class comment
+             node: primary node to search 
+                        default "http://pcmdi.llnl.gov/esg-search" 
+             distrib: default True search across all nodes 
+             replica: default False exclude replicas from results
+             project: default CMIP5 ESGF project to search
         :return: 
         ''' 
-        node, distrib, replica = ["http://pcmdi.llnl.gov/esg-search",True, False]
+        # set default values for node, project, distributed search and replica
+        node, project, distrib, replica = ["http://pcmdi.llnl.gov/esg-search","CMIP5",True, False]
         if "node" in kwargs.keys(): node = kwargs.pop('node')
         if "distrib" in kwargs.keys(): distrib = kwargs.pop('distrib')
         if "replica" in kwargs.keys(): replica = kwargs.pop('replica')
+        if "project" in kwargs.keys(): project = kwargs.pop('project')
         if 'model' in kwargs.keys():
             kwargs['model']=self.model_names(kwargs['model']) 
         self.conn = SearchConnection(node, distrib=distrib)
-        self.ctx = self.conn.new_context(project='CMIP5', latest=True, 
+        self.ctx = self.conn.new_context(project=project, latest=True, 
                                            replica=replica, **kwargs)
         return 
 
@@ -102,7 +105,7 @@ class ESGFSearch(object):
         :argument **kwargs: optional constraints to apply, listed in class comment
         :return: A list of pyESGF DatasetResult objects
         '''
-        return self.ctx.search(**kwargs)
+        return self.ctx.search(batch_size=250, ignore_facet_check=True, **kwargs)
 
     def ds_filter(self, **kwargs):
         '''Narrows down search results 
@@ -194,6 +197,9 @@ def get_attribute(self, attr):
     ''' return a list for the attribute of Dataset/FileResult specified as input '''
     return self.json[attr]
 
+def get_variable(self):
+    ''' return a value for the variable attribute of FileResult '''
+    return self.json['variable'][0]
 # Adding methods to DatasetResult class
 DatasetResult.variables = variables
 DatasetResult.files = files
@@ -206,3 +212,4 @@ DatasetResult.get_attribute = get_attribute
 # Adding methods to FileResult class
 FileResult.list_attributes = list_attributes
 FileResult.get_attribute = get_attribute
+FileResult.get_variable = get_variable

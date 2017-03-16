@@ -75,13 +75,11 @@ def assign_constraints():
 # assign constraints from input
 kwargs=assign_constraints()
 
-# a list fo the standard unique constraints defining one instance in the database
-# initialize dictionary of exp/matrices
-# initialise dictionary to contain results
+# initialise dictionary to contain a list of results
 results=defaultdict(list)
-#results=defaultdict(lambda: defaultdict(list))
 # open connection to local database and intiate SQLalchemy session 
 cmip5 = connect()
+# remove variables from constraints dictionary and save it as a separate list
 variables=kwargs.pop("variable")
 # get constraints combination
 combs=combine_constraints(**kwargs)
@@ -89,16 +87,19 @@ combs=combine_constraints(**kwargs)
 for constraints in combs:
     exp0=constraints['experiment']
     mip0=constraints['mip']
-# at the beginning:
+# search on localdatabase for matching Instances, if key "decadal" used for experiments, do this in two steps  
+# first search all other constraints, then filter results where experiment=="decadal*"
+# in both cases filter for variables which belong to input list
     if constraints['experiment']=='decadal':
         outputs=cmip5.outputs(**constraints).filter(and_(Instance.experiment.like(exp0), Instance.variable.in_(variables)))
     else:
         outputs=cmip5.outputs(**constraints).filter(Instance.variable.in_(variables))
-#extract list of models and variables
+#extract list of models from Instances returned by search 
     mod_set=set([str(o.model) for o in outputs])
 # build string to use as result dict key
     str_constr="_".join([constraints["experiment"],constraints["mip"]])
-# filter results by model, then ensembles and check if variables set is present
+# filter results by model, then ensembles and check if all variables are present
+# save details in versions dictionary as a string joining "model ensemble variable" as key and a list of versions as value
     for mod0 in mod_set:
         mod_outs=outputs.filter(Instance.model == mod0)
         ensembles=set([str(o.ensemble) for o in mod_outs])
@@ -111,10 +112,11 @@ for constraints in combs:
                 varset.add(str(o.variable))
                 # find version for each variable
             if set(variables).issubset(varset):
-      #  if all variables gone through save in dict else pass to next ensemble/model
+      #  if all variables  are available for an esemble/model pair than save in results dict else pass to next ensemble/model
                 results[str_constr].append(versions)
     
 # this is a bit ugly but works
+# for each model/ensemble pair in results if there saved results print them
 for k,v in results.items():
     if v!=[]:
         print("Found model/s for constraints: ",k)

@@ -16,12 +16,18 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+Last modified:
+  2017/02/22 - added "decadal" option to be used as experiment input, it will return all experiment matching "decadal%"
+             - fixed issue with Warning:"No local version exists for constraints .." appearing if one of the instances in database had no versions
+             - corrected help text, it was referring to older version  
 """
 
 from __future__ import print_function
 
 from ARCCSSive import CMIP5
 from ARCCSSive.CMIP5.other_functions import combine_constraints 
+from ARCCSSive.CMIP5.Model import Instance
 import argparse
 import sys
 
@@ -34,12 +40,15 @@ def parse_input():
     ''' Parse input arguments '''
     parser = argparse.ArgumentParser(description='''Checks all the CMIP5 ensembles
              available on raijin, matching the constraints passed as arguments.
-             Accept one value for the required arguments: experiment, model, variable, mip.
-             The others are optional and can be repeated:
+             Required arguments: experiment and variable .
+             The others are optional and all can be repeated, except for the output filename:
             example to select two particular ensembles:
-            -e r1i1p1 r2i1p1
+            -en r1i1p1 r2i1p1
             The script returns all the ensembles satifying the constraints
-            var1 AND model1 AND exp1  AND mip1  AND other optional constraints
+            var1 AND model1 AND exp1  AND mip1  AND other optional constraints.
+            -e decadal 
+            -a will return all versions not only the latest
+            will return all the experiments matching decadalYYYY
             If a constraint isn't specified for one of the fields automatically all values
             for that field will be selected.''', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
@@ -48,6 +57,8 @@ def parse_input():
     parser.add_argument('-t','--mip', type=str, nargs="*", help='CMIP5 MIP table', required=False)
     parser.add_argument('-en','--ensemble', type=str, nargs="*", help='CMIP5 ensemble', required=False)
     parser.add_argument('-ve','--version', type=str, nargs="*", help='CMIP5 version', required=False)
+    parser.add_argument('-a','--all-versions', help='returns all versions not only latest', action='store_true', 
+                         required=False) 
     parser.add_argument('-o','--output', type=str, nargs=1, help='output file name', required=False)
     return vars(parser.parse_args())
 
@@ -59,8 +70,9 @@ def assign_constraints():
         if v is None: kwargs.pop(k)
     return kwargs
 
-# Calling parse_input() function to build kwargs from external arguments paased by user 
+# Calling parse_input() function to build kwargs from external arguments passed by user 
 kwargs=assign_constraints()
+all_versions=kwargs.pop("all_versions")
 # open output file
 outfile=kwargs.pop("output",["search_result.txt"])
 fout=open(outfile[0],'w')
@@ -75,18 +87,26 @@ for constraints in combs:
     db_results=[]
     print(constraints)
 # search on local DB, return instance_ids
-    outputs=cmip5.outputs(**constraints)
+# allow "decadal" keyword to search for all decadalYYYY experiments
+    if constraints['experiment']=='decadal':
+        exp0=constraints.pop('experiment')
+        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%"))
+    else:
+        outputs=cmip5.outputs(**constraints)
 # loop through returned Instance objects
+    someresult=False
     for o in outputs:
-        db_results=[v for v in o.versions if v.is_latest]
-        if db_results==[]:
+        if all_versions:
+            db_results=[v for v in o.versions]
+        else:
             db_results=[v for v in o.versions if v==o.latest()[0]]
 # write result to output file
-        if db_results==[]:
-            print("No local version exists for constraints:\n",constraints)
-        else:
+        if db_results!=[]:
+            someresult=True
             for v in db_results:
                 fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
+    if not someresult:
+         print("No local version exists for constraints:\n",constraints)
 fout.close()
        
 

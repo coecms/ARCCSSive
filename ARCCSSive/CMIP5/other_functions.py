@@ -52,133 +52,9 @@ def join_varmip(var0,mip0):
 def get_instance(dataset_id):
     ''' Break dataset_id from ESGF search in dictionary of instance attributes '''
     bits=dataset_id.split(".")
-    return {'model': bits[3],'experiment': bits[4],'realm':bits[6],'mip':bits[7],'ensemble':bits[8],'version':bits[9].split("|")[0]}
+    return {'model': bits[3],'experiment': bits[4],'realm':bits[6],'mip':bits[7],
+            'ensemble':bits[8],'version':bits[9].split("|")[0]}
 
-def compare_instances(db,remote,local,const_keys,admin):
-    ''' Compare remote and local search results they're both a list of dictionaries
-        :argument db: sqlalchemy local db session 
-        :argument remote: each dict has keys version, files (objs), filenames, tracking_ids, dataset_id 
-        :argument local:  list of version objects
-        :argument const_keys:  list of instance attributes defined by user constraints
-        :argument admin:  boolean if True user is admin and can update db directly, optherwise new info saved in log file
-        :return: remote, local with updated attributes 
-    '''
-    global logfile
-    logdir="/g/data1/ua6/unofficial-ESG-replica/tmp/pxp581/requests/"
-    if not admin:
-        logfile=logdir+"log_" + os.environ['USER'] + "_" + today.replace("-","") + ".txt"
-        print(logfile)
-    # a list of the unique constraints defining one instance in the database which are not in user constraints
-    undefined=[x for x in Instance.__table_args__[0].columns.keys() if x not in const_keys]
-    # loop through all returned remote datasets
-    for ind,ds in enumerate(remote):
-        # loop through all local versions
-        ds_instance=get_instance(ds['dataset_id'])
-        for v in local:
-            dummy=[False for key in undefined if  ds_instance[key] != v.variable.__dict__[key]]
-            if False in dummy:
-                continue
-            v.checked_on = today
-            # compare files for all cases except if version regular but different from remote 
-            if v.version in [ds['version'],'NA',r've\d*']:
-                extra = compare_files(db,ds,v,admin)
-                # if tracking_ids or checksums are same
-                if extra==set([]):
-                    v.to_update = False
-                else:
-                    v.to_update = True
-                    if not admin: 
-                        ds_info=[str(x) for x in ds_instance.items()]
-                        write_log(" ".join(["update"]+ds_info+[v.version,v.path,"\n"]))
-            # if local dataset_id is the same as remote skip all other checks
-            if v.dataset_id==ds['dataset_id']:
-                v.is_latest = True
-            # if version same as latest on esgf 
-            elif v.version == ds['version']:
-                v.dataset_id = ds['dataset_id']
-                v.is_latest = True
-            # if version undefined 
-            elif v.version in ['NA',r've\d*']:
-                if extra==set([]):
-                    v.version = ds['version']
-                    v.dataset_id = ds['dataset_id']
-                    v.is_latest = True
-            # if version different or undefined but one or more tracking_ids are different
-            # assume different version from latest
-            # NB what would happen if we fix faulty files? tracking_ids will be same but md5 different, 
-            # need to set a standard warning for them
-            else:
-                v.is_latest = False
-                if v.version > ds['version']: 
-                    print("Warning!!!")
-                    print(" ".join(["Local version",v.version,"is more recent than the latest version",ds['version'], "found on ESGF"]))
-                if v.dataset_id is None: v.dataset_id = "NA"
-    # update local version on database
-            if admin: 
-                db.commit()
-            else:
-                if db.dirty:
-                    line=["version"]+ds_instance.values()[:-1]+[v.version,str(v.id),str(v.dataset_id),
-                          str(v.is_latest),str(v.checked_on),"\n"]
-                    write_log(" ".join(line))
-                
-    # add to remote dictionary list of local identical versions
-        remote[ind]['same_as']=[v.id for v in local if v.dataset_id == ds['dataset_id']] 
-    try:
-        flog.close()
-    except:
-        pass
-    return remote, local
-
-def compare_files(db,rds,v,admin):
-    ''' Compare files of remote and local version of a dataset
-        :argument rds: dictionary of remote dataset object selected attributes  
-        :argument v:  local version object   
-        :return: result set, NB updating VerisonFiles object in databse if calculating checksums 
-    '''
-    extra=None
-    local_files_num=len(v.files)
-    # if there are no files on db for local version add them
-    if v.files==[]:
-        rows=[]
-        for f in v.build_filepaths():
-            rows.append(dict(filename=f.split("/")[-1], version_id=v.id))
-        if admin:   
-            add_bulk_items(db, VersionFile, rows)
-        else:
-            for r in rows:
-                write_log("new file "+ str(r) + "\n")
-        local_files_num=len(rows)
-    # first compare tracking_ids if all are present in local version
-    # if a file is INVALID or missing skip both tracking-id and checksums comparison
-    local_ids=[x for x in v.tracking_ids() if x not in [None,""]]
-    if "INVALID" not in local_ids or local_files_num != len(rds['files']):
-        return extra
-    if len(local_ids)>0:
-        extra = compare_tracking_ids(rds['tracking_ids'],local_ids)
-    # calculate checksums and update local db if necessary  
-    # uncomment this to check also if tracking_ids are the same
-    #if extra is None or  extra==set([]):
-    # if tracking_ids are not present compare checksums
-    if extra is None:
-        local_sums=[]
-        cktype=str(rds['checksum_type']).lower()
-        for f in v.files:
-            try:
-                cksum=f.__dict__[cktype] 
-            except (TypeError, KeyError):
-                #print("type or key error ",cktype)
-                cksum=None
-            if cksum in ["",None]:
-                cksum=check_hash(v.path+"/"+f.filename,cktype)
-                if admin: 
-                    update_item(db,VersionFile,f.id,{cktype:cksum})
-                else:
-                    write_log(" ".join([cktype,str(f.id),cksum,"\n"]))
-            local_sums.append(cksum) 
-        extra = compare_checksums(rds['checksums'],local_sums)
-    return extra 
-            
 def compare_tracking_ids(remote_ids,local_ids):
     ''' Compare the lists of the tracking_ids from a remote and a local version of a dataset
         :argument remote_ids: list of remote tracking_ids  
@@ -222,7 +98,7 @@ def list_tmpdir(flist):
 
 def list_logfile(flist):
     ''' this read from file list of instances from download log file and return the ones matching constraints '''
-    keys=['variable','mip','model','experiment','ensemble','realm','version','path','cks_type','files']
+    keys=['variable','mip','model','experiment','ensemble','realm','version','dataset_id','path','cks_type','files']
     file_keys=['filename','tracking_id','checksum']
     f=open(flist,'r')
     inst_list=[]
@@ -240,6 +116,8 @@ def list_logfile(flist):
             inst_list.append(ds_dict)
             file_list=[]
             ds_dict=dict(zip(keys[:-1], values))
+    ds_dict['files']=file_list
+    inst_list.append(ds_dict)
     f.close()
     return inst_list
 
@@ -306,22 +184,22 @@ def find_version(bits,string):
     else:
         return dummy[0]
 
-#def get_trackid(fpath):
-#    ''' Return trackid from netcdf file '''
-#    # open netcdf file
-#    try:
-#        f = cdms2.open(fpath,'r')
-#    except:
-#        print("INVALID NETCDF,%s" % fpath)
-#        return "INVALID" 
-#    # read tracking id attribute
-#    try:
-#        trackid=f.tracking_id
-#    except:
-#        trackid=None
-#    # close file
-#    f.close()
-#    return trackid
+def get_trackid(fpath):
+    ''' Return trackid from netcdf file '''
+    # open netcdf file
+    try:
+        f = cdms2.open(fpath,'r')
+    except:
+        print("INVALID NETCDF,%s" % fpath)
+        return "INVALID" 
+    # read tracking id attribute
+    try:
+        trackid=f.tracking_id
+    except:
+        trackid=None
+    # close file
+    f.close()
+    return trackid
 
 def list_drs_versions(path):
     ''' Returns matching string if found in directory structure '''
