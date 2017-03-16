@@ -255,7 +255,7 @@ def compare_instances(db,remote,local,const_keys,admin):
                 extra = compare_files(db,ds,v,admin)
                 # if tracking_ids or checksums are same
                 if extra==set([]):
-		    v.to_update = False
+                    v.to_update = False
                 else:
                     v.to_update = True
                     if not admin:
