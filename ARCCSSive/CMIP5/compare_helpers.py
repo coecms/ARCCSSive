@@ -197,7 +197,6 @@ def retrieve_ds(args):
     (ds, variables) = args
     fvar=FileResult.get_variable
     allfiles=ds.files()
-    print('Taken %f seconds for ds_files()' % (end - start))
     #  use first file checksum to work out checksum type 
     # this is faster than calling ds.chksum_type()
     if allfiles[0].checksum is None:
@@ -220,7 +219,6 @@ def retrieve_ds(args):
                              'dataset_id':ds.dataset_id,
                              'variable': var,
                              'files':files } ) 
-    print('Taken %f seconds for ds-info' % (end - start))
     return ds_info
 
 
