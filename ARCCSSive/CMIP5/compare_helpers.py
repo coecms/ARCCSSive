@@ -192,8 +192,9 @@ def check_same(same,v,dsfiles,ctype):
        #    if f.filename in same:
     return different
 
-def retrieve_ds((ds,variables)):
+def retrieve_ds(args):
     ''' Retrieve info from a remote dataset object '''
+    (ds, variables) = args
     fvar=FileResult.get_variable
     allfiles=ds.files()
     print('Taken %f seconds for ds_files()' % (end - start))
