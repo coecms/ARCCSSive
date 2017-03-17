@@ -149,12 +149,8 @@ def update_files(local,remote):
                 missing=dsfnames.difference(v.filenames())
                 extra=set(v.filenames()).difference(dsfnames)
                 same=dsfnames.intersection(v.filenames())
-                print(missing)
-                print(extra)
-                print(same)
             ctype=ds['checksum_type']
             different=check_same(same,v,ds['files'],ctype) + list(missing)
-            print(different)
             if different != []:
                 inst=get_instance(ds['dataset_id'])
             # found dataset local path from download url, replace thredds with /g/data1/ua6/unof...
@@ -185,11 +181,7 @@ def check_same(same,v,dsfiles,ctype):
         tup1=[f for f in dsfiles if f.filename==fname][0] 
         tocompare.append((tup0,tup1)) 
     for tup in tocompare:
-        print(tup)
         if tup[0].__dict__[ctype]!=tup[1].checksum: different.append(tup[0].filename)
-       #for fname in same:
-       #    ds.__dict__[
-       #    if f.filename in same:
     return different
 
 def retrieve_ds(args):
