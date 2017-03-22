@@ -10,6 +10,7 @@ from ARCCSSive.CMIP5.other_functions import *
 #NB tmptree root dir is also defined there
 from ARCCSSive.CMIP5 import DB
 from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile
+import glob
 
 
 # open local database using ARCSSive interface
@@ -34,7 +35,8 @@ for inst in instances:
     kw_version={}
     kw_files={}
     frequency, kw_instance = drs_details(inst)
-    kw_instance['mip'] = get_mip(inst)
+    filename=glob.glob(inst+"/latest/*.nc")
+    kw_instance['mip'] = get_mip(filename)
     #print(kw_instance)
 # make sure details list isn't empty
     if kw_instance:

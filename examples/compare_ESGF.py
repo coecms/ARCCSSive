@@ -163,39 +163,39 @@ for constraints in combs:
             esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, orig_args.keys(), admin)
 
 # build table to summarise results
-    urls,dataset_info=new_files(esgf_results)
-    upd_urls,up_dataset_info=update_files(db_results,esgf_results)
-    if upd_urls!=[]:
-        user_date="_".join([os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
-        outfile="update_"+user_date
-        fout=open(outfile,"w")
-        ds_info=open(outdir+"up-dsinfo_"+user_date,'w')
-        for line in up_dataset_info:
-            ds_info.write(line)
-        ds_info.close()
-        print("These are files to update:\n")
-        for s in upd_urls:
-            print(s.split("'")[0])
-            fout.writelines("'" +s + "'\n")
-        fout.close()
-    if urls!=[]:
-        user_date="_".join([os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
-        outfile="request_"+user_date
-        fout=open(outfile,"w")
-        ds_info=open(outdir+"dsinfo_"+user_date,'w')
-        for line in dataset_info:
-            ds_info.write(line)
-        ds_info.close()
-        print("These are new files to download:\n")
-        for s in urls:
-            print(s.split("'")[0])
-            fout.writelines("'" +s + "'\n")
-        fout.close()
-        if sys.version_info < ( 3, 0 ):
-            request=raw_input("submit a request to download these files? Y/N \n")
-        else:
-            request=input("submit a request to download these files? Y/N \n")
-        if request == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
+            urls,dataset_info=new_files(esgf_results)
+            upd_urls,up_dataset_info=update_files(db_results,esgf_results)
+            if upd_urls!=[]:
+                user_date="_".join([os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
+                outfile="update_"+user_date
+                fout=open(outfile,"w")
+                ds_info=open(outdir+"up-dsinfo_"+user_date,'w')
+                for line in up_dataset_info:
+                    ds_info.write(line)
+                ds_info.close()
+                print("These are files to update:\n")
+                for s in upd_urls:
+                    print(s.split("'")[0])
+                    fout.writelines("'" +s + "'\n")
+                    fout.close()
+            if urls!=[]:
+                user_date="_".join([os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
+                outfile="request_"+user_date
+                fout=open(outfile,"w")
+                ds_info=open(outdir+"dsinfo_"+user_date,'w')
+                for line in dataset_info:
+                    ds_info.write(line)
+                ds_info.close()
+                print("These are new files to download:\n")
+                for s in urls:
+                    print(s.split("'")[0])
+                    fout.writelines("'" +s + "'\n")
+                fout.close()
+                if sys.version_info < ( 3, 0 ):
+                    request2=raw_input("submit a request to download these files? Y/N \n")
+                else:
+                    request2=input("submit a request to download these files? Y/N \n")
+                if request2 == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
     for var in variables:
         remote=[ds for ds in esgf_results if ds['variable']==var]
         local=[v for v in db_results if v.variable.__dict__['variable']==var]

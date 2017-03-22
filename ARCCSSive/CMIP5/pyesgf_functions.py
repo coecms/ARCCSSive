@@ -71,14 +71,14 @@ class ESGFSearch(object):
             by default searches CMIP5 latest version, not replica
         :argument **kwargs: optional constraints to apply, listed in class comment
              node: primary node to search 
-                        default "http://pcmdi.llnl.gov/esg-search" 
+                        default "http://esgf-node.llnl.gov/esg-search" 
              distrib: default True search across all nodes 
              replica: default False exclude replicas from results
              project: default CMIP5 ESGF project to search
         :return: 
         ''' 
         # set default values for node, project, distributed search and replica
-        node, project, distrib, replica = ["http://pcmdi.llnl.gov/esg-search","CMIP5",True, False]
+        node, project, distrib, replica = ["http://esgf-node.llnl.gov/esg-search","CMIP5",True, False]
         if "node" in kwargs.keys(): node = kwargs.pop('node')
         if "distrib" in kwargs.keys(): distrib = kwargs.pop('distrib')
         if "replica" in kwargs.keys(): replica = kwargs.pop('replica')

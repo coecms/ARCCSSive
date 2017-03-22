@@ -107,7 +107,7 @@ for kw_instance in instances:
 # add version to database if does not exist yet
     v_obj,new = insert_unique(db, Version, **kw_version)
 # check if files objects exist already if not add from files dictionary 
-# add both tracking-ids and checksums, i checksums are "None" calculate sha256
+# add both tracking-ids and checksums, if checksums are "None" calculate sha256
     for i,f in enumerate(kw_files):
         if f['checksum']=="None":
             kw_files[i][ctype]=check_hash(v_obj.path+"/"+f['filename'],ctype)

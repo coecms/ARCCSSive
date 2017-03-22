@@ -69,6 +69,20 @@ def test_list_drs_files(drstree):
 
 def test_get_instance():
     dataset_id='cmip5.output1.MIROC.MIROC-ESM-CHEM.rcp45.mon.atmos.Amon.r3i1p1.v20150209|esgf-data1.diasjp.net'
+    dataset_id_excetion='cmip5.output.CCCma.CanESM2.rcp85.mon.ocean.r2i1p1.v20130331|esgfcog.cccma.ec.gc.ca'
     inst_dict={'model':'MIROC-ESM-CHEM','experiment':'rcp45','realm':'atmos','mip':'Amon',
                'ensemble':'r3i1p1','version':'v20150209'}
+    inst_dict_exception={'model':'CanESM2','experiment':'rcp85','realm':'ocean', 
+               'ensemble':'r2i1p1','version':'v20130331'}
     assert get_instance(dataset_id)==inst_dict
+    assert get_instance(dataset_id_exception)==inst_dict_exception
+    assert 'mip' not in get_instance(dataset_id_exception).keys()
+
+def test_get_mip():
+    filename='thetao_Omon_CanESM2_rcp85_r2i1p1_209101-210012.nc'
+    assert get_mip(filename)=='Omon'
+
+def test_file_details():
+    filename='thetao_Omon_CanESM2_rcp85_r2i1p1_209101-210012.nc'
+    assert file_details(filename)=={'variable':"thetao",'mip':"Omon",
+               'model':"CanESM2",'experiment': "rcp85", 'ensemble': "r2i1p1"}

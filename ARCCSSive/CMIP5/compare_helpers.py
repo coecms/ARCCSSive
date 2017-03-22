@@ -20,7 +20,7 @@ limitations under the License.
 
 from __future__ import print_function
 
-from ARCCSSive.CMIP5.other_functions import write_log, get_instance, compare_tracking_ids, compare_checksums, today 
+from ARCCSSive.CMIP5.other_functions import write_log, get_instance, get_mip, compare_tracking_ids, compare_checksums, today 
 from ARCCSSive.CMIP5.Model import Instance 
 from ARCCSSive.CMIP5.pyesgf_functions import FileResult 
 from collections import defaultdict
@@ -51,6 +51,8 @@ def result_matrix(matrix,exp,var,remote,local):
     for ds in remote:
         if 'same_as' not in ds.keys() or ds['same_as']==[]:
             inst=get_instance(ds['dataset_id'])
+            if 'mip' not in inst.keys():
+                inst['mip']=get_mip(ds['files'][0].filename)
             if exp == 'decadal':
                 cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['experiment'][7:] + " " 
             cell_value[(inst['mip'],(inst['model'],inst['ensemble']))]+= inst['version'] + " latest new | " 
@@ -104,7 +106,6 @@ def new_files(remote):
     for ind,ds in enumerate(remote):
         if 'same_as' not in ds.keys(): continue 
         if ds['same_as']==[]:
-            inst=get_instance(ds['dataset_id'])
             ctype=ds['checksum_type']
             # found dataset local path from download url, replace thredds with /g/data1/ua6/unof...
             if ds['files']==[]:
@@ -112,6 +113,9 @@ def new_files(remote):
                 continue
             if ctype is None: ctype="None"
             first=ds['files'][0]
+            inst=get_instance(ds['dataset_id'])
+            if 'mip' not in inst.keys():
+                inst['mip']=get_mip(first.filename)
             path="/".join(first.download_url.split("/")[1:-1])
             ds_string=",".join([ds['variable'],inst['mip'],inst['model'],inst['experiment'],
                                inst['ensemble'],inst['realm'],inst['version'],ds['dataset_id'],

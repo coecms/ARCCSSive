@@ -52,6 +52,9 @@ def join_varmip(var0,mip0):
 def get_instance(dataset_id):
     ''' Break dataset_id from ESGF search in dictionary of instance attributes '''
     bits=dataset_id.split(".")
+    if "|esgfcog" in bits[8]:
+        return {'model': bits[3],'experiment': bits[4],'realm':bits[6],
+            'ensemble':bits[7],'version':bits[8].split("|")[0]}
     return {'model': bits[3],'experiment': bits[4],'realm':bits[6],'mip':bits[7],
             'ensemble':bits[8],'version':bits[9].split("|")[0]}
 
@@ -209,12 +212,11 @@ def list_drs_files(path):
     ''' Returns matching string if found in directory structure '''
     return [x.split("/")[-1] for x in glob.glob(path+"/*.nc")]
  
-def get_mip(path):
+def get_mip(filename):
     ''' Returns mip for instance 
-        input: instance path
+        input: filename 
     '''
-    onefile = os.path.basename(glob.glob(path + "/latest/*.nc")[0]) 
-    dummy = file_details(onefile)
+    dummy = file_details(filename)
     return dummy['mip']
 
 def tree_path(drspath):
@@ -265,8 +267,7 @@ def write_log(line):
 try:
     drstree = os.environ['DRSTREE']
 except KeyError:
-    drstree = "/g/data1/ua6/drstree/CMIP5/GCM/"
-drstree="/g/data1/ua8/cmip-download/drstree/CMIP5/GCM/"
+    drstree = "/g/data1/ua6/DRSv2/CMIP5/GCM/"
 tmptree="/g/data1/ua6/unofficial-ESG-replica/tmp/tree/"
 
 # define date string for current date
