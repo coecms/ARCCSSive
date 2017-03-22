@@ -120,7 +120,7 @@ def connect(path = None):
 
     engine = create_engine(path)
     Base.metadata.create_all(engine)
-    SQASession.configure(bind=engine)
+    SQASession.configure(bind=engine, autoflush=False)
 
     connection = Session()
     connection.session = SQASession()
