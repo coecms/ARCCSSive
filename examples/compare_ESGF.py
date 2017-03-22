@@ -177,7 +177,7 @@ for constraints in combs:
                 for s in upd_urls:
                     print(s.split("'")[0])
                     fout.writelines("'" +s + "'\n")
-                    fout.close()
+                fout.close()
             if urls!=[]:
                 user_date="_".join([os.environ['USER'],datetime.now().strftime("%Y%m%dT%H%M")+".txt"])
                 outfile="request_"+user_date
