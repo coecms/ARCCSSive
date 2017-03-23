@@ -288,9 +288,11 @@ def compare_instances(db,remote,local,const_keys,admin):
                     write_log(" ".join(line))
 
     # add to remote dictionary list of local identical versions
-        remote[ind]['same_as']=[v.id for v in local if v.dataset_id == ds['dataset_id']]
+        remote[ind]['same_as']=[v.id for v in local if v.dataset_id == ds['dataset_id'] 
+                                and v.variable.__dict__['variable'] == ds['variable']]
         remote[ind]['update']=[]
-        remote[ind]['update']=[v.id for v in local if v.dataset_id == ds['dataset_id'] and v.to_update]
+        remote[ind]['update']=[v.id for v in local if v.to_update and v.dataset_id == ds['dataset_id']
+                                and v.variable.__dict__['variable'] == ds['variable']]
     try:
         flog.close()
     except:

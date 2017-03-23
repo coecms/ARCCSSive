@@ -114,6 +114,7 @@ for constraints in combs:
     db_results=[]
     esgf_results=[]
     print(constraints)
+    print(variables)
     orig_args=constraints.copy()
 # search on local DB, return instance_ids
     if constraints['experiment']=='decadal':
@@ -142,7 +143,6 @@ for constraints in combs:
         async_results = Pool(6).map_async(retrieve_ds, results)
         for ds_info in async_results.get():
             esgf_results.extend(ds_info)
-
 # append to results list of version dictionaries containing useful info 
 # NB search should return only one latest, not replica version if any
         

@@ -13,6 +13,7 @@ from ARCCSSive.CMIP5 import DB
 from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile 
 import cdms2
 import os
+import glob
 
 
 def parse_input():
@@ -63,6 +64,10 @@ def check_realm(fpath):
 # assign input arguments
 kwargs = parse_input()
 ifiles = kwargs['input_file']
+for f in ifiles:
+    if '*' in f:
+        ifiles.remove(f)
+        ifiles.extend(glob.glob(f)) 
 # open local database using ARCSSive interface
 cmip5 = DB.connect()
 db = cmip5.session
