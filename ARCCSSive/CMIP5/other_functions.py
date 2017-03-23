@@ -108,11 +108,10 @@ def list_logfile(flist):
     file_list=[]
     lines=f.readlines()
     values=lines[0].replace("\n","").split(',')
-    var=values[0]
     ds_dict=dict(zip(keys[:-1], values))
     for line in lines[1:]:
         values=line.replace("\n","")[:-1].split(',')
-        if values[0]!=var:
+        if len(values)<5:
             file_list.append(dict(zip(file_keys, values)))
         else:
             ds_dict['files']=file_list
