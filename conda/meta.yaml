@@ -1,0 +1,26 @@
+package:
+    name: arccssive
+    version: {{ GIT_DESCRIBE_TAG }}
+
+build:
+    number: {{ GIT_DESCRIBE_NUMBER }}
+    string: {{ GIT_BUILD_STR }}
+
+source:
+    path: ../
+
+build:
+    script: python setup.py install
+
+requirements:
+    run:
+        - python
+        - six
+        - sqlalchemy
+        - esgf-pyclient
+
+about:
+    home: https://github.com/coecms/ARCCSSive
+    license: Apache 2.0
+    license_file: LICENSE
+    summary: ARCCSS Data Archive Tools
