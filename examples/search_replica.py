@@ -21,6 +21,8 @@ Last modified:
   2017/02/22 - added "decadal" option to be used as experiment input, it will return all experiment matching "decadal%"
              - fixed issue with Warning:"No local version exists for constraints .." appearing if one of the instances in database had no versions
              - corrected help text, it was referring to older version  
+  2017/03/20 - added --all-versions / -a flag, it will return all versions not just latest 
+  2017/03/24 - added "noVolc" option to be used as experiment input, it will return all experiment matching "noVolc%"
 """
 
 from __future__ import print_function
@@ -46,9 +48,9 @@ def parse_input():
             -en r1i1p1 r2i1p1
             The script returns all the ensembles satifying the constraints
             var1 AND model1 AND exp1  AND mip1  AND other optional constraints.
-            -e decadal 
+            -e decadal / noVolc 
+            will return all the experiments matching decadalYYYY / noVolcYYYY respectively
             -a will return all versions not only the latest
-            will return all the experiments matching decadalYYYY
             If a constraint isn't specified for one of the fields automatically all values
             for that field will be selected.''', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
@@ -88,7 +90,8 @@ for constraints in combs:
     print(constraints)
 # search on local DB, return instance_ids
 # allow "decadal" keyword to search for all decadalYYYY experiments
-    if constraints['experiment']=='decadal':
+# allow "noVolc" keyword to search for all noVolcYYYY experiments
+    if constraints['experiment'] in ['decadal','noVolc']:
         exp0=constraints.pop('experiment')
         outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%"))
     else:

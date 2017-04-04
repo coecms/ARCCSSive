@@ -110,7 +110,7 @@ def list_logfile(flist):
     values=lines[0].replace("\n","").split(',')
     ds_dict=dict(zip(keys[:-1], values))
     for line in lines[1:]:
-        values=line.replace("\n","")[:-1].split(',')
+        values=line.replace("\n","").split(',')
         if len(values)<5:
             file_list.append(dict(zip(file_keys, values)))
         else:
