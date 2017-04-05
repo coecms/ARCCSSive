@@ -262,7 +262,8 @@ def write_log(line):
 def unique(outputs,column_name):
     ''' Return all distinct values for selected column and search results '''
     column=getattr(Instance,column_name)
-    return outputs.distinct(column).group_by(column).all()
+    outs= outputs.distinct(column).group_by(column).all()
+    return [o.__getattribute__(column_name) for o in outs]
       
      
 # this should be taken by setting environment variable DRSTREE
