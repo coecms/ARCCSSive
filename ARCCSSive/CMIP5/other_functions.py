@@ -259,6 +259,10 @@ def write_log(line):
         flog.write(line)
     return
       
+def unique(outputs,column_name):
+    ''' Return all distinct values for selected column and search results '''
+    column=getattr(Instance,column_name)
+    return outputs.distinct(column).group_by(column).all()
       
      
 # this should be taken by setting environment variable DRSTREE

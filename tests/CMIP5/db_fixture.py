@@ -209,6 +209,35 @@ def session(request, tmpdir_factory):
         filename   = 'example.nc',
         md5        = None,
         sha256     = None)
+# add more instances to test unique function
+    inst0 = add_instance_item(db,
+        variable   = 'tas',
+        mip        = 'Amon',
+        model      = 'ACCESS1-3',
+        experiment = 'rcp26',
+        ensemble   = 'r1i1p1',
+        realm      = 'realm')
+    inst0 = add_instance_item(db,
+        variable   = 'a',
+        mip        = 'Amon',
+        model      = 'MIROC5',
+        experiment = 'rcp26',
+        ensemble   = 'r1i1p1',
+        realm      = 'realm')
+    inst0 = add_instance_item(db,
+        variable   = 'a',
+        mip        = '6hrLev',
+        model      = 'MIROC5',
+        experiment = 'rcp45',
+        ensemble   = 'r2i1p1',
+        realm      = 'realm')
+    inst0 = add_instance_item(db,
+        variable   = 'tas',
+        mip        = 'cfMon',
+        model      = 'MIROC5',
+        experiment = 'rcp45',
+        ensemble   = 'r2i1p1',
+        realm      = 'realm')
     db.commit()
 
     # Close the session
