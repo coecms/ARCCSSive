@@ -23,16 +23,16 @@ from .db_fixture import session
 # Tests for the basic list queries
 
 def test_models(session):
-    assert session.models() == ['ACCESS1-3', 'c']
+    assert session.models().sort() == ['ACCESS1-3', 'c', 'MIROC5'].sort()
 
 def test_experiments(session):
-    assert session.experiments() == ['d', 'rcp45']
+    assert session.experiments().sort() == ['d', 'rcp45', 'rcp26'].sort()
 
 def test_variables(session):
-    assert session.variables() == ['a', 'f', 'tas']
+    assert session.variables().sort() == ['a', 'f', 'tas'].sort()
 
 def test_mips(session):
-    assert session.mips() == ['6hrLev', 'Amon', 'cfMon']
+    assert session.mips().sort() == ['6hrLev', 'Amon', 'cfMon'].sort()
 
 def test_warnings(session):
     outs =session.outputs()
@@ -58,7 +58,7 @@ def test_files(session):
 def test_all(session):
     v = session.outputs()
 
-    assert v.count() == 3
+    assert v.count() == 7 
 
     assert v[0].variable == u'a'
     assert len(v[0].versions) ==3 
@@ -70,11 +70,11 @@ def test_all(session):
 
 def test_query_outputs(session):
     vars = session.outputs(mip = 'cfMon')
-    assert vars.count() == 1
+    assert vars.count() == 2 
     assert vars[0].mip == 'cfMon'
 
 def test_filenames(session):
-    outs = session.outputs()
+    outs = session.outputs(experiment='d')
     for o in outs:
         for f in o.filenames():
             assert f
