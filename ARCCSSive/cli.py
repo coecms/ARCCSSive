@@ -56,6 +56,16 @@ def select_options(func):
         func = option(func)
     return func
 
+def filter_latest(q, session):
+    """
+    Filter to return only the latest versions
+    """
+    # Get the maximum version (string ordering) for each instance, omitting 'NA' values
+    s = (session.query(Version.instance_id, sqlf.max(Version.version).label('latest_version'))
+            .filter(Version.version != 'NA').group_by(Version.instance_id).subquery())
+    q = q.join(s, sqle.and_(Version.instance_id == s.c.instance_id, Version.version == s.c.latest_version))
+    return q
+
 def select(q, model, experiment, variable, mip, 
         ensemble, version, latest, debug, session):
     """
@@ -63,10 +73,7 @@ def select(q, model, experiment, variable, mip,
     """
 
     if latest:
-        # Get the maximum version (string ordering) for each instance, omitting 'NA' values
-        s = (session.query(Version.instance_id, sqlf.max(Version.version).label('latest_version'))
-                .filter(Version.version != 'NA').group_by(Version.instance_id).subquery())
-        q = q.join(s, sqle.and_(Version.instance_id == s.c.instance_id, Version.version == s.c.latest_version))
+        q = filter_latest(q, session)
 
     # Apply common filtering to a query
     if len(model) > 0:
