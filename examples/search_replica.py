@@ -61,6 +61,8 @@ def parse_input():
     parser.add_argument('-ve','--version', type=str, nargs="*", help='CMIP5 version', required=False)
     parser.add_argument('-a','--all-versions', help='returns all versions not only latest', action='store_true', 
                          required=False) 
+    parser.add_argument('-w','--warnings', help='returns also warnings', action='store_true', 
+                         required=False) 
     parser.add_argument('-o','--output', type=str, nargs=1, help='output file name', required=False)
     return vars(parser.parse_args())
 
@@ -75,6 +77,7 @@ def assign_constraints():
 # Calling parse_input() function to build kwargs from external arguments passed by user 
 kwargs=assign_constraints()
 all_versions=kwargs.pop("all_versions")
+warnings=kwargs.pop("warnings")
 # open output file
 outfile=kwargs.pop("output",["search_result.txt"])
 fout=open(outfile[0],'w')
@@ -108,6 +111,10 @@ for constraints in combs:
             someresult=True
             for v in db_results:
                 fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
+                if warnings and v.warnings != []:
+                    fout.write("Warnings:\n")
+                    for w in v.warnings:
+                        fout.write(w.warning + "\n added by " + w.added_by + " on the " + w.added_on + "\n")
     if not someresult:
          print("No local version exists for constraints:\n",constraints)
 fout.close()
