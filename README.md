@@ -17,16 +17,15 @@ Installing
 
 ### Raijin
 
-The stable version of ARCCSSive is available on Rajin in the `analysis27` and
-`analysis3` Anaconda environment:
+The stable version of ARCCSSive is available on Rajin in the `analysis27` Anaconda environment:
 
-    raijin $ module use ~access/modules
-    raijin $ module load pythonlib/ARCCSSive
+    raijin $ module use /g/data3/hh5/public/modules
+    raijin $ module load conda/analysis27
 
 and is also available as a module:
 
-    raijin $ module use /g/data3/hh5/public/modules
-    raijin $ module load conda/analysis3
+    raijin $ module use ~access/modules
+    raijin $ module load pythonlib/ARCCSSive
 
 ### NCI Virtual Desktops
 
@@ -36,7 +35,7 @@ details on how to use virtual desktops see http://vdi.nci.org.au/help
 ARCCSSive can be accessed on VDI using the Anaconda environments:
 
     vdi $ module use /g/data3/hh5/public/modules
-    vdi $ module load conda/analysis3
+    vdi $ module load conda/analysis27
 
 ### Local Install
 
