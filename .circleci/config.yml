@@ -6,6 +6,7 @@ jobs:
             - image: condaforge/linux-anvil
         steps:
             - run: |
+                set -x
                 ls /opt/conda
                 ls /opt/docker/bin
                 source /opt/docker/bin/entrypoint_source
