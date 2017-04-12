@@ -34,6 +34,7 @@ Contents:
 
    using
    CMIP5
+   admin
 
 Indices and tables
 ==================
