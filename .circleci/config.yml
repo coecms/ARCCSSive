@@ -4,6 +4,7 @@ jobs:
         working_directory: /conda-build
         docker:
             - image: condaforge/linux-anvil
+              command: [/bin/bash]
         steps:
             - checkout
             - run: conda config --add channels conda-forge
