@@ -5,14 +5,21 @@ jobs:
         docker:
             - image: condaforge/linux-anvil
         steps:
-            - run: |
-                set -x
-                ls /opt/conda
-                ls /opt/docker/bin
-                source /opt/docker/bin/entrypoint_source
             - checkout
             - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda config --add channels conda-forge
                 conda update conda conda-build
-                conda install conda-build-all
-            - run: conda-build-all conda --matrix-conditions "python >=2.7,<3|>=3.5"
+                EOF
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
+                conda-build conda --python=27
+                EOF
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
+                conda-build conda --python=35
+                EOF
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
+                conda-build conda --python=36
+                EOF
