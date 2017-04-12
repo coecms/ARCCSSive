@@ -5,7 +5,10 @@ jobs:
         docker:
             - image: condaforge/linux-anvil
         steps:
-            - run: source /opt/docker/bin/entrypoint_source
+            - run: |
+                ls /opt/conda
+                ls /opt/docker/bin
+                source /opt/docker/bin/entrypoint_source
             - checkout
             - run: |
                 conda config --add channels conda-forge
