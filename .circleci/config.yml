@@ -4,10 +4,11 @@ jobs:
         working_directory: /conda-build
         docker:
             - image: condaforge/linux-anvil
-              command: [/bin/bash]
         steps:
+            - run: source /opt/docker/bin/entrypoint_source
             - checkout
-            - run: conda config --add channels conda-forge
-            - run: conda update conda conda-build
-            - run: conda install conda-build-all
+            - run: |
+                conda config --add channels conda-forge
+                conda update conda conda-build
+                conda install conda-build-all
             - run: conda-build-all conda --matrix-conditions "python >=2.7,<3|>=3.5"
