@@ -23,7 +23,7 @@ from __future__ import print_function
 
 from ARCCSSive.CMIP5 import connect
 from ARCCSSive.CMIP5.Model import Instance
-from ARCCSSive.CMIP5.other_functions import assign_mips, combine_constraints 
+from ARCCSSive.CMIP5.other_functions import assign_mips, combine_constraints, unique 
 from collections import defaultdict
 import argparse
 import sys
@@ -95,14 +95,14 @@ for constraints in combs:
     else:
         outputs=cmip5.outputs(**constraints).filter(Instance.variable.in_(variables))
 #extract list of models from Instances returned by search 
-    mod_set=set([str(o.model) for o in outputs])
+    models=unique(outputs,'model')
 # build string to use as result dict key
     str_constr="_".join([constraints["experiment"],constraints["mip"]])
 # filter results by model, then ensembles and check if all variables are present
 # save details in versions dictionary as a string joining "model ensemble variable" as key and a list of versions as value
-    for mod0 in mod_set:
+    for mod0 in models:
         mod_outs=outputs.filter(Instance.model == mod0)
-        ensembles=set([str(o.ensemble) for o in mod_outs])
+        ensembles=unique(mod_outs,'ensemble')
         for ens0 in ensembles:
             varset=set()
             res=mod_outs.filter(Instance.ensemble==ens0)

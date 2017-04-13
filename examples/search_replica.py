@@ -23,6 +23,7 @@ Last modified:
              - corrected help text, it was referring to older version  
   2017/03/20 - added --all-versions / -a flag, it will return all versions not just latest 
   2017/03/24 - added "noVolc" option to be used as experiment input, it will return all experiment matching "noVolc%"
+  2017/04/11 - added "warnings" -w option, it will return also the existing warnings in output file
 """
 
 from __future__ import print_function
