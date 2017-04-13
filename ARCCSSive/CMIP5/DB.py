@@ -98,6 +98,8 @@ class Session(object):
         """
         return self.query(Instance).filter_by(**kwargs)
 
+# Default CMIP5 database
+default_db = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'
 
 def connect(path = None):
     """Connect to the CMIP5 catalog
@@ -112,11 +114,8 @@ def connect(path = None):
     """
 
     if path is None:
-        try:
-            # Get the path from the environment
-            path = os.environ['CMIP5_DB']
-        except KeyError:
-            raise Exception('Environment variable $CMIP5_DB should point to the database')
+        # Get the path from the environment
+        path = os.environ.get('CMIP5_DB', default_db)
 
     engine = create_engine(path)
     Base.metadata.create_all(engine)
