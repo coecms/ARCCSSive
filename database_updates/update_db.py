@@ -12,7 +12,7 @@ from ARCCSSive.CMIP5.other_functions import list_logfile, list_drs_files, check_
 from ARCCSSive.CMIP5 import DB 
 from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile 
 import cdms2
-import os
+import os,sys
 import glob
 
 
@@ -107,10 +107,12 @@ for kw_instance in instances:
             kw_version['version']= "NA" 
 # add instance to database if does not exist yet
     inst_obj,new = insert_unique(db, Instance, **kw_instance)
+    print("instance:",inst_obj.id,new)
 # create dictionary of fields for new version
     kw_version['instance_id'] = inst_obj.id
 # add version to database if does not exist yet
     v_obj,new = insert_unique(db, Version, **kw_version)
+    print("version:",v_obj.id,new)
 # check if files objects exist already if not add from files dictionary 
 # add both tracking-ids and checksums, if checksums are "None" calculate sha256
     for i,f in enumerate(kw_files):

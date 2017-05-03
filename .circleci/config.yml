@@ -1,0 +1,37 @@
+version: 2
+jobs:
+    build:
+        working_directory: /conda-build
+        docker:
+            - image: condaforge/linux-anvil
+        steps:
+            - checkout
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
+                conda config --add channels conda-forge
+                conda update conda conda-build
+                EOF
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
+                conda-build conda --python=27
+                EOF
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
+                conda-build conda --python=35
+                EOF
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
+                conda-build conda --python=36
+                EOF
+            - deploy:
+                command: |
+                    if [ -n "${CIRCLE_TAG}" ]; then
+                      anaconda upload --token $ANACONDA_TOKEN --user $ANACONDA_USER /opt/conda/conda-bld/linux-64/*
+                    fi
+
+# See: https://discuss.circleci.com/t/git-tag-deploys-in-2-0/9493/8
+deployment:
+    fake_deploy_for_cci2:
+        tag: /.*/
+        commands:
+            - echo "make tags run in 2.0"

@@ -257,7 +257,7 @@ class VersionWarning(Base):
     id         = Column(Integer, name='warning_id', primary_key = True)
     warning    = Column(String)
     added_by   = Column(String)
-    added_on   = Column(Date)
+    added_on   = Column(String)
     version_id = Column(Integer, ForeignKey('versions.version_id'), index=True)
 
     def __str__(self):

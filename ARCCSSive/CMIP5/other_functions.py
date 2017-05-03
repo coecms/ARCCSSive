@@ -110,7 +110,7 @@ def list_logfile(flist):
     values=lines[0].replace("\n","").split(',')
     ds_dict=dict(zip(keys[:-1], values))
     for line in lines[1:]:
-        values=line.replace("\n","")[:-1].split(',')
+        values=line.replace("\n","").split(',')
         if len(values)<5:
             file_list.append(dict(zip(file_keys, values)))
         else:
@@ -259,6 +259,11 @@ def write_log(line):
         flog.write(line)
     return
       
+def unique(outputs,column_name):
+    ''' Return all distinct values for selected column and search results '''
+    column=getattr(Instance,column_name)
+    outs= outputs.distinct(column).group_by(column).all()
+    return [o.__getattribute__(column_name) for o in outs]
       
      
 # this should be taken by setting environment variable DRSTREE

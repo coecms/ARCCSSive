@@ -117,7 +117,7 @@ for constraints in combs:
     print(variables)
     orig_args=constraints.copy()
 # search on local DB, return instance_ids
-    if constraints['experiment']=='decadal':
+    if constraints['experiment'] in ['decadal','noVolc']:
         exp0=constraints.pop('experiment')
         outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%").filter(Instance.variable.in_(variables)))
     else:
@@ -140,7 +140,7 @@ for constraints in combs:
 # using 8 here as it is the number ov VCPU on VDI
     if esgf.ds_count()>=1:
         results=[(ds,variables) for ds in esgf.get_ds()]
-        async_results = Pool(6).map_async(retrieve_ds, results)
+        async_results = Pool(1).map_async(retrieve_ds, results)
         for ds_info in async_results.get():
             esgf_results.extend(ds_info)
 # append to results list of version dictionaries containing useful info 
@@ -150,15 +150,15 @@ for constraints in combs:
     print("Finished to retrieve remote data")
     if esgf_results==[]:
         if db_results!=[]:
-            print("Found local version but none is currently available on ESGF nodes for constraints:\n",constraints)
+            print("Found local version but none is currently available on ESGF nodes for constraints:\n",constraints,"and variables:",variables)
         else: 
-            print("Nothing currently available on ESGF nodes and no local version exists for constraints:\n",constraints)
+            print("Nothing currently available on ESGF nodes and no local version exists for constraints:\n",constraints,"and variables:",variables)
     else:
         print(esgf.ds_count(),"instances were found on ESGF and ",outputs.count()," on the local database")
         if sys.version_info < ( 3, 0 ):
-            request=raw_input("Do you want to proceed with comparison (Y) or print current results (N) ? Y/N \n")
+            request=raw_input("Do you want to proceed with comparison (Y) or write current results (N) ? Y/N \n")
         else:
-            request=input("Do you want to proceed with comparison (Y) or print current results (N) ? Y/N \n")
+            request=input("Do you want to proceed with comparison (Y) or write current results (N) ? Y/N \n")
         if request == "Y":
             esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, orig_args.keys(), admin)
 

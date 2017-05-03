@@ -21,6 +21,9 @@ Last modified:
   2017/02/22 - added "decadal" option to be used as experiment input, it will return all experiment matching "decadal%"
              - fixed issue with Warning:"No local version exists for constraints .." appearing if one of the instances in database had no versions
              - corrected help text, it was referring to older version  
+  2017/03/20 - added --all-versions / -a flag, it will return all versions not just latest 
+  2017/03/24 - added "noVolc" option to be used as experiment input, it will return all experiment matching "noVolc%"
+  2017/04/11 - added "warnings" -w option, it will return also the existing warnings in output file
 """
 
 from __future__ import print_function
@@ -46,9 +49,9 @@ def parse_input():
             -en r1i1p1 r2i1p1
             The script returns all the ensembles satifying the constraints
             var1 AND model1 AND exp1  AND mip1  AND other optional constraints.
-            -e decadal 
+            -e decadal / noVolc 
+            will return all the experiments matching decadalYYYY / noVolcYYYY respectively
             -a will return all versions not only the latest
-            will return all the experiments matching decadalYYYY
             If a constraint isn't specified for one of the fields automatically all values
             for that field will be selected.''', formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
@@ -58,6 +61,8 @@ def parse_input():
     parser.add_argument('-en','--ensemble', type=str, nargs="*", help='CMIP5 ensemble', required=False)
     parser.add_argument('-ve','--version', type=str, nargs="*", help='CMIP5 version', required=False)
     parser.add_argument('-a','--all-versions', help='returns all versions not only latest', action='store_true', 
+                         required=False) 
+    parser.add_argument('-w','--warnings', help='returns also warnings', action='store_true', 
                          required=False) 
     parser.add_argument('-o','--output', type=str, nargs=1, help='output file name', required=False)
     return vars(parser.parse_args())
@@ -73,6 +78,7 @@ def assign_constraints():
 # Calling parse_input() function to build kwargs from external arguments passed by user 
 kwargs=assign_constraints()
 all_versions=kwargs.pop("all_versions")
+warnings=kwargs.pop("warnings")
 # open output file
 outfile=kwargs.pop("output",["search_result.txt"])
 fout=open(outfile[0],'w')
@@ -88,7 +94,8 @@ for constraints in combs:
     print(constraints)
 # search on local DB, return instance_ids
 # allow "decadal" keyword to search for all decadalYYYY experiments
-    if constraints['experiment']=='decadal':
+# allow "noVolc" keyword to search for all noVolcYYYY experiments
+    if constraints['experiment'] in ['decadal','noVolc']:
         exp0=constraints.pop('experiment')
         outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%"))
     else:
@@ -105,6 +112,10 @@ for constraints in combs:
             someresult=True
             for v in db_results:
                 fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
+                if warnings and v.warnings != []:
+                    fout.write("Warnings:\n")
+                    for w in v.warnings:
+                        fout.write(w.warning + "\n added by " + w.added_by + " on the " + w.added_on + "\n")
     if not someresult:
          print("No local version exists for constraints:\n",constraints)
 fout.close()

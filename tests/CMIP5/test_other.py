@@ -20,6 +20,7 @@ limitations under the License.
 import pytest
 from ARCCSSive.CMIP5.other_functions import *
 from .drs_fixture import drstree
+from .db_fixture import session
 
 def test_frequency():
     assert frequency('Amon') == ['mon']
@@ -86,3 +87,17 @@ def test_file_details():
     filename='thetao_Omon_CanESM2_rcp85_r2i1p1_209101-210012.nc'
     assert file_details(filename)=={'variable':"thetao",'mip':"Omon",
                'model':"CanESM2",'experiment': "rcp85", 'ensemble': "r2i1p1"}
+
+def test_unique(session):
+    outs=session.outputs()
+    models=['c','ACCESS1-3','MIROC5'].sort()
+    ensembles=['e','r1i1p1','r2i1p1'].sort()
+    experiments=['d','rcp45','rcp26'].sort()
+    variables=['a','tas'].sort()
+    mips=['6hrLev','cfMon','Amon'].sort()
+    assert unique(outs,'model').sort() == models
+    assert unique(outs,'ensemble').sort() == ensembles
+    assert unique(outs,'experiment').sort() == experiments
+    assert unique(outs,'variable').sort() == variables
+    assert unique(outs,'mip').sort() == mips
+     
