@@ -21,6 +21,8 @@ requirements:
         - six
         - sqlalchemy
         - esgf-pyclient
+        - click
+        - tabulate
 
 test:
     source_files:
