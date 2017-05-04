@@ -59,11 +59,37 @@ def select_options(func):
 def filter_latest(q, session):
     """
     Filter to return only the latest versions
+
+    Will prefer versions flagged with `is_latest`, otherwise will do a string
+    ordering of the version id (so '10' < '2')
     """
-    # Get the maximum version (string ordering) for each instance, omitting 'NA' values
-    s = (session.query(Version.instance_id, sqlf.max(Version.version).label('latest_version'))
-            .filter(Version.version != 'NA').group_by(Version.instance_id).subquery())
-    q = q.join(s, sqle.and_(Version.instance_id == s.c.instance_id, Version.version == s.c.latest_version))
+    flag_versions = session.query(Version).filter(Version.is_latest==True).subquery()
+    max_versions = (
+            session.query(
+                Version.instance_id, 
+                sqlf.max(Version.version).label('version'))
+            .group_by(Version.instance_id)
+            ).subquery()
+
+    # Join the two queries - flag_versions takes precidence
+    latest_versions = (
+            session.query(
+                max_versions.c.instance_id,
+                sqlf.coalesce(
+                    flag_versions.c.version,
+                    max_versions.c.version).label('version'))
+            .outerjoin(
+                flag_versions, 
+                max_versions.c.instance_id == flag_versions.c.instance_id)
+            ).subquery()
+
+    q = q.join(latest_versions, 
+            sqle.and_(
+                Version.instance_id == latest_versions.c.instance_id, 
+                Version.version == latest_versions.c.version
+                )
+            )
+
     return q
 
 def select(q, model, experiment, variable, mip, 
@@ -131,9 +157,4 @@ def files(model, experiment, variable, mip,
         ensemble, version, latest, debug, cmip5)
     for r, p in q.limit(50).all():
         print(os.path.join(p, r))
-
-
-    
-
-
 

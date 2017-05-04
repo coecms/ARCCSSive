@@ -21,6 +21,8 @@ from ARCCSSive.CMIP5.Model import *
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import sqlalchemy.sql.functions as sqlf
+import sqlalchemy.sql.expression as sqle
 
 @pytest.fixture(scope="module")
 def database():
@@ -86,7 +88,6 @@ def test_latest_na_version(session):
 
     q = session.query(Instance, Version).join(Version)
     q = filter_latest(q, session)
-    assert q.count() == 1
     assert q.one()[1] == v2
 
 def test_latest_flag_version(session):
@@ -95,7 +96,7 @@ def test_latest_flag_version(session):
     """
     i = Instance()
     session.add(i)
-
+    
     v1 = Version(variable=i, version='v1')
     session.add(v1)
 
@@ -107,5 +108,44 @@ def test_latest_flag_version(session):
 
     q = session.query(Instance, Version).join(Version)
     q = filter_latest(q, session)
-    assert q.count() == 1
     assert q.one()[1] == v2
+
+def test_get_latest(session):
+    """
+    Tests for building up the 'filter_latest' function
+    """
+    i = Instance()
+    session.add(i)
+
+    v1 = Version(variable=i, version='v1')
+    session.add(v1)
+
+    v2 = Version(variable=i, version='v2', is_latest=True)
+    session.add(v2)
+
+    v3 = Version(variable=i, version='v3')
+    session.add(v3)
+
+    v4 = Version(variable=i, version='NA')
+    session.add(v4)
+
+    q1 = session.query(Version).filter(Version.is_latest==True)
+    s1 = q1.subquery()
+    assert q1.one() == v2
+
+    q2 = session.query(Version.instance_id, sqlf.max(Version.version).label('max_version')).group_by(Version.instance_id)
+    s2 = q2.subquery()
+    assert q2.one() == (i.id, 'v3')
+
+    q3 = session.query(Version).join(s2, sqle.and_(Version.instance_id == s2.c.instance_id, Version.version == s2.c.max_version))
+    assert q3.one() == v3
+
+    q4 = session.query(s2.c.instance_id, s1.c.version, s2.c.max_version, sqlf.coalesce(s1.c.version, s2.c.max_version)).outerjoin(s1, s1.c.instance_id == s2.c.instance_id)
+    assert q4.one() == (i.id, v2.version, v3.version, v2.version)
+
+    v2.is_latest = False
+    session.add(v2)
+    print(q4)
+    assert q1.count() == 0
+    assert q2.count() == 1
+    assert q4.one() == (i.id, None, v3.version, v3.version)
