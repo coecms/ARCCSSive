@@ -132,12 +132,15 @@ def search(model, experiment, variable, mip,
     q = select(q, model, experiment, variable, mip, 
         ensemble, version, latest, debug, cmip5)
     tabulate_instances(q)
+    if q.count() > 50:
+        print()
+        print('... (%d results total)'%q.count())
 
 def tabulate_instances(instances):
     """
     Print a table of instance information
     """
-    headers= ['model', 'experiment', 'mip', 'variable', 'ensemble', 'version']
+    headers= ['[m]odel', '[e]xperiment', 'mip [t]able', '[v]ariable', 'e[n]semble', '[V]ersion']
     table = [[r.model, r.experiment, r.mip, r.variable, r.ensemble, v] 
             for r, v in instances.limit(50).all()]
     print(tabulate(table, headers=headers))
