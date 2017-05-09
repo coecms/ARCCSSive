@@ -11,6 +11,23 @@ CREATE MATERIALIZED VIEW cf_attributes TABLESPACE ceph AS
         md_json->'attributes'->>'Conventions' is not null;
 CREATE UNIQUE INDEX ON cf_attributes (md_hash);
 
+/* A variable in a CF-NetCDF file */
+CREATE MATERIALIZED VIEW cf_variable TABLESPACE ceph AS
+    SELECT
+        md5(md_hash || ':' || v.key) as variable_id
+      , md_hash
+      , v.key as variable_name
+      , v.value->'attributes'->>'units' as units
+      , v.value->'attributes'->>'long_name' as long_name
+      , v.value->'attributes'->>'attributes' as axis
+    FROM
+        metadata
+      , jsonb_each(md_json->'variables') v
+    WHERE md_hash IN (SELECT md_hash FROM cf_attributes);
+CREATE UNIQUE INDEX ON cf_variable (variable_id);
+CREATE INDEX ON cf_variable (md_hash);
+CREATE INDEX ON cf_variable (variable_name);
+
 /* Metadata from the file specific to CMIP5 
  * Gets the attributes out of JSON format into a more usable format
  */
@@ -91,7 +108,7 @@ CREATE UNIQUE INDEX ON cmip5_dataset (dataset_id);
  */ 
 CREATE MATERIALIZED VIEW cmip5_file_version TABLESPACE ceph AS
     SELECT DISTINCT
-        md5 ( dataset_id || ':' || COALESCE(version_number,'-') ) as version_id
+        version_id
       , dataset_id
       , version_number
     FROM cmip5_attributes NATURAL INNER JOIN cmip5_attributes_derived;
@@ -121,11 +138,11 @@ CREATE VIEW cmip5_version AS
 
 /* Warnings associated with a dataset version
  */
-CREATE TABLE cmip5_warnings (
+CREATE TABLE cmip5_warning (
     id SERIAL PRIMARY KEY,
     version_id TEXT,
     warning TEXT,
     added_by TEXT,
     added_on DATE
     ) TABLESPACE ceph;
-CREATE INDEX cmip5_warnings (version_id);
+CREATE INDEX cmip5_warning (version_id);
