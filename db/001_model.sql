@@ -1,64 +1,65 @@
 /* Generic CF metadata */
-CREATE MATERIALIZED VIEW cf_attributes TABLESPACE ceph AS
+CREATE VIEW cf_attributes AS
     SELECT
         md_hash
       , md_json->'attributes'->>'title'       as title
       , md_json->'attributes'->>'institution' as institution
       , md_json->'attributes'->>'source'      as source
+      , COALESCE(md_json->'attributes'->>'project_id', 'unknown') as collection
     FROM
         metadata 
     WHERE
         md_json->'attributes'->>'Conventions' is not null;
-CREATE UNIQUE INDEX ON cf_attributes (md_hash);
 
 /* A variable in a CF-NetCDF file */
 CREATE MATERIALIZED VIEW cf_variable TABLESPACE ceph AS
     SELECT
         md5(md_hash || ':' || v.key) as variable_id
       , md_hash
-      , v.key as variable_name
+      , v.key as name
       , v.value->'attributes'->>'units' as units
       , v.value->'attributes'->>'long_name' as long_name
-      , v.value->'attributes'->>'attributes' as axis
+      , v.value->'attributes'->>'axis' as axis
     FROM
         metadata
       , jsonb_each(md_json->'variables') v
-    WHERE md_hash IN (SELECT md_hash FROM cf_attributes);
+    WHERE
+        md_json->'attributes'->>'Conventions' IS NOT NULL;
+
 CREATE UNIQUE INDEX ON cf_variable (variable_id);
 CREATE INDEX ON cf_variable (md_hash);
-CREATE INDEX ON cf_variable (variable_name);
+CREATE INDEX ON cf_variable (name);
 
 /* Metadata from the file specific to CMIP5 
  * Gets the attributes out of JSON format into a more usable format
  */
-CREATE MATERIALIZED VIEW cmip5_attributes TABLESPACE ceph AS
-    SELECT
-        md_hash
-      , md_json->'attributes'->>'experiment_id'         as experiment_id
-      , md_json->'attributes'->>'frequency'             as frequency
-      , md_json->'attributes'->>'institute_id'          as institute_id
-      , md_json->'attributes'->>'model_id'              as model_id
-      , md_json->'attributes'->>'modeling_realm'        as modeling_realm
-      , md_json->'attributes'->>'product'               as product
-      , md_json->'attributes'->>'table_id'              as table_id
-      , md_json->'attributes'->>'tracking_id'           as tracking_id
-      , md_json->'attributes'->>'version_number'        as version_number
-      , md_json->'attributes'->>'realization'           as realization
-      , md_json->'attributes'->>'initialization_method' as initialization_method
-      , md_json->'attributes'->>'physics_version'       as physics_version
-    FROM metadata 
-    WHERE
-        md_json->'attributes'->>'Conventions' is not null
-      AND
-        md_json->'attributes'->>'project_id' = 'CMIP5';
-CREATE UNIQUE INDEX ON cmip5_attributes (md_hash);
-CREATE INDEX ON cmip5_attributes (
-    experiment_id
-  , institute_id
-  , model_id
-  , modeling_realm
-  , frequency
-    );
+CREATE VIEW cmip5_attributes AS
+    WITH attributes AS (
+        SELECT
+            md_hash
+          , md_json->'attributes'->>'experiment_id'         as experiment_id
+          , md_json->'attributes'->>'frequency'             as frequency
+          , md_json->'attributes'->>'institute_id'          as institute_id
+          , md_json->'attributes'->>'model_id'              as model_id
+          , md_json->'attributes'->>'modeling_realm'        as modeling_realm
+          , md_json->'attributes'->>'product'               as product
+          , md_json->'attributes'->>'table_id'              as table_id
+          , md_json->'attributes'->>'tracking_id'           as tracking_id
+          , md_json->'attributes'->>'version_number'        as version_number
+          , md_json->'attributes'->>'realization'           as realization
+          , md_json->'attributes'->>'initialization_method' as initialization_method
+          , md_json->'attributes'->>'physics_version'       as physics_version
+        FROM metadata 
+        WHERE
+            md_json->'attributes'->>'Conventions' is not null
+          AND
+            md_json->'attributes'->>'project_id' = 'CMIP5'
+    ) SELECT
+        *
+      , ('r' || realization ||
+         'i' || initialization_method ||
+         'p' || physics_version) as ensemble_member
+    FROM attributes;
 
 /* Derived CMIP5 attributes that are not specified in the file
  * Includes links to normalised tables and 'rXiYpZ' ensemble member
@@ -66,15 +67,11 @@ CREATE INDEX ON cmip5_attributes (
 CREATE MATERIALIZED VIEW cmip5_attributes_derived TABLESPACE ceph AS
     SELECT
         md_hash
-      , ensemble_member
       , dataset_id
       , md5 ( dataset_id || ':' || COALESCE(version_number,'-') ) as version_id
     FROM (SELECT
         md_hash
       , version_number
-      , ('r' || realization ||
-        'i' || initialization_method ||
-        'p' || physics_version) as ensemble_member
       , md5 ( experiment_id 
         || ':' || institute_id 
         || ':' || model_id 

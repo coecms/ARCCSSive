@@ -21,6 +21,7 @@ requirements:
         - six
         - sqlalchemy
         - esgf-pyclient
+        - psycopg2
 
 test:
     source_files:

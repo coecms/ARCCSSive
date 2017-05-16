@@ -2,10 +2,15 @@ language: python
 python:
     - '2.6'
     - '2.7'
-    - '3.4'
+    - '3.5'
+services:
+    - postgresql
 install:
     - pip install --upgrade pytest coverage codecov
     - pip install .
+before_script:
+    - psql -U postgres -f db/000_nci.sql
+    - psql -U postgres -f db/001_model.sql
 script:
     - coverage run --source ARCCSSive -m py.test
 after_success:
