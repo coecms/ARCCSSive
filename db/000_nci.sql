@@ -1,4 +1,4 @@
-CREATE TABLESPACE ceph LOCATION /tmp/ceph;
+CREATE TABLESPACE ceph LOCATION '/tmp/ceph';
 
 CREATE TABLE metadata (
     md_hash UUID PRIMARY KEY,
