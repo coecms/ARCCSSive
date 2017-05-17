@@ -18,7 +18,7 @@ jobs:
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
-                conda install postgresql
+                conda install -y postgresql
                 psql -U postgres -f db/000_nci.sql
                 psql -U postgres -f db/001_model.sql
                 EOF
