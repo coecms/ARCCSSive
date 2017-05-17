@@ -12,7 +12,7 @@ CREATE VIEW cf_attributes AS
         md_json->'attributes'->>'Conventions' is not null;
 
 /* A variable in a CF-NetCDF file */
-CREATE MATERIALIZED VIEW cf_variable TABLESPACE ceph AS
+CREATE MATERIALIZED VIEW cf_variable  AS
     SELECT
         md5(md_hash || ':' || v.key) as variable_id
       , md_hash
@@ -64,7 +64,7 @@ CREATE VIEW cmip5_attributes AS
 /* Derived CMIP5 attributes that are not specified in the file
  * Includes links to normalised tables and 'rXiYpZ' ensemble member
  */
-CREATE MATERIALIZED VIEW cmip5_attributes_derived TABLESPACE ceph AS
+CREATE MATERIALIZED VIEW cmip5_attributes_derived  AS
     SELECT
         md_hash
       , dataset_id
@@ -86,7 +86,7 @@ CREATE INDEX ON cmip5_attributes_derived (version_id);
  * Like what you find on ESGF, however version_number is broken out into its
  * own table
  */
-CREATE MATERIALIZED VIEW cmip5_dataset TABLESPACE ceph AS
+CREATE MATERIALIZED VIEW cmip5_dataset  AS
     SELECT DISTINCT
         dataset_id
       , experiment_id
@@ -103,7 +103,7 @@ CREATE UNIQUE INDEX ON cmip5_dataset (dataset_id);
  * Normally the `cmip5_version` table should be used instead, as this contains
  * fixed values
  */ 
-CREATE MATERIALIZED VIEW cmip5_file_version TABLESPACE ceph AS
+CREATE MATERIALIZED VIEW cmip5_file_version  AS
     SELECT DISTINCT
         version_id
       , dataset_id
@@ -119,7 +119,7 @@ CREATE TABLE cmip5_override_version(
     version_id TEXT PRIMARY KEY,
     version_number TEXT,
     is_latest BOOLEAN,
-    to_update BOOLEAN) TABLESPACE ceph;
+    to_update BOOLEAN) ;
 CREATE UNIQUE INDEX ON cmip5_override_version (version_id);
 
 /* View combining the file and override versions to provide a consistent view
@@ -141,5 +141,5 @@ CREATE TABLE cmip5_warning (
     warning TEXT,
     added_by TEXT,
     added_on DATE
-    ) TABLESPACE ceph;
+    ) ;
 CREATE INDEX cmip5_warning (version_id);
