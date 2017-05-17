@@ -142,4 +142,4 @@ CREATE TABLE cmip5_warning (
     added_by TEXT,
     added_on DATE
     ) ;
-CREATE INDEX cmip5_warning (version_id);
+CREATE INDEX ON cmip5_warning (version_id);
