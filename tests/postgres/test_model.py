@@ -19,11 +19,19 @@ from ARCCSSive.postgres.model import *
 from ARCCSSive.postgres.db import connect, Session
 
 import pytest
+import psycopg2
+import getpass
 
 @pytest.fixture(scope='session')
 def database():
     # Travis connection
-    connect('postgresql://localhost/postgres', user='postgres', password='', echo=True)
+    try:
+        engine = connect('postgresql://localhost/postgres', user='postgres', password='', echo=True)
+        engine.connect()
+    except Exception:
+        import private
+        engine = private.connect()
+
     yield Session
 
 @pytest.fixture()
@@ -35,3 +43,15 @@ def session(database):
 def test_path(session):
     q = session.query(Path).limit(5)
     assert q.count() == 5
+
+def test_cf(session):
+    q = session.query(CFAttributes).limit(5)
+    assert q.count() == 5
+
+    q = q.first()
+    assert len(q.variables) > 0
+
+# def test_cmip5(session):
+#     q = session.query(CFAttributes).filter_by(collection='CMIP5').first()
+#     assert q.experiment_id is not None
+

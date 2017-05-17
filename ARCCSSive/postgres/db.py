@@ -41,3 +41,4 @@ def connect(url=default_url, user=default_user, password=None, echo=False):
 
     engine = create_engine(_url, echo=echo)
     Session.configure(bind=engine)
+    return engine

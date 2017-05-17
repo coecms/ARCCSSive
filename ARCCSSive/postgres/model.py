@@ -39,9 +39,12 @@ class CFAttributes(Base):
     title       = Column(Text)
     institution = Column(Text)
     source      = Column(Text)
+    collection  = Column(Text)
 
     path = relationship('Path')
     variables = relationship("CFVariable", back_populates='file_attributes')
+
+    __mapper_args__ = {'polymorphic_on': collection}
 
 class CFVariable(Base):
     """
@@ -85,6 +88,8 @@ class CMIP5Attributes(CFAttributes):
 
     dataset = relationship('CMIP5Dataset', secondary=cmip5_association, back_populates='file_attributes')
     version = relationship('CMIP5Version', secondary=cmip5_association, back_populates='file_attributes')
+
+    __mapper_args__ = {'polymorphic_identity': 'CMIP5'}
 
 class CMIP5Version(Base):
     __tablename__ = 'cmip5_version'
