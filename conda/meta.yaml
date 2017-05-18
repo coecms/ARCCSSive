@@ -22,6 +22,15 @@ requirements:
         - sqlalchemy
         - esgf-pyclient
 
+test:
+    source_files:
+        - setup.cfg
+        - tests
+    requires:
+        - pytest
+    commands:
+        - py.test
+
 about:
     home: https://github.com/coecms/ARCCSSive
     license: Apache 2.0

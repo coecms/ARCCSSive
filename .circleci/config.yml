@@ -28,3 +28,10 @@ jobs:
                     if [ -n "${CIRCLE_TAG}" ]; then
                       anaconda upload --token $ANACONDA_TOKEN --user $ANACONDA_USER /opt/conda/conda-bld/linux-64/*
                     fi
+
+# See: https://discuss.circleci.com/t/git-tag-deploys-in-2-0/9493/8
+deployment:
+    fake_deploy_for_cci2:
+        tag: /.*/
+        commands:
+            - echo "make tags run in 2.0"
