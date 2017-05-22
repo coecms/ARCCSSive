@@ -153,7 +153,7 @@ CREATE MATERIALIZED VIEW cmip5_dataset  AS
           , modeling_realm
           , frequency
           , ensemble_member
-        FROM cmip5_attributes;
+        FROM cmip5_attributes
     )
     SELECT
         md5 ( experiment_id 
@@ -186,7 +186,7 @@ CREATE INDEX ON cmip5_file_version (dataset_id);
  * inaccurate or missing data
  */
 CREATE TABLE cmip5_override_version(
-    version_id TEXT PRIMARY KEY,
+    version_id UUID PRIMARY KEY,
     version_number TEXT,
     is_latest BOOLEAN,
     to_update BOOLEAN) ;
@@ -207,7 +207,7 @@ CREATE VIEW cmip5_version AS
  */
 CREATE TABLE cmip5_warning (
     id SERIAL PRIMARY KEY,
-    version_id TEXT,
+    version_id UUID,
     warning TEXT,
     added_by TEXT,
     added_on DATE
