@@ -15,83 +15,15 @@
 # limitations under the License.
 from __future__ import print_function
 
-from sqlalchemy.ext.declarative import declarative_base
+from .base import Base
+from .cfnetcdf import File as CFFile, Variable
+
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Text, Boolean, Integer
-from sqlalchemy.dialects.postgresql import UUID
-
-Base = declarative_base()
-
-class Path(Base):
-    """
-    The path to a file in the metadata db
-    """
-    __tablename__ = 'paths'
-
-    pa_hash = Column(UUID, primary_key = True)
-
-    #: str: Path on NCI's filesystem
-    path = Column('pa_path', Text)
-
-cf_variable_link = Table('cf_variable_link', Base.metadata,
-        Column('md_hash', UUID, ForeignKey('cf_attributes.md_hash')),
-        Column('variable_id', UUID, ForeignKey('cf_variable.variable_id')),
-        )
-
-class CFFile(Base):
-    """
-    A CF-compliant NetCDF file's attributes
-    """
-    __tablename__ = 'cf_attributes'
-
-    md_hash     = Column(UUID, ForeignKey('paths.pa_hash'), primary_key = True)
-
-    #: str: File title
-    title       = Column(Text)
-    #: str: Generating institution
-    institution = Column(Text)
-    #: str: Dataset source
-    source      = Column(Text)
-    collection  = Column(Text)
-
-    path_rel = relationship('Path')
-
-    #: str: Path to data file
-    path = association_proxy('path_rel', 'path')
-
-    #: list[:class:`CFVariable`]: Component variables
-    variables = relationship(
-            "CFVariable",
-            secondary=cf_variable_link,
-            back_populates='cf_files')
-
-    __mapper_args__ = {
-            'polymorphic_on': collection,
-            'polymorphic_identity': 'unknown',
-            }
-
-class CFVariable(Base):
-    """
-    A variable in a CF-Compliant NetCDF file
-    """
-    __tablename__ = 'cf_variable'
-
-    variable_id = Column(UUID, primary_key = True)
-
-    #: str: Variable name
-    name        = Column(Text)
-    #: str: Variable units
-    units       = Column(Text)
-    #: str: Long name
-    long_name   = Column(Text)
-
-    #: list[:class:`CFFile`]: Files containing this variable
-    cf_files = relationship(
-            "CFFile", 
-            secondary=cf_variable_link, 
-            back_populates='variables')
 
 cmip5_attributes_links = Table('cmip5_attributes_links', Base.metadata,
         Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash')),
@@ -226,13 +158,13 @@ class CMIP5Dataset(Base):
             secondary=cmip5_attributes_links,
             back_populates='dataset')
 
-    #: list[:class:`CFVariables`]: Variables associated with this dataset's files
+    #: list[:class:`Variable`]: Variables associated with this dataset's files
     variables = relationship(
-            'CFVariable',
+            'Variable',
             secondary='join(cmip5_attributes_links, cf_variable_link, '
                 'cmip5_attributes_links.c.md_hash ==  cf_variable_link.c.md_hash)',
             primaryjoin='CMIP5Dataset.dataset_id == cmip5_attributes_links.c.dataset_id',
-            secondaryjoin='CFVariable.variable_id == cf_variable_link.c.variable_id')
+            secondaryjoin='Variable.variable_id == cf_variable_link.c.variable_id')
 
 class CMIP5Warning(Base):
     __tablename__ = 'cmip5_warning'

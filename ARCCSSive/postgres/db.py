@@ -15,7 +15,7 @@
 # limitations under the License.
 from __future__ import print_function
 
-from .model import *
+from ..model import *
 
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url

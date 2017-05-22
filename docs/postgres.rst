@@ -19,6 +19,7 @@ CMIP5 Outputs
     :members:
 
 .. autoclass:: CMIP5File
+    :inherited-members:
     :members:
 
 CMIP5 Errata
