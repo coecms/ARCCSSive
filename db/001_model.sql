@@ -13,28 +13,83 @@ CREATE VIEW cf_attributes AS
 
 /* A variable in a CF-NetCDF file */
 CREATE MATERIALIZED VIEW cf_variable  AS
+    WITH vars AS (
+        SELECT DISTINCT
+            v.key as name
+          , v.value->'attributes'->>'units' as units
+          , v.value->'attributes'->>'long_name' as long_name
+          , v.value->'attributes'->>'axis' as axis
+        FROM
+            metadata
+          , jsonb_each(md_json->'variables') v
+        WHERE
+            md_json->'attributes'->>'Conventions' IS NOT NULL
+    )
     SELECT
-        md5(md_hash || ':' || v.key) as variable_id
-      , md_hash
-      , v.key as name
-      , v.value->'attributes'->>'units' as units
-      , v.value->'attributes'->>'long_name' as long_name
-      , v.value->'attributes'->>'axis' as axis
-    FROM
-        metadata
-      , jsonb_each(md_json->'variables') v
-    WHERE
-        md_json->'attributes'->>'Conventions' IS NOT NULL;
-
+        md5(name 
+            || ':' || COALESCE(units,'-')
+            || ':' || COALESCE(long_name,'-')
+            || ':' || COALESCE(axis,'-')
+        )::uuid AS variable_id
+      , *
+    FROM vars;
 CREATE UNIQUE INDEX ON cf_variable (variable_id);
-CREATE INDEX ON cf_variable (md_hash);
-CREATE INDEX ON cf_variable (name);
+
+/* Get the counts of each variable for filtering */
+CREATE MATERIALIZED VIEW cf_variable_counts AS
+     SELECT 
+        v.key
+      , count(v.value) AS count
+     FROM metadata, jsonb_each(metadata.md_json -> 'variables') v
+     WHERE ((v.value -> 'dimensions'::text) -> 1) IS NOT NULL
+     GROUP BY v.key;
+
+/* Exclude most of the dimensions variables - those with a matching `_bnds` */
+CREATE VIEW interesting_variables AS
+    SELECT key
+    FROM cf_variable_counts
+    WHERE
+        key NOT IN ( 
+            SELECT left(key, -5)
+            FROM cf_variable_counts
+            WHERE key ~~ '%_bnds')
+        AND key !~~ '%_bnds'::text 
+        AND key !~~ 'bounds_%'::text
+        AND key !~~ '%_vertices'::text;
+
+/* n-to-n join from files to variables */
+CREATE MATERIALIZED VIEW cf_variable_link AS
+    WITH vars AS (
+        SELECT
+            md_hash
+          , v.key as name
+          , v.value->'attributes'->>'units' as units
+          , v.value->'attributes'->>'long_name' as long_name
+          , v.value->'attributes'->>'axis' as axis
+        FROM
+            metadata
+          , jsonb_each(md_json->'variables') v
+        WHERE
+            md_json->'attributes'->>'Conventions' IS NOT NULL
+        AND
+            v.key IN (SELECT key FROM interesting_variables)
+    )
+    SELECT
+        md_hash
+      , md5(name 
+            || ':' || COALESCE(units,'-')
+            || ':' || COALESCE(long_name,'-')
+            || ':' || COALESCE(axis,'-')
+        )::uuid AS variable_id
+    FROM vars;
+CREATE INDEX ON cf_variable_link(md_hash)
+CREATE INDEX ON cf_variable_link(variable_id)
 
 /* Metadata from the file specific to CMIP5 
  * Gets the attributes out of JSON format into a more usable format
  */
-CREATE VIEW cmip5_attributes AS
-    WITH attributes AS (
+CREATE MATERIALIZED VIEW cmip5_attributes AS
+    WITH attrs AS (
         SELECT
             md_hash
           , md_json->'attributes'->>'experiment_id'         as experiment_id
@@ -51,50 +106,65 @@ CREATE VIEW cmip5_attributes AS
           , md_json->'attributes'->>'physics_version'       as physics_version
         FROM metadata 
         WHERE
-            md_json->'attributes'->>'Conventions' is not null
+            md_json->'attributes'->>'Conventions' IS NOT NULL
           AND
             md_json->'attributes'->>'project_id' = 'CMIP5'
-    ) SELECT
+    )
+    SELECT
         *
       , ('r' || realization ||
          'i' || initialization_method ||
          'p' || physics_version) as ensemble_member
-    FROM attributes;
+    FROM attrs;
+CREATE UNIQUE INDEX ON cmip5_attributes (md_hash);
 
-/* Derived CMIP5 attributes that are not specified in the file
- * Includes links to normalised tables and 'rXiYpZ' ensemble member
+/* Links to derived tables
  */
-CREATE MATERIALIZED VIEW cmip5_attributes_derived  AS
+CREATE MATERIALIZED VIEW cmip5_attributes_links  AS
     SELECT
         md_hash
       , dataset_id
-      , md5 ( dataset_id || ':' || COALESCE(version_number,'-') ) as version_id
+      , md5 ( dataset_id || ':' || COALESCE(version_number,'-') )::uuid as version_id
     FROM (SELECT
         md_hash
       , version_number
       , md5 ( experiment_id 
-        || ':' || institute_id 
-        || ':' || model_id 
-        || ':' || modeling_realm 
-        || ':' || frequency) as dataset_id
+            || ':' || institute_id 
+            || ':' || model_id 
+            || ':' || modeling_realm 
+            || ':' || frequency
+            || ':' || ensemble_member
+            )::uuid as dataset_id
     FROM cmip5_attributes) AS s;
-CREATE UNIQUE INDEX ON cmip5_attributes_derived (md_hash);
-CREATE INDEX ON cmip5_attributes_derived (dataset_id);
-CREATE INDEX ON cmip5_attributes_derived (version_id);
+CREATE UNIQUE INDEX ON cmip5_attributes_links (md_hash);
+CREATE INDEX ON cmip5_attributes_links (dataset_id);
+CREATE INDEX ON cmip5_attributes_links (version_id);
 
 /* A CMIP5 dataset
  * Like what you find on ESGF, however version_number is broken out into its
  * own table
  */
 CREATE MATERIALIZED VIEW cmip5_dataset  AS
-    SELECT DISTINCT
-        dataset_id
-      , experiment_id
-      , institute_id
-      , model_id
-      , modeling_realm
-      , frequency
-    FROM cmip5_attributes NATURAL INNER JOIN cmip5_attributes_derived;
+    WITH datas AS (
+        SELECT DISTINCT
+            experiment_id
+          , institute_id
+          , model_id
+          , modeling_realm
+          , frequency
+          , ensemble_member
+        FROM cmip5_attributes;
+    )
+    SELECT
+        md5 ( experiment_id 
+            || ':' || institute_id 
+            || ':' || model_id 
+            || ':' || modeling_realm 
+            || ':' || frequency
+            || ':' || ensemble_member
+            )::uuid as dataset_id
+      , *
+    FROM datas;
 CREATE UNIQUE INDEX ON cmip5_dataset (dataset_id);
 
 /* The version number specified in the file
@@ -108,7 +178,7 @@ CREATE MATERIALIZED VIEW cmip5_file_version  AS
         version_id
       , dataset_id
       , version_number
-    FROM cmip5_attributes NATURAL INNER JOIN cmip5_attributes_derived;
+    FROM cmip5_attributes NATURAL INNER JOIN cmip5_attributes_links;
 CREATE UNIQUE INDEX ON cmip5_file_version (version_id);
 CREATE INDEX ON cmip5_file_version (dataset_id);
 

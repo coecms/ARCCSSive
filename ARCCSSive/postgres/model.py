@@ -29,6 +29,11 @@ class Path(Base):
     pa_hash = Column(UUID, primary_key = True)
     path = Column('pa_path', Text)
 
+cf_variable_link = Table('cf_variable_link', Base.metadata,
+        Column('md_hash', UUID, ForeignKey('cf_attributes.md_hash')),
+        Column('variable_id', UUID, ForeignKey('cf_variable.variable_id')),
+        )
+
 class CFAttributes(Base):
     """
     A CF-compliant NetCDF file's attributes
@@ -42,9 +47,15 @@ class CFAttributes(Base):
     collection  = Column(Text)
 
     path = relationship('Path')
-    variables = relationship("CFVariable", back_populates='file_attributes')
+    variables = relationship(
+            "CFVariable",
+            secondary=cf_variable_link,
+            back_populates='cf_files')
 
-    __mapper_args__ = {'polymorphic_on': collection}
+    __mapper_args__ = {
+            'polymorphic_on': collection,
+            'polymorphic_identity': 'unknown',
+            }
 
 class CFVariable(Base):
     """
@@ -52,19 +63,21 @@ class CFVariable(Base):
     """
     __tablename__ = 'cf_variable'
 
-    variable_id = Column(Text, primary_key = True)
-    md_hash     = Column(UUID, ForeignKey('cf_attributes.md_hash'))
+    variable_id = Column(UUID, primary_key = True)
     name        = Column(Text)
     units       = Column(Text)
     long_name   = Column(Text)
     axis        = Column(Text)
 
-    file_attributes = relationship("CFAttributes", back_populates='variables')
+    cf_files = relationship(
+            "CFAttributes", 
+            secondary=cf_variable_link, 
+            back_populates='variables')
 
-cmip5_association = Table('cmip5_attributes_derived', Base.metadata,
+cmip5_attributes_links = Table('cmip5_attributes_links', Base.metadata,
         Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash')),
-        Column('dataset_id', Text, ForeignKey('cmip5_dataset.dataset_id')),
-        Column('version_id', Text, ForeignKey('cmip5_version.version_id')))
+        Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')),
+        Column('version_id', UUID, ForeignKey('cmip5_version.version_id')))
 
 class CMIP5Attributes(CFAttributes):
     """
@@ -86,28 +99,38 @@ class CMIP5Attributes(CFAttributes):
     initialization_method = Column(Text)
     physics_version       = Column(Text)
 
-    dataset = relationship('CMIP5Dataset', secondary=cmip5_association, back_populates='file_attributes')
-    version = relationship('CMIP5Version', secondary=cmip5_association, back_populates='file_attributes')
+    dataset = relationship(
+            'CMIP5Dataset',
+            secondary=cmip5_attributes_links,
+            back_populates='file_attributes')
+    version = relationship(
+            'CMIP5Version',
+            secondary=cmip5_attributes_links,
+            back_populates='file_attributes')
 
     __mapper_args__ = {'polymorphic_identity': 'CMIP5'}
 
 class CMIP5Version(Base):
     __tablename__ = 'cmip5_version'
 
-    version_id     = Column(Text, primary_key = True)
+    version_id     = Column(UUID, primary_key = True)
     dataset_id     = Column(Text, ForeignKey('cmip5_dataset.dataset_id'))
     version_number = Column(Text)
     is_latest      = Column(Boolean)
     to_update      = Column(Boolean)
 
     dataset         = relationship('CMIP5Dataset', back_populates='versions')
-    file_attributes = relationship('CMIP5Attributes', secondary=cmip5_association, back_populates='version')
     override        = relationship('CMIP5VersionOverride', uselist=False)
+
+    file_attributes = relationship(
+            'CMIP5Attributes',
+            secondary=cmip5_attributes_links,
+            back_populates='version')
 
 class CMIP5VersionOverride(Base):
     __tablename__ = 'cmip5_override_version'
 
-    version_id     = Column(Text, ForeignKey('cmip5_version.version_id'), primary_key = True)
+    version_id     = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key = True)
     version_number = Column(Text)
     is_latest      = Column(Boolean)
     to_update      = Column(Boolean)
@@ -115,12 +138,18 @@ class CMIP5VersionOverride(Base):
 class CMIP5Dataset(Base):
     __tablename__ = 'cmip5_dataset'
 
-    dataset_id     = Column(Text, primary_key=True)
+    dataset_id     = Column(UUID, primary_key=True)
     experiment_id  = Column(Text)
     institute_id   = Column(Text)
     model_id       = Column(Text)
     modeling_realm = Column(Text)
     frequency      = Column(Text)
 
-    versions = relationship('CMIP5Version', back_populates='dataset')
-    file_attributes = relationship('CMIP5Attributes', secondary=cmip5_association, back_populates='dataset')
+    versions = relationship(
+            'CMIP5Version',
+            back_populates='dataset')
+
+    file_attributes = relationship(
+            'CMIP5Attributes',
+            secondary=cmip5_attributes_links,
+            back_populates='dataset')
