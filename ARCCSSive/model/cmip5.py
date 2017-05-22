@@ -30,7 +30,7 @@ cmip5_attributes_links = Table('cmip5_attributes_links', Base.metadata,
         Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')),
         Column('version_id', UUID, ForeignKey('cmip5_version.version_id')))
 
-class CMIP5File(CFFile):
+class File(CFFile):
     """
     A CMIP5 output file's attributes
     """
@@ -50,27 +50,27 @@ class CMIP5File(CFFile):
     initialization_method = Column(Text)
     physics_version       = Column(Text)
 
-    #: :class:`CMIP5Dataset`: The dataset this file is part of
+    #: :class:`Dataset`: The dataset this file is part of
     dataset = relationship(
-            'CMIP5Dataset',
+            'Dataset',
             secondary=cmip5_attributes_links,
             back_populates='files')
 
-    #: :class:`CMIP5Version`: This file's dataset version
+    #: :class:`Version`: This file's dataset version
     version = relationship(
-            'CMIP5Version',
+            'Version',
             secondary=cmip5_attributes_links,
             back_populates='files')
 
-    #: list[:class:`CMIP5Warning`]: Warnings associated with this file
+    #: list[:class:`Warning`]: Warnings associated with this file
     warnings = relationship(
-            'CMIP5Warning',
+            'Warning',
             secondary=cmip5_attributes_links,
-            secondaryjoin='cmip5_attributes_links.c.version_id == CMIP5Warning.version_id')
+            secondaryjoin='cmip5_attributes_links.c.version_id == Warning.version_id')
 
     __mapper_args__ = {'polymorphic_identity': 'CMIP5'}
 
-class CMIP5Version(Base):
+class Version(Base):
     """
     A version of a ESGF dataset
 
@@ -89,33 +89,33 @@ class CMIP5Version(Base):
     #: boolean: True if this is the latest version available
     is_latest      = Column(Boolean)
 
-    #: :class:`CMIP5Dataset`: Dataset associated with this version
-    dataset         = relationship('CMIP5Dataset', back_populates='versions')
+    #: :class:`Dataset`: Dataset associated with this version
+    dataset         = relationship('Dataset', back_populates='versions')
 
-    #: :class:`CMIP5VersionOverride`: Errata information for this version
-    override        = relationship('CMIP5VersionOverride', uselist=False)
+    #: :class:`VersionOverride`: Errata information for this version
+    override        = relationship('VersionOverride', uselist=False)
 
-    #: list[:class:`CMIP5File`]: Files belonging to this dataset version
+    #: list[:class:`File`]: Files belonging to this dataset version
     files = relationship(
-            'CMIP5File',
+            'cmip5.File',
             secondary=cmip5_attributes_links,
             back_populates='version')
 
-    #: list[:class:`CMIP5Warning`]: Warnings attached to the datset by users
+    #: list[:class:`Warning`]: Warnings attached to the datset by users
     warnings = relationship(
-            'CMIP5Warning',
+            'Warning',
             back_populates='dataset_version')
 
-class CMIP5VersionOverride(Base):
+class VersionOverride(Base):
     """
     Errata for a CMIP5 dataset version, for cases when the published version_id
     is unset or incorrect
 
     Editing this table will automatically update the corresponding
-    :class:`CMIP5Version`.
+    :class:`Version`.
 
-    v = session.query(CMIP5Version).first()
-    v.override = CMIP5VersionOverride(version_number='v20120101')
+    v = session.query(Version).first()
+    v.override = VersionOverride(version_number='v20120101')
     session.add(v)
     """
     __tablename__ = 'cmip5_override_version'
@@ -128,7 +128,7 @@ class CMIP5VersionOverride(Base):
     #: boolean: True if this is the latest version available
     is_latest      = Column(Boolean)
 
-class CMIP5Dataset(Base):
+class Dataset(Base):
     """
     A CMIP5 Dataset, as you'd find listed on ESGF
     """
@@ -146,15 +146,16 @@ class CMIP5Dataset(Base):
     #: str: Data output frequency
     frequency      = Column(Text)
 
-    #: list[:class:`CMIP5Version`]: Available versions of this dataset
+    #: list[:class:`Version`]: Available versions of this dataset, in release order
     versions = relationship(
-            'CMIP5Version',
-            back_populates='dataset')
+            'Version',
+            back_populates='dataset',
+            order_by='(Version.is_latest, Version.version_number)')
 
-    #: list[:class:`CMIP5Files`]: Files belonging to this dataset
+    #: list[:class:`Files`]: Files belonging to this dataset
     #: (note this contains multiple different versions)
     files = relationship(
-            'CMIP5File',
+            'cmip5.File',
             secondary=cmip5_attributes_links,
             back_populates='dataset')
 
@@ -163,15 +164,22 @@ class CMIP5Dataset(Base):
             'Variable',
             secondary='join(cmip5_attributes_links, cf_variable_link, '
                 'cmip5_attributes_links.c.md_hash ==  cf_variable_link.c.md_hash)',
-            primaryjoin='CMIP5Dataset.dataset_id == cmip5_attributes_links.c.dataset_id',
+            primaryjoin='Dataset.dataset_id == cmip5_attributes_links.c.dataset_id',
             secondaryjoin='Variable.variable_id == cf_variable_link.c.variable_id')
 
-class CMIP5Warning(Base):
+    @property
+    def latest_version(self):
+        """
+        The latest :class:`Version` for this dataset
+        """
+        return self.versions[-1]
+
+class Warning(Base):
     __tablename__ = 'cmip5_warning'
 
     id = Column(Integer, primary_key=True)
     version_id = Column(UUID, ForeignKey('cmip5_version.version_id'))
 
     dataset_version = relationship(
-            'CMIP5Version',
+            'Version',
             back_populates='warnings')

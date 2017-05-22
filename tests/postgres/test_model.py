@@ -15,8 +15,9 @@
 # limitations under the License.
 from __future__ import print_function
 
-from ARCCSSive.postgres.model import *
-from ARCCSSive.postgres.db import connect, Session
+from ARCCSSive.model import *
+from ARCCSSive.model.cmip5 import *
+from ARCCSSive.db import connect, Session
 
 import pytest
 import psycopg2
@@ -41,29 +42,33 @@ def session(database):
     s.rollback()
 
 def test_path(session):
-    q = session.query(Path).limit(5)
+    q = session.query(base.Path).limit(5)
+    assert q.count() == 5
+
+def test_metadata(session):
+    q = session.query(base.Metadata).limit(5)
     assert q.count() == 5
 
 def test_cf(session):
-    q = session.query(CFFile).limit(5)
+    q = session.query(cfnetcdf.File).limit(5)
     assert q.count() == 5
 
     q = q.first()
     assert len(q.variables) > 0
 
 def test_cmip5(session):
-    q = session.query(CFFile).filter_by(collection='CMIP5').first()
+    q = session.query(cfnetcdf.File).filter_by(collection='CMIP5').first()
     assert q.experiment_id is not None
 
     assert len(q.variables) > 0
 
 def test_version_override(session):
     value = 'v99999999'
-    q = (session.query(CMIP5Version)
-            .outerjoin(CMIP5VersionOverride)
-            .filter(CMIP5VersionOverride.version_id == None)
+    q = (session.query(Version)
+            .outerjoin(VersionOverride)
+            .filter(VersionOverride.version_id == None)
             .first())
-    o = CMIP5VersionOverride(version_number = value)
+    o = VersionOverride(version_number = value)
     q.override = o
     session.add(q)
     session.commit()

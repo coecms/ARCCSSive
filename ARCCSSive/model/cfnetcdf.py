@@ -78,6 +78,6 @@ class Variable(Base):
 
     #: list[:class:`File`]: Files containing this variable
     cf_files = relationship(
-            "File", 
+            "cfnetcdf.File", 
             secondary=cf_variable_link, 
             back_populates='variables')
