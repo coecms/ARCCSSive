@@ -82,8 +82,8 @@ CREATE MATERIALIZED VIEW cf_variable_link AS
             || ':' || COALESCE(axis,'-')
         )::uuid AS variable_id
     FROM vars;
-CREATE INDEX ON cf_variable_link(md_hash)
-CREATE INDEX ON cf_variable_link(variable_id)
+CREATE INDEX ON cf_variable_link(md_hash);
+CREATE INDEX ON cf_variable_link(variable_id);
 
 /* Metadata from the file specific to CMIP5 
  * Gets the attributes out of JSON format into a more usable format
