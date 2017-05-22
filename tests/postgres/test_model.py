@@ -51,7 +51,9 @@ def test_cf(session):
     q = q.first()
     assert len(q.variables) > 0
 
-# def test_cmip5(session):
-#     q = session.query(CFAttributes).filter_by(collection='CMIP5').first()
-#     assert q.experiment_id is not None
+def test_cmip5(session):
+    q = session.query(CFAttributes).filter_by(collection='CMIP5').first()
+    assert q.experiment_id is not None
+
+    assert len(q.variables) > 0
 
