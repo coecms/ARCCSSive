@@ -21,11 +21,11 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Text
+from sqlalchemy.types import Text, Integer
 
 cf_variable_link = Table('cf_variable_link', Base.metadata,
         Column('md_hash', UUID, ForeignKey('cf_attributes.md_hash')),
-        Column('variable_id', UUID, ForeignKey('cf_variable.variable_id')),
+        Column('variable_id', Integer, ForeignKey('cf_variable.id')),
         )
 
 class File(Base):
@@ -34,7 +34,7 @@ class File(Base):
     """
     __tablename__ = 'cf_attributes'
 
-    md_hash     = Column(UUID, ForeignKey('paths.pa_hash'), primary_key = True)
+    md_hash     = Column(UUID, ForeignKey('paths.pa_hash'), ForeignKey('metadata.md_hash'), primary_key = True)
 
     #: str: File title
     title       = Column(Text)
@@ -54,30 +54,64 @@ class File(Base):
     variables = relationship(
             "Variable",
             secondary=cf_variable_link,
-            back_populates='cf_files')
+            back_populates='files')
+
+    metadata_rel = relationship(
+            "Metadata")
+
+    #: dict: Full metadata
+    attributes = association_proxy('metadata_rel', 'md_json')
 
     __mapper_args__ = {
             'polymorphic_on': collection,
             'polymorphic_identity': 'unknown',
             }
 
+    def open(self):
+        """
+        Open the file
+        """
+        return xarray.open_dataset(self.path)
+
 class Variable(Base):
     """
-    A variable in a CF-Compliant NetCDF file
+    A CF-Compliant variable
     """
     __tablename__ = 'cf_variable'
 
-    variable_id = Column(UUID, primary_key = True)
+    id             = Column(Integer, primary_key=True)
 
-    #: str: Variable name
-    name        = Column(Text)
-    #: str: Variable units
-    units       = Column(Text)
-    #: str: Long name
-    long_name   = Column(Text)
+    #: Variable standard name
+    name           = Column(Text)
+    #: Canonical unit
+    canonical_unit = Column(Text)
+    #: Grib code
+    grib           = Column(Text)
+    #: AMIP name
+    amip           = Column(Text)
+    #: Description of the variable
+    description    = Column(Text)
+
+    aliases_rel    = relationship('VariableAlias', back_populates='variable')
+
+    #: list[str]: Aliases of this variable
+    aliases        = association_proxy('aliases_rel','name', 
+            creator=lambda a: VariableAlias(name=a))
 
     #: list[:class:`File`]: Files containing this variable
-    cf_files = relationship(
-            "cfnetcdf.File", 
-            secondary=cf_variable_link, 
-            back_populates='variables')
+    files          = relationship(
+            'cfnetcdf.File',
+            secondary = cf_variable_link,
+            back_populates = 'variables')
+
+class VariableAlias(Base):
+    __tablename__ = 'cf_variable_alias'
+
+    id             = Column(Integer, primary_key=True)
+    variable_id    = Column(Integer, ForeignKey('cf_variable.id'))
+
+    #: Alias name
+    name           = Column(Text)
+
+    #: :class:`Variable`: Variable this is an alias to
+    variable       = relationship('Variable', back_populates='aliases_rel')

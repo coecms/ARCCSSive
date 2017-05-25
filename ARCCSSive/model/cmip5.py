@@ -106,6 +106,17 @@ class Version(Base):
             'Warning',
             back_populates='dataset_version')
 
+    variables = relationship(
+            'Timeseries',
+            back_populates='version')
+
+    def open(self):
+        """
+        Open all variables in the dataset
+        """
+        pass
+    
+
 class VersionOverride(Base):
     """
     Errata for a CMIP5 dataset version, for cases when the published version_id
@@ -163,9 +174,9 @@ class Dataset(Base):
     variables = relationship(
             'Variable',
             secondary='join(cmip5_attributes_links, cf_variable_link, '
-                'cmip5_attributes_links.c.md_hash ==  cf_variable_link.c.md_hash)',
+                'cmip5_attributes_links.c.md_hash == cf_variable_link.c.md_hash)',
             primaryjoin='Dataset.dataset_id == cmip5_attributes_links.c.dataset_id',
-            secondaryjoin='Variable.variable_id == cf_variable_link.c.variable_id')
+            secondaryjoin='Variable.id == cf_variable_link.c.variable_id')
 
     @property
     def latest_version(self):
@@ -183,3 +194,31 @@ class Warning(Base):
     dataset_version = relationship(
             'Version',
             back_populates='warnings')
+
+class Timeseries(Base):
+    """
+    All the files at a given Dataset, Variable and Version
+    """
+    __tablename__ = 'dataset_files_link'
+
+    dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'), primary_key=True)
+    variable_id = Column(UUID, ForeignKey('cf_variable.id'))
+    version_id = Column(UUID, ForeignKey('cmip5_version.version_id'))
+
+    #: Dataset this timeseries is part of
+    dataset = relationship('Dataset')
+    #: Dataset version of this timeseries
+    version = relationship('Version', back_populates='variables')
+    #: Variable this timeseries contains
+    variable = relationship('Variable')
+
+    #: List of files in this timeseries
+    files = relationship('cmip5.File',
+            secondary='join(cmip5_attributes_links, cf_variable_link, cmip5_attributes_links.c.md_hash == cf_variable_link.c.md_hash)',
+            primaryjoin='and_(Timeseries.variable_id == cf_variable_link.c.variable_id, Timeseries.version_id == cmip5_attributes_links.c.version_id)')
+
+    def open(self):
+        """
+        Open all files in the set
+        """
+        return xarray.concat([x.open() for x in self.files], 'time')

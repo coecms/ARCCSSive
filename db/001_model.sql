@@ -1,5 +1,7 @@
+SET default_tablespace = ceph;
+
 /* Generic CF metadata */
-CREATE VIEW cf_attributes AS
+CREATE OR REPLACE VIEW cf_attributes AS
     SELECT
         md_hash
       , md_json->'attributes'->>'title'       as title
@@ -11,84 +13,55 @@ CREATE VIEW cf_attributes AS
     WHERE
         md_json->'attributes'->>'Conventions' is not null;
 
-/* A variable in a CF-NetCDF file */
-CREATE MATERIALIZED VIEW cf_variable  AS
-    WITH vars AS (
-        SELECT DISTINCT
-            v.key as name
-          , v.value->'attributes'->>'units' as units
-          , v.value->'attributes'->>'long_name' as long_name
-          , v.value->'attributes'->>'axis' as axis
-        FROM
-            metadata
-          , jsonb_each(md_json->'variables') v
-        WHERE
-            md_json->'attributes'->>'Conventions' IS NOT NULL
-    )
-    SELECT
-        md5(name 
-            || ':' || COALESCE(units,'-')
-            || ':' || COALESCE(long_name,'-')
-            || ':' || COALESCE(axis,'-')
-        )::uuid AS variable_id
-      , *
-    FROM vars;
-CREATE UNIQUE INDEX ON cf_variable (variable_id);
+CREATE TABLE IF NOT EXISTS cf_variable (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    canonical_unit TEXT,
+    grib TEXT,
+    amip TEXT,
+    description TEXT
+    );
 
-/* Get the counts of each variable for filtering */
-CREATE MATERIALIZED VIEW cf_variable_counts AS
-     SELECT 
-        v.key
-      , count(v.value) AS count
-     FROM metadata, jsonb_each(metadata.md_json -> 'variables') v
-     WHERE ((v.value -> 'dimensions'::text) -> 1) IS NOT NULL
-     GROUP BY v.key;
+CREATE TABLE IF NOT EXISTS cf_variable_alias (
+    id SERIAL PRIMARY KEY,
+    variable_id INTEGER REFERENCES cf_variable ON DELETE CASCADE,
+    name TEXT
+    );
+CREATE INDEX ON cf_variable_alias(name);
 
-/* Exclude most of the dimensions variables - those with a matching `_bnds` */
-CREATE VIEW interesting_variables AS
-    SELECT key
-    FROM cf_variable_counts
-    WHERE
-        key NOT IN ( 
-            SELECT left(key, -5)
-            FROM cf_variable_counts
-            WHERE key ~~ '%_bnds')
-        AND key !~~ '%_bnds'::text 
-        AND key !~~ 'bounds_%'::text
-        AND key !~~ '%_vertices'::text;
-
-/* n-to-n join from files to variables */
-CREATE MATERIALIZED VIEW cf_variable_link AS
-    WITH vars AS (
+CREATE MATERIALIZED VIEW IF NOT EXISTS cf_variable_link AS
+    WITH file_vars AS (
+        -- Variables in files that aren't an axis
         SELECT
             md_hash
-          , v.key as name
-          , v.value->'attributes'->>'units' as units
-          , v.value->'attributes'->>'long_name' as long_name
-          , v.value->'attributes'->>'axis' as axis
+          , vars.key as name
+          , COALESCE(vars.value->'attributes'->>'standard_name'
+                , vars.key) as standard_name
         FROM
             metadata
-          , jsonb_each(md_json->'variables') v
+          , jsonb_each(md_json->'variables') as vars
         WHERE
-            md_json->'attributes'->>'Conventions' IS NOT NULL
-        AND
-            v.key IN (SELECT key FROM interesting_variables)
+            NOT vars.value->'attributes' ? 'axis'
     )
-    SELECT
+    SELECT DISTINCT
         md_hash
-      , md5(name 
-            || ':' || COALESCE(units,'-')
-            || ':' || COALESCE(long_name,'-')
-            || ':' || COALESCE(axis,'-')
-        )::uuid AS variable_id
-    FROM vars;
+      , cf_variable.id as variable_id
+      , file_vars.name
+    FROM
+        file_vars
+    JOIN
+        cf_variable_alias ON (cf_variable_alias.name = file_vars.standard_name)
+    JOIN
+        cf_variable ON (cf_variable.id = cf_variable_alias.variable_id)
+    WHERE
+        cf_variable.name NOT IN ('time', 'latitude', 'longitude');
 CREATE INDEX ON cf_variable_link(md_hash);
 CREATE INDEX ON cf_variable_link(variable_id);
 
 /* Metadata from the file specific to CMIP5 
  * Gets the attributes out of JSON format into a more usable format
  */
-CREATE MATERIALIZED VIEW cmip5_attributes AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes AS
     WITH attrs AS (
         SELECT
             md_hash
@@ -120,7 +93,7 @@ CREATE UNIQUE INDEX ON cmip5_attributes (md_hash);
 
 /* Links to derived tables
  */
-CREATE MATERIALIZED VIEW cmip5_attributes_links  AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_links  AS
     SELECT
         md_hash
       , dataset_id
@@ -173,7 +146,7 @@ CREATE UNIQUE INDEX ON cmip5_dataset (dataset_id);
  * Normally the `cmip5_version` table should be used instead, as this contains
  * fixed values
  */ 
-CREATE MATERIALIZED VIEW cmip5_file_version  AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_file_version  AS
     SELECT DISTINCT
         version_id
       , dataset_id
@@ -185,7 +158,7 @@ CREATE INDEX ON cmip5_file_version (dataset_id);
 /* Manually entered version information, for the case when the file is
  * inaccurate or missing data
  */
-CREATE TABLE cmip5_override_version(
+CREATE TABLE IF NOT EXISTS cmip5_override_version(
     version_id UUID PRIMARY KEY,
     version_number TEXT,
     is_latest BOOLEAN,
@@ -194,7 +167,7 @@ CREATE UNIQUE INDEX ON cmip5_override_version (version_id);
 
 /* View combining the file and override versions to provide a consistent view
  */
-CREATE VIEW cmip5_version AS
+CREATE OR REPLACE VIEW cmip5_version AS
     SELECT
         f.version_id as version_id
       , f.dataset_id as dataset_id
@@ -205,7 +178,7 @@ CREATE VIEW cmip5_version AS
 
 /* Warnings associated with a dataset version
  */
-CREATE TABLE cmip5_warning (
+CREATE TABLE IF NOT EXISTS cmip5_warning (
     id SERIAL PRIMARY KEY,
     version_id UUID,
     warning TEXT,
@@ -213,3 +186,12 @@ CREATE TABLE cmip5_warning (
     added_on DATE
     ) ;
 CREATE INDEX ON cmip5_warning (version_id);
+
+CREATE TABLE IF NOT EXISTS esgf_variable (
+    id SERIAL PRIMARY KEY,
+    variable TEXT
+    );
+
+    /*
+with names as (select md_hash, coalesce(vars.value->'attributes'->>'standard_name', vars.key) as standard_name from metadata, jsonb_each(md_json->'variables') as vars where not vars.value->'attributes' ? 'axis') select * from names where standard_name in (select name from cf_variable_alias) and standard_name not in ('time', 'latitude', 'longitude', 'height', 'depth');
+*/

@@ -76,3 +76,10 @@ def test_version_override(session):
     session.delete(o)
     session.commit()
     assert q.version_number != value
+
+def test_timeseries(session):
+    q = session.query(Dataset).first()
+    l = q.latest_version
+    vs = l.variables
+    files = [f.path for v in vs for f in v.files]
+
