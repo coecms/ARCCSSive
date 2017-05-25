@@ -187,11 +187,13 @@ CREATE TABLE IF NOT EXISTS cmip5_warning (
     ) ;
 CREATE INDEX ON cmip5_warning (version_id);
 
-CREATE TABLE IF NOT EXISTS esgf_variable (
-    id SERIAL PRIMARY KEY,
-    variable TEXT
-    );
+CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_dataset_variable_link AS
+    SELECT DISTINCT
+        variable_id
+        version_id
+        dataset_id
+    FROM
+        cmip5_attributes_links as a
+    JOIN
+        cf_variable_link as v ON (a.md_hash = v.md_hash);
 
-    /*
-with names as (select md_hash, coalesce(vars.value->'attributes'->>'standard_name', vars.key) as standard_name from metadata, jsonb_each(md_json->'variables') as vars where not vars.value->'attributes' ? 'axis') select * from names where standard_name in (select name from cf_variable_alias) and standard_name not in ('time', 'latitude', 'longitude', 'height', 'depth');
-*/
