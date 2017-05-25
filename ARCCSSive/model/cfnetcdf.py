@@ -22,10 +22,11 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import Text, Integer
+from sqlalchemy.sql.expression import case
 
 cf_variable_link = Table('cf_variable_link', Base.metadata,
-        Column('md_hash', UUID, ForeignKey('cf_attributes.md_hash')),
-        Column('variable_id', Integer, ForeignKey('cf_variable.id')),
+        Column('md_hash', UUID, ForeignKey('cf_attributes.md_hash'), primary_key=True),
+        Column('variable_id', Integer, ForeignKey('cf_variable.id'), primary_key=True),
         )
 
 class File(Base):
@@ -63,7 +64,9 @@ class File(Base):
     attributes = association_proxy('metadata_rel', 'md_json')
 
     __mapper_args__ = {
-            'polymorphic_on': collection,
+            'polymorphic_on': case([
+                (collection == 'CMIP5', 'CMIP5')
+                ], else_='unknown'),
             'polymorphic_identity': 'unknown',
             }
 

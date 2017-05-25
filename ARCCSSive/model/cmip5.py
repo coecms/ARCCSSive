@@ -16,17 +16,17 @@
 from __future__ import print_function
 
 from .base import Base
-from .cfnetcdf import File as CFFile, Variable
+from .cfnetcdf import File as CFFile, Variable, cf_variable_link
 
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, ForeignKey, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, ForeignKey, Table, join
+from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.types import Text, Boolean, Integer
 
 cmip5_attributes_links = Table('cmip5_attributes_links', Base.metadata,
-        Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash')),
+        Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash'), primary_key=True),
         Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')),
         Column('version_id', UUID, ForeignKey('cmip5_version.version_id')))
 
@@ -199,10 +199,10 @@ class Timeseries(Base):
     """
     All the files at a given Dataset, Variable and Version
     """
-    __tablename__ = 'dataset_files_link'
+    __tablename__ = 'cmip5_dataset_variable_link'
 
     dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'), primary_key=True)
-    variable_id = Column(UUID, ForeignKey('cf_variable.id'))
+    variable_id = Column(Integer, ForeignKey('cf_variable.id'))
     version_id = Column(UUID, ForeignKey('cmip5_version.version_id'))
 
     #: Dataset this timeseries is part of
@@ -213,9 +213,11 @@ class Timeseries(Base):
     variable = relationship('Variable')
 
     #: List of files in this timeseries
-    files = relationship('cmip5.File',
-            secondary='join(cmip5_attributes_links, cf_variable_link, cmip5_attributes_links.c.md_hash == cf_variable_link.c.md_hash)',
-            primaryjoin='and_(Timeseries.variable_id == cf_variable_link.c.variable_id, Timeseries.version_id == cmip5_attributes_links.c.version_id)')
+    files = relationship('cmip5.File', 
+            secondary=join(cmip5_attributes_links, cf_variable_link,
+                cmip5_attributes_links.c.md_hash == cf_variable_link.c.md_hash),
+            primaryjoin='and_(Timeseries.version_id==cmip5_attributes_links.c.version_id,'
+                'Timeseries.variable_id==cf_variable_link.c.variable_id)')
 
     def open(self):
         """
