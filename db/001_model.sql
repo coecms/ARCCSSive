@@ -78,10 +78,20 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes AS
           , md_json->'attributes'->>'initialization_method' as initialization_method
           , md_json->'attributes'->>'physics_version'       as physics_version
         FROM metadata 
+        JOIN paths ON md_hash = pa_hash
         WHERE
             md_json->'attributes'->>'Conventions' IS NOT NULL
           AND
             md_json->'attributes'->>'project_id' = 'CMIP5'
+          AND (
+                pa_path LIKE '/g/data1/ua6/unofficial-ESG-replica/%'
+            OR
+                pa_path LIKE '/g/data1/ua6/authorative/%'
+            OR
+                pa_path LIKE '/g/data1/ua6/drstree/%'
+            OR
+                pa_path LIKE '/g/data1/ua6/DRSv2'
+          ) 
     )
     SELECT
         *
@@ -93,25 +103,41 @@ CREATE UNIQUE INDEX ON cmip5_attributes (md_hash);
 
 /* Links to derived tables
  */
-CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_links  AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_links AS
+    WITH s AS (
+        SELECT
+            md_hash
+          , version_number
+          , md5 ( experiment_id 
+                || ':' || institute_id 
+                || ':' || model_id 
+                || ':' || modeling_realm 
+                || ':' || frequency
+                || ':' || ensemble_member
+                )::uuid as dataset_id
+        FROM cmip5_attributes
+    )
+    , v AS (
+        SELECT DISTINCT
+            md_hash
+          , array_agg(name) as variable_list
+        FROM
+            cf_variable_link
+        GROUP BY md_hash
+    )
     SELECT
-        md_hash
+        s.md_hash
       , dataset_id
       , md5 ( dataset_id || ':' || COALESCE(version_number,'-') )::uuid as version_id
-    FROM (SELECT
-        md_hash
-      , version_number
-      , md5 ( experiment_id 
-            || ':' || institute_id 
-            || ':' || model_id 
-            || ':' || modeling_realm 
-            || ':' || frequency
-            || ':' || ensemble_member
-            )::uuid as dataset_id
-    FROM cmip5_attributes) AS s;
+      , variable_list
+    FROM 
+        s
+    JOIN 
+        v ON (s.md_hash = v.md_hash);
 CREATE UNIQUE INDEX ON cmip5_attributes_links (md_hash);
 CREATE INDEX ON cmip5_attributes_links (dataset_id);
 CREATE INDEX ON cmip5_attributes_links (version_id);
+CREATE INDEX ON cmip5_attributes_links (variable_list);
 
 /* A CMIP5 dataset
  * Like what you find on ESGF, however version_number is broken out into its
@@ -187,13 +213,10 @@ CREATE TABLE IF NOT EXISTS cmip5_warning (
     ) ;
 CREATE INDEX ON cmip5_warning (version_id);
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_dataset_variable_link AS
+CREATE VIEW cmip5_timeseries_link AS
     SELECT DISTINCT
-        variable_id
-        version_id
         dataset_id
+      , version_id
+      , variable_list
     FROM
-        cmip5_attributes_links as a
-    JOIN
-        cf_variable_link as v ON (a.md_hash = v.md_hash);
-
+        cmip5_attributes_links;

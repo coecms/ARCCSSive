@@ -22,6 +22,7 @@ from ARCCSSive.db import connect, Session
 import pytest
 import psycopg2
 import getpass
+import six
 
 @pytest.fixture(scope='session')
 def database():
@@ -56,12 +57,6 @@ def test_cf(session):
     q = q.first()
     assert len(q.variables) > 0
 
-def test_cmip5(session):
-    q = session.query(cfnetcdf.File).filter_by(collection='CMIP5').first()
-    assert q.experiment_id is not None
-
-    assert len(q.variables) > 0
-
 def test_version_override(session):
     value = 'v99999999'
     q = (session.query(Version)
@@ -83,3 +78,44 @@ def test_timeseries(session):
     vs = l.variables
     files = [f.path for v in vs for f in v.files]
 
+def test_dataset_relationships(session):
+    # Grab a file in the test data
+    f = session.query(cmip5.File).first()
+
+    # Does the file's dataset point back to the file?
+    d = f.dataset
+    assert d is not None
+    assert isinstance(d.institute_id, six.string_types)
+    assert f in d.files
+    assert f.version in d.versions
+    assert f.timeseries in d.variables
+
+def test_version_relationships(session):
+    # Grab a file in the test data with a defined version
+    f = session.query(cmip5.File).join(cmip5_attributes_links).join(Version).filter(Version.version_number != None).first()
+    # How about the version?
+    v = f.version
+    assert v is not None
+    assert isinstance(v.version_number, six.string_types)
+    assert f in v.files
+    assert v.dataset == f.dataset
+    assert f.timeseries in v.variables
+
+def test_timeseries_relationships(session):
+    # Grab a file in the test data
+    f = session.query(cmip5.File).first()
+    # The timeseries has multiple files with the same variables, dataset and version
+    t = f.timeseries
+    assert t is not None
+    assert t.dataset == f.dataset
+    assert t.version == f.version
+    assert f in t.files
+    # assert f.variables[0].name in t.variable_list
+
+def test_timeseries_query(session):
+    t = (session.query(Timeseries).join(Dataset)
+            .filter_by(institute_id = 'CSIRO-QCCCE')
+            .filter(Timeseries.variable_list.any('tasmax'))
+            .first())
+    assert t is not None
+    assert t.dataset.institute_id == 'CSIRO-QCCCE'
