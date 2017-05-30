@@ -20,6 +20,7 @@ jobs:
                 /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda install -y postgresql
                 psql -h localhost -U postgres -f db/000_nci.sql
+                python ARCCSSive/cftable.py
                 psql -h localhost -U postgres -f db/001_model.sql
                 EOF
             - run: |
