@@ -8,8 +8,9 @@ python:
 services:
     - postgresql
 env:
-    - ARCCSSIVE_DB: postgres://localhost/postgres
-    - ARCCSSIVE_USER: postgres
+    global:
+        - ARCCSSIVE_DB: postgres://localhost/postgres
+        - ARCCSSIVE_USER: postgres
 addons:
     postgresql: '9.6'
 install:
