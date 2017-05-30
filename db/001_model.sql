@@ -95,6 +95,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes AS
     )
     SELECT
         *
+      , split_part(table_id, ' ', 2) as mip_table
       , ('r' || realization ||
          'i' || initialization_method ||
          'p' || physics_version) as ensemble_member
@@ -113,6 +114,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_links AS
                 || ':' || model_id 
                 || ':' || modeling_realm 
                 || ':' || frequency
+                || ':' || mip_table
                 || ':' || ensemble_member
                 )::uuid as dataset_id
         FROM cmip5_attributes
@@ -143,7 +145,7 @@ CREATE INDEX ON cmip5_attributes_links (variable_list);
  * Like what you find on ESGF, however version_number is broken out into its
  * own table
  */
-CREATE MATERIALIZED VIEW cmip5_dataset  AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_dataset AS
     WITH datas AS (
         SELECT DISTINCT
             experiment_id
@@ -151,6 +153,7 @@ CREATE MATERIALIZED VIEW cmip5_dataset  AS
           , model_id
           , modeling_realm
           , frequency
+          , mip_table
           , ensemble_member
         FROM cmip5_attributes
     )
@@ -160,6 +163,7 @@ CREATE MATERIALIZED VIEW cmip5_dataset  AS
             || ':' || model_id 
             || ':' || modeling_realm 
             || ':' || frequency
+            || ':' || mip_table
             || ':' || ensemble_member
             )::uuid as dataset_id
       , *

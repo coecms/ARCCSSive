@@ -100,7 +100,7 @@ def add_file_item(db, version_id, filename, md5, sha256):
 
 @pytest.fixture(scope="module")
 def session(request, tmpdir_factory):
-    session = CMIP5.connect('sqlite:///:memory:')
+    session = CMIP5.connect()
 
     dira = tmpdir_factory.mktemp('a')
     dirb = tmpdir_factory.mktemp('b')

@@ -60,7 +60,7 @@ class File(CFFile):
 
     #: :class:`Version`: This file's dataset version
     version = relationship(
-            'Version',
+            'cmip5.Version',
             uselist=False,
             secondary=cmip5_attributes_links,
             back_populates='files')
@@ -119,6 +119,7 @@ class Version(Base):
     #: list[:class:`Warning`]: Warnings attached to the datset by users
     warnings = relationship(
             'Warning',
+            order_by='Warning.added_on',
             back_populates='dataset_version')
 
     variables = relationship(
@@ -171,12 +172,16 @@ class Dataset(Base):
     modeling_realm = Column(Text)
     #: str: Data output frequency
     frequency      = Column(Text)
+    #: str: Ensemble member
+    ensemble_member = Column(Text)
+    #: str: MIP Table
+    mip_table = Column(Text)
 
     #: list[:class:`Version`]: Available versions of this dataset, in release order
     versions = relationship(
-            'Version',
+            'cmip5.Version',
             back_populates='dataset',
-            order_by='(Version.is_latest, Version.version_number)')
+            order_by='(cmip5.Version.is_latest, cmip5.Version.version_number)')
 
     #: list[:class:`Files`]: Files belonging to this dataset
     #: (note this contains multiple different versions)
@@ -200,9 +205,19 @@ class Warning(Base):
     id = Column(Integer, primary_key=True)
     version_id = Column(UUID, ForeignKey('cmip5_version.version_id'))
 
+    #: str: Warning text
+    warning = Column(Text)
+    #: str: Who added thge warning
+    added_by = Column(Text)
+    #: str: Date the warning was added
+    added_on = Column(Date)
+
     dataset_version = relationship(
-            'Version',
+            'cmip5.Version',
             back_populates='warnings')
+
+    def __str__(self):
+        return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
 
 class Timeseries(Base):
     """
@@ -217,7 +232,7 @@ class Timeseries(Base):
     #: Dataset this timeseries is part of
     dataset = relationship('Dataset', back_populates='variables')
     #: Dataset version of this timeseries
-    version = relationship('Version', back_populates='variables')
+    version = relationship('cmip5.Version', back_populates='variables')
 
     #: List of files in this timeseries
     files = relationship('cmip5.File', 

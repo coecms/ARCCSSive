@@ -34,10 +34,15 @@ def connect(url=default_url, user=default_user, password=None, echo=False):
     """
     _url = make_url(url)
 
-    if user is not None:
-        _url.username = user
-    if password is not None:
-        _url.password = password
+    try:
+        import private
+        _url.username = private.username
+        _url.password = private.password
+    except ImportError:
+        if user is not None:
+            _url.username = user
+        if password is not None:
+            _url.password = password
 
     engine = create_engine(_url, echo=echo)
     Session.configure(bind=engine)
