@@ -28,7 +28,7 @@ import six
 def database():
     # Travis connection
     try:
-        engine = connect('postgresql://localhost/postgres', user='postgres', password='', echo=True)
+        engine = connect(echo=True)
         engine.connect()
     except Exception:
         import private

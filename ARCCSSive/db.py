@@ -23,8 +23,8 @@ from sqlalchemy.orm import sessionmaker
 
 import os
 
-default_url = 'postgres://130.56.244.109:5432/postgres'
-default_user = os.environ.get('USER','')
+default_url = os.enviorn.get('ARCCSSIVE_DB', 'postgres://130.56.244.109:5432/postgres')
+default_user = os.environ.get('ARCCSSIVE_USER', os.environ.get('USER',''))
 
 Session = sessionmaker()
 

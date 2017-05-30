@@ -48,10 +48,14 @@ def load_cf_table(session):
     session.commit()
 
 def main():
-    import private
-    private.connect()
-    session = Session()
+    try:
+        engine = connect()
+        engine.connect()
+    except Exception:
+        import private
+        engine = private.connect()
 
+    session = Session()
     load_cf_table(session)
 
 if __name__ == '__main__':

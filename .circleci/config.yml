@@ -4,6 +4,9 @@ jobs:
         working_directory: /conda-build
         docker:
             - image: condaforge/linux-anvil
+              environment:
+                  ARCCSSIVE_DB: postgres://localhost/postgres
+                  ARCCSSIVE_USER: postgres
             - image: circleci/postgres:9.6
               environment:
                   POSTGRES_USER: postgres
