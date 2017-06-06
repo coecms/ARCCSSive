@@ -18,9 +18,12 @@ limitations under the License.
 """
 
 from __future__ import print_function
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Date, UniqueConstraint
+from sqlalchemy import Column, Integer, Text, Boolean, ForeignKey, Date, UniqueConstraint
+from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy import select, func, join
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.associationproxy import association_proxy
 from ARCCSSive.data import *
 
 from ARCCSSive.model.base import Base
@@ -30,38 +33,8 @@ import os
 import glob
 
 # Aliases to old names
-Version = model2.Timeseries
 VersionWarning = model2.Warning
 VersionFile = model2.File
-
-dataset_variable_link = (
-    select([
-        model2.cmip5_attributes_links.c.dataset_id,
-        func.unnest(model2.cmip5_attributes_links.c.variable_list).label('variable')
-        ])
-    .distinct()
-    .alias()
-    )
-
-instance_table = (
-    select([
-        model2.Dataset.dataset_id,
-        model2.Dataset.experiment_id.label('experiment'),
-        model2.Dataset.mip_table.label('mip'),
-        model2.Dataset.model_id.label('model'),
-        model2.Dataset.ensemble_member.label('ensemble'),
-        model2.Dataset.modeling_realm.label('realm'),
-        dataset_variable_link.c.variable,
-        ])
-    .select_from(
-        join(
-            model2.Dataset,
-            dataset_variable_link,
-            model2.Dataset.dataset_id == dataset_variable_link.c.dataset_id
-            )
-        )
-    .alias()
-    )
 
 class Instance(Base):
     """
@@ -97,29 +70,21 @@ class Instance(Base):
 
         List of :class:`Version` available for this output
     """
-    __table__ = instance_table
+    __tablename__ = 'old_cmip5_instance'
 
-    __mapper_args__ = {
-            'primary_key': [
-                instance_table.c.dataset_id,
-                instance_table.c.variable
-                ]
-            }
+    dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'), primary_key=True)
+    variable   = Column(Text, primary_key=True)
+    experiment = Column(Text)
+    mip        = Column(Text)
+    model      = Column(Text)
+    ensemble   = Column(Text)
+    realm      = Column(Text)
 
-    versions = relationship('Timeseries',
-            primaryjoin = 'and_('
-                'instance_table.c.dataset_id == Timeseries.dataset_id'
-                'Timeseries.variable_list.any(instance_table.c.variable'
-                ')',
-            order_by='(Timeseries.version.is_latest, Timeseries.version.version_number)')
-#     id         = Column(Integer, name='instance_id', primary_key = True)
-# 
-#     variable   = Column(String, index=True)
-#     experiment = Column(String, index=True)
-#     mip        = Column(String, index=True)
-#     model      = Column(String, index=True)
-#     ensemble   = Column(String)
-#     realm      = Column(String)
+    versions = relationship('CMIP5.Model.Version',
+            order_by='(CMIP5.Model.Version.is_latest, CMIP5.Model.Version.version)',
+            primaryjoin='and_(Instance.dataset_id == CMIP5.Model.Version.dataset_id,'
+                'Instance.variable == CMIP5.Model.Version.variable)'
+            )
 #     # Missing versions are labelled NA in database and v20110427 in drstree, this is CMOR documentation date
 #     # order doesn't work if version NA
 # 
@@ -171,132 +136,155 @@ class Instance(Base):
 # Add alias to deprecated name
 Variable = Instance
 
-#class Version(Base):
-#    """
-#    A version of a model run's variable
-#
-#    .. attribute:: version
-#
-#        Version identifier
-#
-#    .. attribute:: path
-#
-#        Path to the output directory
-#
-#    .. attribute:: variable
-#
-#        :class:`Variable` associated with this version
-#
-#    .. attribute:: warnings
-#
-#        List of :class:`VersionWarning` available for this output
-#
-#    .. attribute:: files
-#
-#        List of :class:`VersionFile` available for this output
-#
-#    .. testsetup::
-#
-#        >>> cmip5  = getfixture('session')
-#
-#    >>> version = cmip5.query(Version).first()
-#    """
-#    __tablename__ = 'versions'
+class Version(Base):
+    """
+    A version of a model run's variable
+
+    .. attribute:: version
+
+        Version identifier
+
+    .. attribute:: path
+
+        Path to the output directory
+
+    .. attribute:: variable
+
+        :class:`Variable` associated with this version
+
+    .. attribute:: warnings
+
+        List of :class:`VersionWarning` available for this output
+
+    .. attribute:: files
+
+        List of :class:`VersionFile` available for this output
+
+    .. testsetup::
+
+        >>> cmip5  = getfixture('session')
+
+    >>> version = cmip5.query(Version).first()
+    """
+    __tablename__ = 'old_cmip5_version'
+
+    dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'))
+    version_id = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key=True)
+    variable   = Column(Text, primary_key=True)
+
 #    id          = Column(Integer, name='version_id', primary_key = True)
 #    instance_id = Column(Integer, ForeignKey('instances.instance_id'), index=True)
-#
-#    version     = Column(String)
-#    path        = Column(String)
-#    dataset_id  = Column(String)
-#    is_latest   = Column(Boolean)
-#    checked_on  = Column(String)
-#    to_update   = Column(Boolean)
-#
-#    warnings   = relationship('VersionWarning', order_by='VersionWarning.id', 
-#                              backref='version', cascade="all, delete-orphan", passive_deletes=True)
-#    files   = relationship('VersionFile', order_by='VersionFile.id', 
-#                            backref='version', cascade="all, delete-orphan", passive_deletes=True)
-#
-#
-#    def glob(self):
-#        """
-#        Get the glob string matching the CMIP5 filename
-#
-#        .. testsetup::
-#
-#            >>> import six
-#            >>> cmip5  = getfixture('session')
-#            >>> version = cmip5.query(Version).first()
-#
-#        >>> six.print_(version.glob())
-#        a_6hrLev_c_d_e*.nc
-#        """
-#        return '%s_%s_%s_%s_%s*.nc'%(
-#            self.variable.variable,
-#            self.variable.mip,
-#            self.variable.model,
-#            self.variable.experiment,
-#            self.variable.ensemble)
-#
-#    def build_filepaths(self):
-#        """
-#        Returns the list of files matching this version
-#
-#        :returns: List of file names
-#
-#        .. testsetup::
-#
-#            >>> cmip5  = getfixture('session')
-#            >>> version = cmip5.query(Version).first()
-#
-#        >>> version.build_filepaths()
-#        []
-#        """
-#        g = os.path.join(self.path, self.glob())
-#        return glob.glob(g)
-#         
-#    def filenames(self):
-#        """
-#        Returns the list of filenames for this version
-#
-#        :returns: List of file names
-#
-#        .. testsetup::
-#
-#            >>> cmip5  = getfixture('session')
-#            >>> version = cmip5.query(Version).first()
-#
-#        >>> version.filenames()
-#        []
-#        """
-#        return [x.filename for x in self.files] 
-#         
-#    def tracking_ids(self):
-#        """
-#        Returns the list of tracking_ids for files in this version
-#
-#        :returns: List of tracking_ids
-#
-#        .. testsetup::
-#
-#            >>> cmip5  = getfixture('session')
-#            >>> version = cmip5.query(Version).first()
-#
-#        >>> version.tracking_ids()
-#        []
-#        """
-#        return [x.tracking_id for x in self.files] 
-#
-#    def drstree_path(self):
-#        """ 
-#        Returns the drstree path for this particular version 
-#        """
-#        if self.version!='NA':
-#            version=self.version
-#        else:
-#            version='v20110427'
-#        return self.variable.drstree_path().replace('latest',version)
-#        
+
+    version     = Column(Text)
+#     path        = Column(Text)
+#     dataset_id  = Column(Text)
+    is_latest   = Column(Boolean)
+#     checked_on  = Column(Text)
+#     to_update   = Column(Boolean)
+# 
+#     warnings   = relationship('VersionWarning', order_by='VersionWarning.id', 
+#                               backref='version', cascade="all, delete-orphan", passive_deletes=True)
+#     files   = relationship('VersionFile', order_by='VersionFile.id', 
+#                             backref='version', cascade="all, delete-orphan", passive_deletes=True)
+
+    __table_args__ = (
+            ForeignKeyConstraint(
+                ['variable', 'dataset_id'],
+                ['old_cmip5_instance.variable', 'old_cmip5_instance.dataset_id'],
+                ),
+            )
+
+    timeseries = relationship('cmip5.Timeseries',
+            primaryjoin='and_('
+                'Model.Version.dataset_id == foreign(cmip5.Timeseries.dataset_id),'
+                'Model.Version.version_id == foreign(cmip5.Timeseries.version_id),'
+                'cmip5.Timeseries.variable_list.any(Model.Version.variable)'
+                ')')
+
+    new_version = relationship('cmip5.Version')
+    warnings = association_proxy('new_version', 'warnings')
+    files = association_proxy('timeseries', 'files')
+
+
+    def glob(self):
+        """
+        Get the glob string matching the CMIP5 filename
+
+        .. testsetup::
+
+            >>> import six
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> six.print_(version.glob())
+        a_6hrLev_c_d_e*.nc
+        """
+        return '%s_%s_%s_%s_%s*.nc'%(
+            self.variable.variable,
+            self.variable.mip,
+            self.variable.model,
+            self.variable.experiment,
+            self.variable.ensemble)
+
+    def build_filepaths(self):
+        """
+        Returns the list of files matching this version
+
+        :returns: List of file names
+
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.build_filepaths()
+        []
+        """
+        g = os.path.join(self.path, self.glob())
+        return glob.glob(g)
+         
+    def filenames(self):
+        """
+        Returns the list of filenames for this version
+
+        :returns: List of file names
+
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.filenames()
+        []
+        """
+        return [x.filename for x in self.files] 
+         
+    def tracking_ids(self):
+        """
+        Returns the list of tracking_ids for files in this version
+
+        :returns: List of tracking_ids
+
+        .. testsetup::
+
+            >>> cmip5  = getfixture('session')
+            >>> version = cmip5.query(Version).first()
+
+        >>> version.tracking_ids()
+        []
+        """
+        return [x.tracking_id for x in self.files] 
+
+    def drstree_path(self):
+        """ 
+        Returns the drstree path for this particular version 
+        """
+        if self.version!='NA':
+            version=self.version
+        else:
+            version='v20110427'
+        return self.variable.drstree_path().replace('latest',version)
+        
 #class VersionWarning(Base):
 #    """
 #    Warnings associated with a output version
@@ -304,9 +292,9 @@ Variable = Instance
 #    __tablename__ = 'warnings'
 #
 #    id         = Column(Integer, name='warning_id', primary_key = True)
-#    warning    = Column(String)
-#    added_by   = Column(String)
-#    added_on   = Column(String)
+#    warning    = Column(Text)
+#    added_by   = Column(Text)
+#    added_on   = Column(Text)
 #    version_id = Column(Integer, ForeignKey('versions.version_id'), index=True)
 #
 #    def __str__(self):
@@ -320,10 +308,10 @@ Variable = Instance
 #    __tablename__ = 'files'
 #
 #    id           = Column(Integer, name='file_id', primary_key = True)
-#    filename     = Column(String)
-#    tracking_id  = Column(String)
-#    md5          = Column(String)
-#    sha256       = Column(String)
+#    filename     = Column(Text)
+#    tracking_id  = Column(Text)
+#    md5          = Column(Text)
+#    sha256       = Column(Text)
 #    version_id   = Column(Integer, ForeignKey('versions.version_id'), index = True)
 #
 #    def __str__(self):

@@ -25,7 +25,7 @@ from sqlalchemy.types import Text, Integer
 from sqlalchemy.sql.expression import case
 
 cf_variable_link = Table('cf_variable_link', Base.metadata,
-        Column('md_hash', UUID, ForeignKey('cf_attributes.md_hash'), primary_key=True),
+        Column('md_hash', UUID, ForeignKey('cf_attributes_raw.md_hash'), primary_key=True),
         Column('variable_id', Integer, ForeignKey('cf_variable.id'), primary_key=True),
         )
 
@@ -33,20 +33,21 @@ class File(Base):
     """
     A CF-compliant NetCDF file's attributes
     """
-    __tablename__ = 'cf_attributes'
+    __tablename__ = 'cf_attributes_raw'
 
     md_hash     = Column(UUID, ForeignKey('paths.pa_hash'), ForeignKey('metadata.md_hash'), primary_key = True)
 
     #: str: File title
-    title       = Column(Text)
+    title       = association_proxy('extra_rel','title')
     #: str: Generating institution
-    institution = Column(Text)
+    institution = association_proxy('extra_rel','institution')
     #: str: Dataset source
-    source      = Column(Text)
+    source      = association_proxy('extra_rel','source')
     #: str: Data collection this file belongs to
     collection  = Column(Text)
 
     path_rel = relationship('Path')
+    extra_rel = relationship('FileExtra')
 
     #: str: Path to data file
     path = association_proxy('path_rel', 'path')
@@ -55,13 +56,20 @@ class File(Base):
     variables = relationship(
             "Variable",
             secondary=cf_variable_link,
-            back_populates='files')
+            back_populates='files',
+            viewonly=True)
 
     metadata_rel = relationship(
-            "Metadata")
+            "Metadata",
+            viewonly=True)
 
     #: dict: Full metadata
     attributes = association_proxy('metadata_rel', 'md_json')
+
+    inode_rel = relationship('Inode', 
+            primaryjoin='cfnetcdf.File.md_hash == foreign(Inode.fi_hash)',
+            viewonly=True)
+    filename = association_proxy('inode_rel','filename')
 
     __mapper_args__ = {
             'polymorphic_on': case([
@@ -75,6 +83,17 @@ class File(Base):
         Open the file
         """
         return xarray.open_dataset(self.path)
+
+class FileExtra(Base):
+    __tablename__ = 'cf_attributes'
+    md_hash     = Column(UUID, ForeignKey('cf_attributes_raw.md_hash'), primary_key = True)
+
+    #: str: File title
+    title       = Column(Text)
+    #: str: Generating institution
+    institution = Column(Text)
+    #: str: Dataset source
+    source      = Column(Text)
 
 class Variable(Base):
     """

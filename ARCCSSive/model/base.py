@@ -24,6 +24,14 @@ from sqlalchemy.types import Text, Boolean, Integer
 
 Base = declarative_base()
 
+class Inode(Base):
+    """
+    An inode on the metadata db
+    """
+    __tablename__ = 'files'
+    fi_hash = Column(UUID, primary_key=True)
+    filename = Column('fi_file', Text)
+
 class Path(Base):
     """
     The path to a file in the metadata db

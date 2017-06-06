@@ -1,34 +1,48 @@
-SET default_tablespace = ceph;
-
-/* Generic CF metadata */
-CREATE OR REPLACE VIEW cf_attributes AS
+/* The collection a cf-netcdf file belongs to (optimisation for cf_attributes view) */
+CREATE MATERIALIZED VIEW IF NOT EXISTS cf_attributes_raw AS
     SELECT
         md_hash
-      , md_json->'attributes'->>'title'       as title
-      , md_json->'attributes'->>'institution' as institution
-      , md_json->'attributes'->>'source'      as source
       , COALESCE(md_json->'attributes'->>'project_id', 'unknown') as collection
     FROM
         metadata 
     WHERE
         md_json->'attributes'->>'Conventions' is not null;
+CREATE UNIQUE INDEX ON cf_attributes_raw(md_hash);
+CREATE INDEX ON cf_attributes_raw(collection);
 
+/* Generic CF metadata */
+CREATE OR REPLACE VIEW cf_attributes AS
+    SELECT
+        a.md_hash
+      , md_json->'attributes'->>'title'       as title
+      , md_json->'attributes'->>'institution' as institution
+      , md_json->'attributes'->>'source'      as source
+      , a.collection
+    FROM
+        cf_attributes_raw AS a
+    JOIN metadata AS m ON (a.md_hash = m.md_hash);
+
+/* CF standard variable name */
 CREATE TABLE IF NOT EXISTS cf_variable (
     id SERIAL PRIMARY KEY,
-    name TEXT,
+    name TEXT UNIQUE,
     canonical_unit TEXT,
     grib TEXT,
     amip TEXT,
     description TEXT
     );
 
+/* Alias of a CF standard variable name */
 CREATE TABLE IF NOT EXISTS cf_variable_alias (
     id SERIAL PRIMARY KEY,
     variable_id INTEGER REFERENCES cf_variable ON DELETE CASCADE,
-    name TEXT
+    name TEXT UNIQUE
     );
 CREATE INDEX ON cf_variable_alias(name);
 
+/* Link between CF variables and CF files
+ * Ignores variables with an 'axis' attribute
+ */
 CREATE MATERIALIZED VIEW IF NOT EXISTS cf_variable_link AS
     WITH file_vars AS (
         -- Variables in files that aren't an axis
@@ -214,10 +228,51 @@ CREATE TABLE IF NOT EXISTS cmip5_warning (
     ) ;
 CREATE INDEX ON cmip5_warning (version_id);
 
-CREATE VIEW cmip5_timeseries_link AS
+CREATE OR REPLACE VIEW cmip5_timeseries_link AS
     SELECT DISTINCT
         dataset_id
       , version_id
       , variable_list
     FROM
         cmip5_attributes_links;
+
+CREATE OR REPLACE VIEW old_cmip5_instance AS
+    WITH x AS (
+        SELECT DISTINCT
+            dataset_id
+          , variable
+        FROM
+            cmip5_attributes_links
+          , UNNEST(variable_list) variable
+    )
+    SELECT
+        x.dataset_id
+      , x.variable
+      , d.experiment_id as experiment
+      , d.mip_table as mip
+      , d.model_id as model
+      , d.ensemble_member as ensemble
+      , d.modeling_realm as realm
+    FROM
+        cmip5_dataset AS d
+    INNER JOIN x ON (x.dataset_id = d.dataset_id);
+
+CREATE OR REPLACE VIEW old_cmip5_version AS
+    WITH x AS (
+        SELECT DISTINCT
+            dataset_id
+          , version_id
+          , variable
+        FROM
+            cmip5_attributes_links
+          , UNNEST(variable_list) variable
+    )
+    SELECT
+        x.dataset_id
+      , x.version_id
+      , x.variable
+      , v.version_number as version
+      , v.is_latest
+    FROM
+        cmip5_version AS v
+    INNER JOIN x ON (v.version_id = x.version_id);

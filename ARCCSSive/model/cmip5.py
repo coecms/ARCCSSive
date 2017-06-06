@@ -23,7 +23,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Table, join
 from sqlalchemy.orm import relationship, column_property
-from sqlalchemy.types import Text, Boolean, Integer
+from sqlalchemy.types import Text, Boolean, Integer, Date
 
 cmip5_attributes_links = Table('cmip5_attributes_links', Base.metadata,
         Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash'), primary_key=True),
@@ -37,7 +37,7 @@ class File(CFFile):
     """
     __tablename__ = 'cmip5_attributes'
 
-    md_hash               = Column(UUID, ForeignKey('cf_attributes.md_hash'), primary_key = True)
+    md_hash               = Column(UUID, ForeignKey('cf_attributes_raw.md_hash'), primary_key = True)
     experiment_id         = Column(Text)
     frequency             = Column(Text)
     institute_id          = Column(Text)
@@ -131,7 +131,6 @@ class Version(Base):
         Open all variables in the dataset
         """
         pass
-    
 
 class VersionOverride(Base):
     """
@@ -199,6 +198,19 @@ class Dataset(Base):
         """
         return self.versions[-1]
 
+    def drstree_path(self):
+        """
+        Get the drs tree path to variables within this dataset
+        """
+        base = '/g/data1/ua6/DRSv2/CMIP5'
+        return os.path.join(
+                base,
+                self.model_id,
+                self.experiment_id,
+                self.frequency,
+                self.modeling_realm,
+                self.ensemble_member)
+
 class Warning(Base):
     __tablename__ = 'cmip5_warning'
 
@@ -226,7 +238,7 @@ class Timeseries(Base):
     __tablename__ = 'cmip5_timeseries_link'
 
     dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'), primary_key=True)
-    version_id = Column(UUID, ForeignKey('cmip5_version.version_id'))
+    version_id = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key=True)
     variable_list = Column(ARRAY(Text))
 
     #: Dataset this timeseries is part of
@@ -243,6 +255,8 @@ class Timeseries(Base):
                 'Timeseries.variable_list == cmip5_attributes_links.c.variable_list'
                 ')',
             back_populates = 'timeseries')
+    
+    warnings = association_proxy('version', 'warnings')
 
     def open(self):
         """

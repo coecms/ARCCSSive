@@ -21,12 +21,10 @@ from __future__ import print_function
 
 import os
 
-from sqlalchemy import create_engine, func, select, and_
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import func, select, and_
 
-from ARCCSSive.CMIP5.Model import Base, Instance
-
-SQASession = sessionmaker()
+import ARCCSSive.db as db
+from ARCCSSive.CMIP5.Model import Instance
 
 class Session(object):
     """Holds a connection to the catalog
@@ -101,7 +99,7 @@ class Session(object):
 # Default CMIP5 database
 default_db = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'
 
-def connect(path = None):
+def connect(path = None, echo=False):
     """Connect to the CMIP5 catalog
 
     :return: A new :py:class:`Session`
@@ -113,15 +111,9 @@ def connect(path = None):
     >>> outputs = cmip5.query() # doctest: +SKIP
     """
 
-    if path is None:
-        # Get the path from the environment
-        path = os.environ.get('CMIP5_DB', default_db)
-
-    engine = create_engine(path)
-    Base.metadata.create_all(engine)
-    SQASession.configure(bind=engine, autoflush=False)
+    db.connect(echo=echo)
 
     connection = Session()
-    connection.session = SQASession()
+    connection.session = db.Session()
     return connection
 

@@ -48,13 +48,7 @@ def load_cf_table(session):
     session.commit()
 
 def main():
-    try:
-        engine = connect()
-        engine.connect()
-    except Exception:
-        import private
-        engine = private.connect()
-
+    connect(echo=True)
     session = Session()
     load_cf_table(session)
 
