@@ -48,7 +48,7 @@ def load_cf_table(session):
     session.commit()
 
 def main():
-    connect(echo=True)
+    connect(echo=False)
     session = Session()
     load_cf_table(session)
 
