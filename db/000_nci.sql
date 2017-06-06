@@ -4,8 +4,7 @@
  * In production these tables come from a remote database
  */
 
-
-CREATE TYPE path_type ENUM ('file', 'directory', 'link');
+CREATE TYPE path_type AS ENUM ('file', 'directory', 'link');
 
 CREATE TABLE metadata (
     md_hash UUID PRIMARY KEY,
