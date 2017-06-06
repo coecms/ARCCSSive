@@ -83,7 +83,7 @@ class Instance(Base):
     versions = relationship('CMIP5.Model.Version',
             order_by='(CMIP5.Model.Version.is_latest, CMIP5.Model.Version.version)',
             primaryjoin='and_(Instance.dataset_id == CMIP5.Model.Version.dataset_id,'
-                'Instance.variable == CMIP5.Model.Version.variable)'
+                'Instance.variable == CMIP5.Model.Version.variable_name)'
             )
 #     # Missing versions are labelled NA in database and v20110427 in drstree, this is CMOR documentation date
 #     # order doesn't work if version NA
@@ -170,7 +170,7 @@ class Version(Base):
 
     dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'))
     version_id = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key=True)
-    variable   = Column(Text, primary_key=True)
+    variable_name = Column('variable', Text, primary_key=True)
 
 #    id          = Column(Integer, name='version_id', primary_key = True)
 #    instance_id = Column(Integer, ForeignKey('instances.instance_id'), index=True)
@@ -198,13 +198,15 @@ class Version(Base):
             primaryjoin='and_('
                 'Model.Version.dataset_id == foreign(cmip5.Timeseries.dataset_id),'
                 'Model.Version.version_id == foreign(cmip5.Timeseries.version_id),'
-                'cmip5.Timeseries.variable_list.any(Model.Version.variable)'
-                ')')
+                'cmip5.Timeseries.variable_list.any(Model.Version.variable_name)'
+                ')',
+            uselist=False)
 
     new_version = relationship('cmip5.Version')
     warnings = association_proxy('new_version', 'warnings')
     files = association_proxy('timeseries', 'files')
 
+    variable = relationship('Instance')
 
     def glob(self):
         """
@@ -279,7 +281,7 @@ class Version(Base):
         """ 
         Returns the drstree path for this particular version 
         """
-        if self.version!='NA':
+        if self.version is not None:
             version=self.version
         else:
             version='v20110427'

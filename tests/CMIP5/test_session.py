@@ -21,6 +21,7 @@ from ARCCSSive.CMIP5.Model import *
 import re
 from .db_fixture import session
 from datetime import date
+from ARCCSSive.model import cmip5
 
 # Tests for the basic list queries
 
@@ -58,8 +59,10 @@ def test_files(session):
     assert out is not None
 
     version = out.latest()[0]
+    assert version is not None
 
     f = version.files[0]
+    assert isinstance(f, cmip5.File)
 
     assert f.filename is not None
     assert f.md5 is not None
@@ -72,8 +75,7 @@ def test_all(session):
 
     assert v[0].variable
     assert len(v[0].versions) > 0
-    assert v[0].versions[0].version
-    
+    assert isinstance(v[0].versions[0], Version)
 
 def test_query_outputs(session):
     vars = session.outputs(mip = 'cfMon')
@@ -110,7 +112,10 @@ def test_latest(session):
     """
     # write test for inst1_id has 3 versions, including 'NA' one
     # all with is_latest False, so return one with newest date
-    q = session.outputs().first()
+    q = session.outputs(
+            dataset_id = 'c6d75f4c-793b-5bcc-28ab-1af81e4b679d',
+            variable = 'tas',
+            ).first()
     assert q.latest() is not None
     assert len(q.latest()) == 1
     assert q.latest()[0].version

@@ -119,3 +119,16 @@ def test_timeseries_query(session):
             .first())
     assert t is not None
     assert t.dataset.institute_id == 'CSIRO-QCCCE'
+    assert isinstance(t.files[0], cfnetcdf.File)
+    assert t.files[0].filename is not None
+
+def test_file(session):
+    t = session.query(cfnetcdf.File).first()
+    assert t.filename is not None
+    assert isinstance(t.filename, six.string_types)
+
+    t = session.query(cmip5.File).first()
+    assert t.filename is not None
+    assert isinstance(t.filename, six.string_types)
+
+

@@ -24,6 +24,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.types import Text, Integer
 from sqlalchemy.sql.expression import case
 
+import os
+
 cf_variable_link = Table('cf_variable_link', Base.metadata,
         Column('md_hash', UUID, ForeignKey('cf_attributes_raw.md_hash'), primary_key=True),
         Column('variable_id', Integer, ForeignKey('cf_variable.id'), primary_key=True),
@@ -66,11 +68,6 @@ class File(Base):
     #: dict: Full metadata
     attributes = association_proxy('metadata_rel', 'md_json')
 
-    inode_rel = relationship('Inode', 
-            primaryjoin='cfnetcdf.File.md_hash == foreign(Inode.fi_hash)',
-            viewonly=True)
-    filename = association_proxy('inode_rel','filename')
-
     __mapper_args__ = {
             'polymorphic_on': case([
                 (collection == 'CMIP5', 'CMIP5')
@@ -83,6 +80,13 @@ class File(Base):
         Open the file
         """
         return xarray.open_dataset(self.path)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.path)
+
+    def __str__(self):
+        return self.filename
 
 class FileExtra(Base):
     __tablename__ = 'cf_attributes'

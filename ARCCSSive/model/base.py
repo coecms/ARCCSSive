@@ -30,7 +30,7 @@ class Inode(Base):
     """
     __tablename__ = 'files'
     fi_hash = Column(UUID, primary_key=True)
-    filename = Column('fi_file', Text)
+    filename = Column('fi_name', Text)
 
 class Path(Base):
     """
