@@ -58,6 +58,7 @@ target/
 
 # Editor files
 *.swp
+*.swo
 
 # Databases
 *.db
