@@ -19,9 +19,10 @@ install:
 before_script:
     - mkdir /tmp/ceph
     - psql -U postgres -f db/000_nci.sql
-    - psql -U postgres -f db/001_model.sql
+    - psql -U postgres -f db/001_raw.sql
+    - psql -U postgres -f db/002_model.sql
     - python ARCCSSive/cftable.py
-    - psql -U postgres -f db/002_refresh.sql
+    - psql -U postgres -f db/010_refresh.sql
 script:
     - coverage run --source ARCCSSive -m py.test
 after_success:
