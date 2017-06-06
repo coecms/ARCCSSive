@@ -57,6 +57,9 @@ def test_cf(session):
     q = q.first()
     assert len(q.variables) > 0
 
+    assert isinstance(q.md5, six.string_types)
+    assert isinstance(q.sha256, six.string_types)
+
 def test_version_override(session):
     value = 'v99999999'
     q = (session.query(Version)

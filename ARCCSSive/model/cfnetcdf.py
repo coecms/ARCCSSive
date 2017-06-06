@@ -61,12 +61,22 @@ class File(Base):
             back_populates='files',
             viewonly=True)
 
-    metadata_rel = relationship(
+    metadata_netcdf_rel = relationship(
             "Metadata",
-            viewonly=True)
+            primaryjoin='and_(cfnetcdf.File.md_hash == Metadata.md_hash,'
+                'Metadata.md_type == "netcdf")',
+            viewonly=True,
+            uselist=False)
+
+    metadata_checksum_rel = relationship(
+            "Metadata",
+            primaryjoin='and_(cfnetcdf.File.md_hash == Metadata.md_hash,'
+                'Metadata.md_type == "checksum")',
+            viewonly=True,
+            uselist=False)
 
     #: dict: Full metadata
-    attributes = association_proxy('metadata_rel', 'md_json')
+    attributes = association_proxy('metadata_netcdf_rel', 'md_json')
 
     __mapper_args__ = {
             'polymorphic_on': case([
@@ -84,6 +94,14 @@ class File(Base):
     @property
     def filename(self):
         return os.path.basename(self.path)
+
+    @property
+    def md5(self):
+        return self.metadata_checksum_rel.md_json['md5']
+
+    @property
+    def sha256(self):
+        return self.metadata_checksum_rel.md_json['sha256']
 
     def __str__(self):
         return self.filename

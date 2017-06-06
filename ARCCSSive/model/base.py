@@ -50,6 +50,7 @@ class Metadata(Base):
     __tablename__  = 'metadata'
 
     md_hash = Column(UUID, ForeignKey('paths.pa_hash'), primary_key = True)
+    md_type = Column(Text, primary_key = True)
     md_json = Column(JSONB)
 
     path_rel = relationship('Path')
