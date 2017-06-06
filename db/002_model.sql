@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS cf_variable (
 CREATE TABLE IF NOT EXISTS cf_variable_alias (
     id SERIAL PRIMARY KEY,
     variable_id INTEGER REFERENCES cf_variable ON DELETE CASCADE,
-    name TEXT UNIQUE
+    name TEXT
     );
 CREATE INDEX ON cf_variable_alias(name);
 
