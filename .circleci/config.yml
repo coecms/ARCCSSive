@@ -18,13 +18,18 @@ jobs:
                 /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda config --add channels conda-forge
                 conda update conda conda-build
+
+                # Install for set-up tools
+                pip install .
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda install -y postgresql
                 psql -h localhost -U postgres -f db/000_nci.sql
+                psql -U postgres -f db/001_raw.sql
+                psql -U postgres -f db/002_model.sql
                 python ARCCSSive/cftable.py
-                psql -h localhost -U postgres -f db/001_model.sql
+                psql -h localhost -U postgres -f db/010_refresh.sql
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
