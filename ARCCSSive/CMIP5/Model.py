@@ -164,7 +164,9 @@ class Version(Base):
 
         >>> cmip5  = getfixture('session')
 
-    >>> version = cmip5.query(Version).first()
+    >>> instance = cmip5.query(Instance).filter_by(dataset_id = 'c6d75f4c-793b-5bcc-28ab-1af81e4b679d', variable='tas').one()
+    >>> version = instance.latest()
+    >>> version = instance.versions[-1]
     """
     __tablename__ = 'old_cmip5_version'
 
@@ -216,10 +218,10 @@ class Version(Base):
 
             >>> import six
             >>> cmip5  = getfixture('session')
-            >>> version = cmip5.query(Version).first()
+            >>> version = cmip5.query(Version).filter_by(version_id = 'ed04fb7a-79e2-5b2f-2569-42abffd322db', variable_name='tas').one()
 
         >>> six.print_(version.glob())
-        a_6hrLev_c_d_e*.nc
+        tas_day_ACCESS1.3_rcp45_r1i1p1*.nc
         """
         return '%s_%s_%s_%s_%s*.nc'%(
             self.variable.variable,
@@ -237,7 +239,7 @@ class Version(Base):
         .. testsetup::
 
             >>> cmip5  = getfixture('session')
-            >>> version = cmip5.query(Version).first()
+            >>> version = cmip5.query(Version).filter_by(version_id = 'ed04fb7a-79e2-5b2f-2569-42abffd322db', variable_name='tas').one()
 
         >>> version.build_filepaths()
         []
@@ -254,10 +256,10 @@ class Version(Base):
         .. testsetup::
 
             >>> cmip5  = getfixture('session')
-            >>> version = cmip5.query(Version).first()
+            >>> version = cmip5.query(Version).filter_by(version_id = 'ed04fb7a-79e2-5b2f-2569-42abffd322db', variable_name='tas').one()
 
         >>> version.filenames()
-        []
+        ['tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc']
         """
         return [x.filename for x in self.files] 
          
@@ -270,10 +272,10 @@ class Version(Base):
         .. testsetup::
 
             >>> cmip5  = getfixture('session')
-            >>> version = cmip5.query(Version).first()
+            >>> version = cmip5.query(Version).filter_by(version_id = 'ed04fb7a-79e2-5b2f-2569-42abffd322db', variable_name='tas').one()
 
         >>> version.tracking_ids()
-        []
+        ['54779e2d-41fb-4671-bbdf-2170385afa3b', 'd2813685-9c7c-4527-8186-44a8f19d31dd', 'f810f58d-329e-4934-bb1c-28c5c314e073', '800713b7-c303-4618-aef9-f72548d5ada6']
         """
         return [x.tracking_id for x in self.files] 
 
