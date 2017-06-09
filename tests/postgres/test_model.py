@@ -24,24 +24,6 @@ import psycopg2
 import getpass
 import six
 
-@pytest.fixture(scope='session')
-def database():
-    # Travis connection
-    try:
-        engine = connect(echo=True)
-        engine.connect()
-    except Exception:
-        import private
-        engine = private.connect()
-
-    yield Session
-
-@pytest.fixture()
-def session(database):
-    s = database()
-    yield s
-    s.rollback()
-
 def test_path(session):
     q = session.query(base.Path).limit(5)
     assert q.count() == 5

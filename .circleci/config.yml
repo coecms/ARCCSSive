@@ -19,14 +19,15 @@ jobs:
                 /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda config --add channels conda-forge
                 conda update conda conda-build
-
-                # Install for set-up tools
-                pip install .
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda install -y postgresql
-                bash db/initdb.sh
+
+                # Install for set-up tools
+                pip install .
+
+                source db/initdb.sh
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF

@@ -7,10 +7,11 @@
 CREATE TYPE path_type AS ENUM ('file', 'directory', 'link');
 
 CREATE TABLE metadata (
-    md_hash UUID PRIMARY KEY,
+    md_hash UUID,
     md_ingested TIMESTAMP WITH TIME ZONE,
     md_type TEXT,
-    md_json JSONB
+    md_json JSONB,
+    PRIMARY KEY (md_hash, md_type)
 );
 
 CREATE TABLE paths (

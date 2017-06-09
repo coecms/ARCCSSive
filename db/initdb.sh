@@ -20,8 +20,8 @@ set -eu
 ARCCSSIVE_USER=postgres
 ARCCSSIVE_DB=postgresql://localhost/postgres
 
-psql -U $ARCCSSIVE_USER db/000_nci.sql
-psql -U $ARCCSSIVE_USER -f db/001_raw.sql
-psql -U $ARCCSSIVE_USER -f db/002_model.sql
+psql -h localhost -U $ARCCSSIVE_USER -f db/000_nci.sql
+psql -h localhost -U $ARCCSSIVE_USER -f db/001_raw.sql
+psql -h localhost -U $ARCCSSIVE_USER -f db/002_model.sql
 python ARCCSSive/cftable.py
-psql -U $ARCCSSIVE_USER -f db/010_refresh.sql
+psql -h localhost -U $ARCCSSIVE_USER -f db/010_refresh.sql

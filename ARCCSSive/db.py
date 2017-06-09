@@ -25,6 +25,7 @@ import os
 
 default_url = os.environ.get('ARCCSSIVE_DB', 'postgresql://130.56.244.107:5432/postgres')
 default_user = os.environ.get('ARCCSSIVE_USER', os.environ.get('USER',''))
+default_password = os.environ.get('ARCCSSIVE_PASSWORD')
 
 Session = sessionmaker()
 
