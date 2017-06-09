@@ -17,12 +17,7 @@ install:
     - pip install --upgrade pytest coverage codecov
     - pip install .
 before_script:
-    - mkdir /tmp/ceph
-    - psql -U postgres -f db/000_nci.sql
-    - psql -U postgres -f db/001_raw.sql
-    - psql -U postgres -f db/002_model.sql
-    - python ARCCSSive/cftable.py
-    - psql -U postgres -f db/010_refresh.sql
+    - bash db/initdb.sh
 script:
     - coverage run --source ARCCSSive -m py.test
 after_success:

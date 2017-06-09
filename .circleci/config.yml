@@ -7,11 +7,12 @@ jobs:
               environment:
                   ARCCSSIVE_DB: postgres://localhost/postgres
                   ARCCSSIVE_USER: postgres
+                  ARCCSSIVE_PASSWORD: circleci
             - image: circleci/postgres:9.6
               environment:
                   POSTGRES_USER: postgres
                   POSTGRES_DB: postgres
-                  POSTGRES_PASSWORD: ''
+                  POSTGRES_PASSWORD: circleci
         steps:
             - checkout
             - run: |
@@ -25,11 +26,7 @@ jobs:
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda install -y postgresql
-                psql -h localhost -U postgres -f db/000_nci.sql
-                psql -U postgres -f db/001_raw.sql
-                psql -U postgres -f db/002_model.sql
-                python ARCCSSive/cftable.py
-                psql -h localhost -U postgres -f db/010_refresh.sql
+                bash db/initdb.sh
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
