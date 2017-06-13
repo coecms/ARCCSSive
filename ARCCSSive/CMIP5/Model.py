@@ -17,7 +17,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 from sqlalchemy import Column, Integer, Text, Boolean, ForeignKey, Date, UniqueConstraint
 from sqlalchemy import ForeignKeyConstraint
 from sqlalchemy import select, func, join
@@ -258,8 +258,8 @@ class Version(Base):
             >>> cmip5  = getfixture('session')
             >>> version = cmip5.query(Version).filter_by(version_id = 'ed04fb7a-79e2-5b2f-2569-42abffd322db', variable_name='tas').one()
 
-        >>> version.filenames()
-        ['tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc']
+        >>> sorted(version.filenames())
+        ['tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc']
         """
         return [x.filename for x in self.files] 
          
@@ -274,8 +274,8 @@ class Version(Base):
             >>> cmip5  = getfixture('session')
             >>> version = cmip5.query(Version).filter_by(version_id = 'ed04fb7a-79e2-5b2f-2569-42abffd322db', variable_name='tas').one()
 
-        >>> version.tracking_ids()
-        ['54779e2d-41fb-4671-bbdf-2170385afa3b', 'd2813685-9c7c-4527-8186-44a8f19d31dd', 'f810f58d-329e-4934-bb1c-28c5c314e073', '800713b7-c303-4618-aef9-f72548d5ada6']
+        >>> sorted(version.tracking_ids())
+        ['54779e2d-41fb-4671-bbdf-2170385afa3b', '800713b7-c303-4618-aef9-f72548d5ada6', 'd2813685-9c7c-4527-8186-44a8f19d31dd', 'f810f58d-329e-4934-bb1c-28c5c314e073']
         """
         return [x.tracking_id for x in self.files] 
 
