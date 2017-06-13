@@ -22,6 +22,7 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import sessionmaker
 
 import os
+from getpass import getpass
 
 default_url = os.environ.get('ARCCSSIVE_DB', 'postgresql://130.56.244.107:5432/postgres')
 default_user = os.environ.get('ARCCSSIVE_USER', os.environ.get('USER',''))
@@ -45,6 +46,10 @@ def connect(url=default_url, user=default_user, password=None, echo=False):
             _url.password = private.password
         except ImportError:
             pass
+
+    if _url.password is None and _url.username is not None:
+        # Prompt for password
+        _url.password = getpass("Password for user %s: "%_url.username)
 
     engine = create_engine(_url, echo=echo)
     Session.configure(bind=engine)
