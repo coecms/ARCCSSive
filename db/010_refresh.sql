@@ -1,0 +1,5 @@
+REFRESH MATERIALIZED VIEW cf_variable_link;
+REFRESH MATERIALIZED VIEW cmip5_attributes_raw;
+REFRESH MATERIALIZED VIEW cmip5_attributes_links;
+REFRESH MATERIALIZED VIEW cmip5_dataset;
+REFRESH MATERIALIZED VIEW cmip5_file_version;

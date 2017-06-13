@@ -4,6 +4,14 @@ jobs:
         working_directory: /conda-build
         docker:
             - image: condaforge/linux-anvil
+              environment:
+                  ARCCSSIVE_DB: postgresql://postgres:@localhost/postgres
+                  ARCCSSIVE_USER: postgres
+            - image: circleci/postgres:9.6
+              environment:
+                  POSTGRES_USER: postgres
+                  POSTGRES_DB: postgres
+                  POSTGRES_PASSWORD: ''
         steps:
             - checkout
             - run: |
@@ -13,16 +21,25 @@ jobs:
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
+                yum install -y postgresql
+
+                # Install for set-up tools
+                pip install .
+
+                source db/initdb.sh
+                EOF
+            - run: |
+                /opt/docker/bin/entrypoint /bin/bash << EOF
                 conda-build conda --python=27
                 EOF
-            - run: |
-                /opt/docker/bin/entrypoint /bin/bash << EOF
-                conda-build conda --python=35
-                EOF
-            - run: |
-                /opt/docker/bin/entrypoint /bin/bash << EOF
-                conda-build conda --python=36
-                EOF
+            # - run: |
+            #     /opt/docker/bin/entrypoint /bin/bash << EOF
+            #     conda-build conda --python=35
+            #     EOF
+            # - run: |
+            #     /opt/docker/bin/entrypoint /bin/bash << EOF
+            #     conda-build conda --python=36
+            #     EOF
             - deploy:
                 command: |
                     if [ -n "${CIRCLE_TAG}" ]; then

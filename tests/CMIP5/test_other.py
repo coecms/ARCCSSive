@@ -88,6 +88,7 @@ def test_file_details():
     assert file_details(filename)=={'variable':"thetao",'mip':"Omon",
                'model':"CanESM2",'experiment': "rcp85", 'ensemble': "r2i1p1"}
 
+@pytest.mark.skip(reason='Not needed with NCI index')
 def test_unique(session):
     outs=session.outputs()
     models=['c','ACCESS1-3','MIROC5'].sort()

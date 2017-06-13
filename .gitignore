@@ -58,6 +58,9 @@ target/
 
 # Editor files
 *.swp
+*.swo
 
 # Databases
 *.db
+
+/private.py

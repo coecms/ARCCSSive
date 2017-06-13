@@ -34,6 +34,7 @@ Contents:
 
    using
    CMIP5
+   postgres
    admin
 
 Indices and tables

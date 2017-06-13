@@ -20,15 +20,23 @@ limitations under the License.
 from ARCCSSive.CMIP5.update_db_functions import *
 from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile
 from .db_fixture import session
+import pytest
+
+test_search = {
+        'variable': 'tauvo',
+        'experiment': 'historicalMisc',
+        'mip': 'Omon',
+        'model': 'GFDL-CM3',
+        'ensemble': 'r5i1p1',
+        'realm': 'ocean',
+        }
 
 def test_search_item(session):
     db=session.session 
-    kwargs={'variable': 'a', 'mip': '6hrLev', 'model': 'c',
-            'experiment': 'd', 'ensemble': 'e','realm':  'realm'}
-    item = search_item(db,Instance,**kwargs)
-    assert type(item.id) is int 
-    assert item.id==1
+    item = search_item(db,Instance,**test_search)
+    assert item
 
+@pytest.mark.skip(reason='Insert not supported with NCI db')
 def test_insert_unique(session):
     db=session.session
     kwargs={'variable': 'a2', 'mip': '6hrLev', 'model': 'c',
@@ -37,6 +45,7 @@ def test_insert_unique(session):
     assert new is True
     assert type(item.id) is int 
 
+@pytest.mark.skip(reason='Insert not supported with NCI db')
 def test_update_item(session):
     db=session.session
     item_id=2
@@ -47,6 +56,7 @@ def test_update_item(session):
     item = search_item(db,Version,**{'id': item_id})
     assert item.is_latest is True
 
+@pytest.mark.skip(reason='Insert not supported with NCI db')
 def test_add_bulk_items(session):
     db=session.session
     vid=1

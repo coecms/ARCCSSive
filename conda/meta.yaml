@@ -11,6 +11,9 @@ source:
 
 build:
     script: python setup.py install
+    script_env:
+        - ARCCSSIVE_DB
+        - ARCCSSIVE_USER
 
 requirements:
     build:
@@ -21,10 +24,12 @@ requirements:
         - six
         - sqlalchemy
         - esgf-pyclient
+        - psycopg2
 
 test:
     source_files:
         - setup.cfg
+        - conftest.py
         - tests
     requires:
         - pytest
