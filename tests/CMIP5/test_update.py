@@ -23,11 +23,11 @@ from .db_fixture import session
 import pytest
 
 test_search = {
-        'variable': 'thetao',
-        'experiment': 'rcp45',
+        'variable': 'tauvo',
+        'experiment': 'historicalMisc',
         'mip': 'Omon',
-        'model': 'GFDL-CM2p1',
-        'ensemble': 'r3i1p1',
+        'model': 'GFDL-CM3',
+        'ensemble': 'r5i1p1',
         'realm': 'ocean',
         }
 

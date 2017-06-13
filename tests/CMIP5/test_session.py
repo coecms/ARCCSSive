@@ -78,9 +78,8 @@ def test_all(session):
     assert isinstance(v[0].versions[0], Version)
 
 def test_query_outputs(session):
-    vars = session.outputs(mip = 'cfMon')
-    assert vars.count() > 2 
-    assert vars[0].mip == 'cfMon'
+    var = session.outputs(mip = 'aero').first()
+    assert var.mip == 'aero'
 
 def test_filenames(session):
     o = session.outputs().first()

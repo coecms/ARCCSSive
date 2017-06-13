@@ -99,11 +99,11 @@ def test_timeseries_relationships(session):
 
 def test_timeseries_query(session):
     t = (session.query(Timeseries).join(Dataset)
-            .filter_by(institute_id = 'CSIRO-QCCCE')
-            .filter(Timeseries.variable_list.any('tasmax'))
+            .filter_by(institute_id = 'NOAA GFDL')
+            .filter(Timeseries.variable_list.any('tauvo'))
             .first())
     assert t is not None
-    assert t.dataset.institute_id == 'CSIRO-QCCCE'
+    assert t.dataset.institute_id == 'NOAA GFDL'
     assert isinstance(t.files[0], cfnetcdf.File)
     assert t.files[0].filename is not None
 
