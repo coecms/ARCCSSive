@@ -23,7 +23,7 @@ from sqlalchemy.orm import sessionmaker
 
 import os
 
-default_url = os.environ['ARCCSSIVE_DB'] #, 'postgresql://130.56.244.107:5432/postgres')
+default_url = os.environ.get('ARCCSSIVE_DB', 'postgresql://130.56.244.107:5432/postgres')
 default_user = os.environ.get('ARCCSSIVE_USER', os.environ.get('USER',''))
 
 Session = sessionmaker()
@@ -46,7 +46,6 @@ def connect(url=default_url, user=default_user, password=None, echo=False):
         except ImportError:
             pass
 
-    print(_url)
     engine = create_engine(_url, echo=echo)
     Session.configure(bind=engine)
     return engine
