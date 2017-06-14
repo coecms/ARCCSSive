@@ -194,7 +194,7 @@ CREATE OR REPLACE VIEW cmip5_timeseries_link AS
     FROM
         cmip5_attributes_links;
 
-CREATE OR REPLACE VIEW old_cmip5_instance AS
+CREATE MATERIALIZED VIEW IF NOT EXISTS old_cmip5_instance AS
     WITH x AS (
         SELECT DISTINCT
             dataset_id
@@ -216,28 +216,26 @@ CREATE OR REPLACE VIEW old_cmip5_instance AS
     FROM
         cmip5_dataset AS d
     INNER JOIN x ON (x.dataset_id = d.dataset_id);
+CREATE INDEX IF NOT EXISTS old_cmip5_instance_dataset_id_idx ON old_cmip5_instance(dataset_id);
+CREATE INDEX IF NOT EXISTS old_cmip5_instance_variable_id_idx ON old_cmip5_instance(variable_id);
+
+CREATE MATERIALIZED VIEW IF NOT EXISTS old_cmip5_version_raw AS
+    SELECT DISTINCT
+        dataset_id
+      , version_id
+      , variable
+      , variable_id
+    FROM
+        cmip5_attributes_links
+      , UNNEST(variable_list) variable;
 
 CREATE OR REPLACE VIEW old_cmip5_version AS
-    WITH x AS (
-        SELECT DISTINCT
-            dataset_id
-          , version_id
-          , variable
-          , variable_id
-        FROM
-            cmip5_attributes_links
-          , UNNEST(variable_list) variable
-    )
     SELECT
-        x.dataset_id
-      , x.version_id
-      , x.variable
-      , x.variable_id
+        r.*
       , v.version_number as version
       , v.is_latest
-    FROM
-        cmip5_version AS v
-    INNER JOIN x ON (v.version_id = x.version_id);
+    FROM old_cmip5_version_raw AS r
+    LEFT JOIN cmip5_version AS v ON (r.version_id = v.version_id);
 
 /* The most recent version attached to a dataset */
 CREATE OR REPLACE VIEW cmip5_latest_version AS

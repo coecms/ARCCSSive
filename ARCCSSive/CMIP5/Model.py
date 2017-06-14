@@ -215,8 +215,12 @@ class Version(Base):
                 ['old_cmip5_instance.variable', 'old_cmip5_instance.dataset_id'],
                 ),
             ForeignKeyConstraint(
+                ['version_id', 'variable_id', 'dataset_id'],
+                ['cmip5_latest_version.version_id', 'cmip5_latest_version.variable_id', 'cmip5_latest_version.dataset_id'],
+                ),
+            ForeignKeyConstraint(
                 ['version_id', 'variable_id'],
-                ['cmip5_latest_version.version_id', 'cmip5_latest_version.variable_id'],
+                ['cmip5_attributes_links.version_id', 'cmip5_attributes_links.variable_id'],
                 ),
             )
 
@@ -231,7 +235,10 @@ class Version(Base):
 
     new_version = relationship('cmip5.Version')
     warnings = association_proxy('new_version', 'warnings')
-    files = association_proxy('timeseries', 'files')
+    files = relationship(
+            'cmip5.File',
+            secondary = model2.cmip5_attributes_links,
+            viewonly=True)
 
     variable = relationship('Instance', viewonly=True)
 
