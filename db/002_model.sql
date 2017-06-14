@@ -99,6 +99,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_links AS
       , dataset_id
       , md5 ( dataset_id || ':' || COALESCE(version_number,'-') )::uuid as version_id
       , variable_list
+      , md5 ( array_to_string( variable_list, '.' ) )::uuid as variable_id
     FROM 
         s
     JOIN 
@@ -106,7 +107,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_links AS
 CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_links_md_hash_idx ON cmip5_attributes_links(md_hash);
 CREATE INDEX IF NOT EXISTS cmip5_attributes_links_dataset_id_idx ON cmip5_attributes_links(dataset_id);
 CREATE INDEX IF NOT EXISTS cmip5_attributes_links_version_id_idx ON cmip5_attributes_links(version_id);
-CREATE INDEX IF NOT EXISTS cmip5_attributes_links_variable_list_idx ON cmip5_attributes_links(variable_list);
+CREATE INDEX IF NOT EXISTS cmip5_attributes_links_variable_id_idx ON cmip5_attributes_links(variable_id);
 
 /* A CMIP5 dataset
  * Like what you find on ESGF, however version_number is broken out into its
@@ -188,6 +189,7 @@ CREATE OR REPLACE VIEW cmip5_timeseries_link AS
     SELECT DISTINCT
         dataset_id
       , version_id
+      , variable_id
       , variable_list
     FROM
         cmip5_attributes_links;
@@ -235,11 +237,11 @@ CREATE OR REPLACE VIEW old_cmip5_version AS
 
 /* The most recent version attached to a dataset */
 CREATE OR REPLACE VIEW cmip5_latest_version AS
-    SELECT DISTINCT ON (dataset_id, variable_list)
+    SELECT DISTINCT ON (dataset_id, variable_id)
         dataset_id
-      , version
-      , variable_list
-    FROM cmip5_attributes
+      , version_id
+      , variable_id
+    FROM cmip5_attributes_links
     NATURAL JOIN cmip5_version
     ORDER BY
         dataset_id
