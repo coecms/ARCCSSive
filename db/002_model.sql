@@ -60,7 +60,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cf_variable_link AS
 CREATE INDEX IF NOT EXISTS cf_variable_link_md_hash_idx ON cf_variable_link(md_hash);
 CREATE INDEX IF NOT EXISTS cf_variable_link_variable_id_idx ON cf_variable_link(variable_id);
 
-CREATE VIEW cmip5_attributes AS
+CREATE OR REPLACE VIEW cmip5_attributes AS
     SELECT
         *
       , split_part(table_id, ' ', 2) as mip_table
@@ -199,6 +199,7 @@ CREATE OR REPLACE VIEW old_cmip5_instance AS
         SELECT DISTINCT
             dataset_id
           , variable
+          , variable_id
         FROM
             cmip5_attributes_links
           , UNNEST(variable_list) variable
@@ -206,6 +207,7 @@ CREATE OR REPLACE VIEW old_cmip5_instance AS
     SELECT
         x.dataset_id
       , x.variable
+      , x.variable_id
       , d.experiment_id as experiment
       , d.mip_table as mip
       , d.model_id as model
@@ -221,6 +223,7 @@ CREATE OR REPLACE VIEW old_cmip5_version AS
             dataset_id
           , version_id
           , variable
+          , variable_id
         FROM
             cmip5_attributes_links
           , UNNEST(variable_list) variable
@@ -229,6 +232,7 @@ CREATE OR REPLACE VIEW old_cmip5_version AS
         x.dataset_id
       , x.version_id
       , x.variable
+      , x.variable_id
       , v.version_number as version
       , v.is_latest
     FROM
@@ -245,6 +249,6 @@ CREATE OR REPLACE VIEW cmip5_latest_version AS
     NATURAL JOIN cmip5_version
     ORDER BY
         dataset_id
-      , variable_list
+      , variable_id
       , is_latest DESC
       , version_id DESC;

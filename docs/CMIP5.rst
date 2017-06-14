@@ -25,7 +25,7 @@ To use the CMIP5 catalog you first need to connect to it::
 .. testsetup::
 
     >>> # Get a fixture to show examples
-    >>> cmip5 = getfixture('session')
+    >>> cmip5 = getfixture('CMIP5_session')
 
 The session object allows you to run queries on the catalog. There are a number
 of helper functions for common operations, for instance searching through the

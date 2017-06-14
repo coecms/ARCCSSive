@@ -100,7 +100,7 @@ from datetime import date
 
 @pytest.fixture(scope="module")
 def session(request, tmpdir_factory):
-    session = CMIP5.connect()
+    session = CMIP5.connect(echo=True)
 
 #     dira = tmpdir_factory.mktemp('a')
 #     dirb = tmpdir_factory.mktemp('b')

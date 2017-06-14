@@ -24,6 +24,7 @@ from sqlalchemy import select, func, join
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm.session import object_session
 from ARCCSSive.data import *
 
 from ARCCSSive.model.base import Base
@@ -74,17 +75,32 @@ class Instance(Base):
 
     dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'), primary_key=True)
     variable   = Column(Text, primary_key=True)
+    variable_id = Column(UUID)
     experiment = Column(Text)
     mip        = Column(Text)
     model      = Column(Text)
     ensemble   = Column(Text)
     realm      = Column(Text)
 
+    __table_args__ = (
+            ForeignKeyConstraint(
+                ['dataset_id', 'variable_id'],
+                ['cmip5_latest_version.dataset_id', 'cmip5_latest_version.variable_id'],
+                ),
+            )
+
     versions = relationship('CMIP5.Model.Version',
             order_by='(CMIP5.Model.Version.is_latest, CMIP5.Model.Version.version)',
             primaryjoin='and_(Instance.dataset_id == CMIP5.Model.Version.dataset_id,'
-                'Instance.variable == CMIP5.Model.Version.variable_name)'
+                'Instance.variable == CMIP5.Model.Version.variable_name)',
+            viewonly = True
             )
+
+    latest_version = relationship('CMIP5.Model.Version',
+            secondary = model2.cmip5_latest_version,
+            uselist = False,
+            viewonly = True)
+
 #     # Missing versions are labelled NA in database and v20110427 in drstree, this is CMOR documentation date
 #     # order doesn't work if version NA
 # 
@@ -94,22 +110,25 @@ class Instance(Base):
 #             UniqueConstraint('variable','experiment','mip','model','ensemble'),
 #             )
 # 
+#    def latest(self):
+#        """
+#        Returns latest version/s available on raijin, first check in any version is_latest, then checks date stamp
+#        """
+#        if len(self.versions)==1: return self.versions 
+#        vlatest=[v for v in self.versions if v.is_latest]
+#        if vlatest==[]: 
+#            valid=[v for v in self.versions if v.version!="NA"]
+#            if valid==[]: return self.versions
+#            valid.sort(key=lambda x: x.version[-8:])
+#            vlatest.append(valid[-1])
+#            i=-2
+#            while i>=-len(valid) and valid[i].version[-8:]==vlatest[0].version[-8:]:
+#                vlatest.append(valid[i])
+#                i+=-1
+#        return vlatest
+
     def latest(self):
-        """
-        Returns latest version/s available on raijin, first check in any version is_latest, then checks date stamp
-        """
-        if len(self.versions)==1: return self.versions 
-        vlatest=[v for v in self.versions if v.is_latest]
-        if vlatest==[]: 
-            valid=[v for v in self.versions if v.version!="NA"]
-            if valid==[]: return self.versions
-            valid.sort(key=lambda x: x.version[-8:])
-            vlatest.append(valid[-1])
-            i=-2
-            while i>=-len(valid) and valid[i].version[-8:]==vlatest[0].version[-8:]:
-                vlatest.append(valid[i])
-                i+=-1
-        return vlatest
+        return [self.latest_version]
         
     def filenames(self):
         """
@@ -172,6 +191,7 @@ class Version(Base):
 
     dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'))
     version_id = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key=True)
+    variable_id = Column(UUID)
     variable_name = Column('variable', Text, primary_key=True)
 
 #    id          = Column(Integer, name='version_id', primary_key = True)
@@ -194,6 +214,10 @@ class Version(Base):
                 ['variable', 'dataset_id'],
                 ['old_cmip5_instance.variable', 'old_cmip5_instance.dataset_id'],
                 ),
+            ForeignKeyConstraint(
+                ['version_id', 'variable_id'],
+                ['cmip5_latest_version.version_id', 'cmip5_latest_version.variable_id'],
+                ),
             )
 
     timeseries = relationship('cmip5.Timeseries',
@@ -202,13 +226,14 @@ class Version(Base):
                 'Model.Version.version_id == foreign(cmip5.Timeseries.version_id),'
                 'cmip5.Timeseries.variable_list.any(Model.Version.variable_name)'
                 ')',
-            uselist=False)
+            uselist=False,
+            viewonly=True)
 
     new_version = relationship('cmip5.Version')
     warnings = association_proxy('new_version', 'warnings')
     files = association_proxy('timeseries', 'files')
 
-    variable = relationship('Instance')
+    variable = relationship('Instance', viewonly=True)
 
     def glob(self):
         """

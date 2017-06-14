@@ -71,7 +71,6 @@ def test_dataset_relationships(session):
     d = f.dataset
     assert d is not None
     assert isinstance(d.institute_id, six.string_types)
-    assert f in d.files
     assert f.version in d.versions
     assert f.timeseries in d.variables
 

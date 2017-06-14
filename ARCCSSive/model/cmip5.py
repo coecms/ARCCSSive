@@ -21,7 +21,7 @@ from .cfnetcdf import File as CFFile, Variable, cf_variable_link
 from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, ForeignKey, Table, join
+from sqlalchemy import Column, ForeignKey, Table, join, ForeignKeyConstraint
 from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.types import Text, Boolean, Integer, Date
 
@@ -29,7 +29,13 @@ cmip5_attributes_links = Table('cmip5_attributes_links', Base.metadata,
         Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash'), primary_key=True),
         Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')),
         Column('version_id', UUID, ForeignKey('cmip5_version.version_id')),
+        Column('variable_id', UUID),
         Column('variable_list', ARRAY(Text)))
+
+cmip5_latest_version = Table('cmip5_latest_version', Base.metadata,
+        Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')),
+        Column('version_id', UUID, ForeignKey('cmip5_version.version_id'), primary_key=True),
+        Column('variable_id', UUID, primary_key=True))
 
 class File(CFFile):
     """
@@ -55,8 +61,7 @@ class File(CFFile):
     dataset = relationship(
             'Dataset',
             uselist=False,
-            secondary=cmip5_attributes_links,
-            back_populates='files')
+            secondary=cmip5_attributes_links)
 
     #: :class:`Version`: This file's dataset version
     version = relationship(
@@ -77,9 +82,8 @@ class File(CFFile):
             uselist=False,
             secondary = cmip5_attributes_links,
             secondaryjoin = 'and_('
-                'Timeseries.dataset_id == cmip5_attributes_links.c.dataset_id,'
                 'Timeseries.version_id == cmip5_attributes_links.c.version_id,'
-                'Timeseries.variable_list == cmip5_attributes_links.c.variable_list'
+                'Timeseries.variable_id == cmip5_attributes_links.c.variable_id'
                 ')',
             back_populates = 'files')
 
@@ -124,7 +128,8 @@ class Version(Base):
 
     variables = relationship(
             'Timeseries',
-            back_populates='version')
+            back_populates='version',
+            viewonly = True)
 
     def open(self):
         """
@@ -182,14 +187,12 @@ class Dataset(Base):
             back_populates='dataset',
             order_by='(cmip5.Version.is_latest, cmip5.Version.version_number)')
 
-    #: list[:class:`Files`]: Files belonging to this dataset
-    #: (note this contains multiple different versions)
-    files = relationship(
-            'cmip5.File',
-            secondary=cmip5_attributes_links,
+    #: list[:class:`Timeseries`]: The most recent versions of the variables in this dataset
+    variables = relationship('Timeseries',
+            secondary=cmip5_latest_version,
+            secondaryjoin='and_(Timeseries.version_id == cmip5_latest_version.c.version_id,'
+                'Timeseries.variable_id == cmip5_latest_version.c.variable_id)',
             back_populates='dataset')
-
-    variables = relationship('Timeseries', back_populates='dataset')
 
     @property
     def latest_version(self):
@@ -237,23 +240,30 @@ class Timeseries(Base):
     """
     __tablename__ = 'cmip5_timeseries_link'
 
-    dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'), primary_key=True)
+    dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'))
     version_id = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key=True)
+    variable_id = Column(UUID, primary_key=True)
     variable_list = Column(ARRAY(Text))
+
+    __table_args__ = (
+            ForeignKeyConstraint(
+                ['version_id', 'variable_id'],
+                ['cmip5_attributes_links.version_id', 'cmip5_attributes_links.variable_id'],
+                ),
+            )
 
     #: Dataset this timeseries is part of
     dataset = relationship('Dataset', back_populates='variables')
     #: Dataset version of this timeseries
-    version = relationship('cmip5.Version', back_populates='variables')
+    version = relationship('cmip5.Version', back_populates='variables', viewonly=True)
 
     #: List of files in this timeseries
     files = relationship('cmip5.File', 
             secondary = cmip5_attributes_links,
-            primaryjoin = 'and_('
-                'Timeseries.dataset_id == cmip5_attributes_links.c.dataset_id,'
-                'Timeseries.version_id == cmip5_attributes_links.c.version_id,'
-                'Timeseries.variable_list == cmip5_attributes_links.c.variable_list'
-                ')',
+#            primaryjoin = 'and_('
+#                'Timeseries.version_id == cmip5_attributes_links.c.version_id,'
+#                'Timeseries.variable_id == cmip5_attributes_links.c.variable_id'
+#                ')',
             back_populates = 'timeseries')
     
     warnings = association_proxy('version', 'warnings')
