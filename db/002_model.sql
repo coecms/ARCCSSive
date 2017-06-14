@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS cf_variable_alias (
     variable_id INTEGER REFERENCES cf_variable ON DELETE CASCADE,
     name TEXT
     );
-CREATE INDEX ON cf_variable_alias(name);
+CREATE INDEX IF NOT EXISTS cf_variable_alias_name_idx ON cf_variable_alias(name);
 
 /* Link between CF variables and CF files
  * Ignores variables with an 'axis' attribute
@@ -57,8 +57,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cf_variable_link AS
         cf_variable ON (cf_variable.id = cf_variable_alias.variable_id)
     WHERE
         cf_variable.name NOT IN ('time', 'latitude', 'longitude');
-CREATE INDEX ON cf_variable_link(md_hash);
-CREATE INDEX ON cf_variable_link(variable_id);
+CREATE INDEX IF NOT EXISTS cf_variable_link_md_hash_idx ON cf_variable_link(md_hash);
+CREATE INDEX IF NOT EXISTS cf_variable_link_variable_id_idx ON cf_variable_link(variable_id);
 
 CREATE VIEW cmip5_attributes AS
     SELECT
@@ -103,10 +103,10 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_links AS
         s
     JOIN 
         v ON (s.md_hash = v.md_hash);
-CREATE UNIQUE INDEX ON cmip5_attributes_links (md_hash);
-CREATE INDEX ON cmip5_attributes_links (dataset_id);
-CREATE INDEX ON cmip5_attributes_links (version_id);
-CREATE INDEX ON cmip5_attributes_links (variable_list);
+CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_links_md_hash_idx ON cmip5_attributes_links(md_hash);
+CREATE INDEX IF NOT EXISTS cmip5_attributes_links_dataset_id_idx ON cmip5_attributes_links(dataset_id);
+CREATE INDEX IF NOT EXISTS cmip5_attributes_links_version_id_idx ON cmip5_attributes_links(version_id);
+CREATE INDEX IF NOT EXISTS cmip5_attributes_links_variable_list_idx ON cmip5_attributes_links(variable_list);
 
 /* A CMIP5 dataset
  * Like what you find on ESGF, however version_number is broken out into its
@@ -135,7 +135,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_dataset AS
             )::uuid as dataset_id
       , *
     FROM datas;
-CREATE UNIQUE INDEX ON cmip5_dataset (dataset_id);
+CREATE UNIQUE INDEX IF NOT EXISTS cmip5_dataset_dataset_id_idx ON cmip5_dataset(dataset_id);
 
 /* The version number specified in the file
  * This may not be accurate, so can be overridden by adding an entry to
@@ -149,8 +149,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_file_version  AS
       , dataset_id
       , version_number
     FROM cmip5_attributes NATURAL INNER JOIN cmip5_attributes_links;
-CREATE UNIQUE INDEX ON cmip5_file_version (version_id);
-CREATE INDEX ON cmip5_file_version (dataset_id);
+CREATE UNIQUE INDEX IF NOT EXISTS cmip5_file_version_version_id_idx ON cmip5_file_version(version_id);
+CREATE INDEX IF NOT EXISTS cmip5_file_version_dataset_id_idx ON cmip5_file_version(dataset_id);
 
 /* Manually entered version information, for the case when the file is
  * inaccurate or missing data
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS cmip5_override_version(
     version_number TEXT,
     is_latest BOOLEAN,
     to_update BOOLEAN) ;
-CREATE UNIQUE INDEX ON cmip5_override_version (version_id);
+CREATE UNIQUE INDEX IF NOT EXISTS cmip5_override_version_version_id_idx ON cmip5_override_version(version_id);
 
 /* View combining the file and override versions to provide a consistent view
  */
@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS cmip5_warning (
     added_by TEXT,
     added_on DATE
     ) ;
-CREATE INDEX ON cmip5_warning (version_id);
+CREATE INDEX IF NOT EXISTS cmip5_warning_version_id_idx ON cmip5_warning(version_id);
 
 CREATE OR REPLACE VIEW cmip5_timeseries_link AS
     SELECT DISTINCT
@@ -232,3 +232,17 @@ CREATE OR REPLACE VIEW old_cmip5_version AS
     FROM
         cmip5_version AS v
     INNER JOIN x ON (v.version_id = x.version_id);
+
+/* The most recent version attached to a dataset */
+CREATE OR REPLACE VIEW cmip5_latest_version AS
+    SELECT DISTINCT ON (dataset_id, variable_list)
+        dataset_id
+      , version
+      , variable_list
+    FROM cmip5_attributes
+    NATURAL JOIN cmip5_version
+    ORDER BY
+        dataset_id
+      , variable_list
+      , is_latest DESC
+      , version_id DESC;

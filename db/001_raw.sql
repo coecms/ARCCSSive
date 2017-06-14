@@ -9,8 +9,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cf_attributes_raw AS
         metadata 
     WHERE
         md_json->'attributes'->>'Conventions' is not null;
-CREATE UNIQUE INDEX ON cf_attributes_raw(md_hash);
-CREATE INDEX ON cf_attributes_raw(collection);
+CREATE UNIQUE INDEX IF NOT EXISTS cf_attributes_raw_md_hash_idx ON cf_attributes_raw(md_hash);
+CREATE INDEX IF NOT EXISTS cf_attributes_raw_collection_idx ON cf_attributes_raw(collection);
 
 /* Metadata from the file specific to CMIP5 
  * Gets the attributes out of JSON format into a more usable format
@@ -42,4 +42,4 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_raw AS
       , md5('/g/data1/ua6/drstree')::uuid
       , md5('/g/data1/ua6/DRSv2')::uuid
       );
-CREATE UNIQUE INDEX ON cmip5_attributes_raw (md_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_raw_md_hash_idx ON cmip5_attributes_raw(md_hash);
