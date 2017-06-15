@@ -40,6 +40,35 @@ cmip5_latest_version = Table('cmip5_latest_version', Base.metadata,
 class File(CFFile):
     """
     A CMIP5 output file's attributes
+
+    Relationships:
+
+    attribute:: dataset
+       :class:`Dataset`: The dataset this file is part of
+
+    attribute:: version
+       :class:`Version`: This file's dataset version
+
+    attribute:: warnings
+       [:class:`Warning`]: Warnings associated with this file
+
+    attribute:: timeseries
+       :class:`Timeseries` holding all files in the dataset with the same variables
+
+    Attributes:
+
+    attribute:: experiment_id
+    attribute:: frequency
+    attribute:: institute_id
+    attribute:: model_id
+    attribute:: modeling_realm
+    attribute:: product
+    attribute:: table_id
+    attribute:: tracking_id
+    attribute:: version_number
+    attribute:: realization
+    attribute:: initialization_method
+    attribute:: physics_version
     """
     __tablename__ = 'cmip5_attributes'
 
@@ -57,26 +86,22 @@ class File(CFFile):
     initialization_method = Column(Text)
     physics_version       = Column(Text)
 
-    #: :class:`Dataset`: The dataset this file is part of
     dataset = relationship(
             'Dataset',
             uselist=False,
             secondary=cmip5_attributes_links)
 
-    #: :class:`Version`: This file's dataset version
     version = relationship(
             'cmip5.Version',
             uselist=False,
             secondary=cmip5_attributes_links,
             back_populates='files')
 
-    #: list[:class:`Warning`]: Warnings associated with this file
     warnings = relationship(
             'Warning',
             secondary=cmip5_attributes_links,
             secondaryjoin='cmip5_attributes_links.c.version_id == Warning.version_id')
 
-    #: :class:`Timeseries` holding all files in the dataset with the same variable
     timeseries = relationship(
             'Timeseries',
             uselist=False,

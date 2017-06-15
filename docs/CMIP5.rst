@@ -183,6 +183,17 @@ variable can have a number of different data versions, as errors get corrected
 by the publisher, and each version can consist of a number of files split into
 a time sequence.
 
+Each model class has a number of relationships, which can be used in a query to
+efficiently return linked data e.g.::
+
+    >>> q = (cmip5.query(Instance, VersionFile)
+                .join(Instance.latest_version)
+                .join(Version.files))
+
+This query returns an iterator of (:class:`Instance`,
+:class:`ARCCSSive.model.cmip5.File`) pairs and only needs to query the database
+once, whereas using a loop requires a database query for each iteration.
+
 .. autoclass:: Instance
     :members:
     :member-order: bysource
@@ -190,3 +201,9 @@ a time sequence.
 .. autoclass:: Version
     :members:
     :member-order: bysource
+
+.. autoclass:: ARCCSSive.model.cmip5.File
+    :noindex:
+    :members:
+    :member-order: bysource
+

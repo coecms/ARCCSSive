@@ -1,32 +1,37 @@
 CF-NetCDF Data
 ==============
 
-.. module:: ARCCSSive.postgres.model
+.. module:: ARCCSSive.model.cfnetcdf
 
-.. autoclass:: CFFile
+.. autoclass:: File
     :members:
 
-.. autoclass:: CFVariable
+.. autoclass:: Variable
     :members:
+
+.. autoclass:: VariableAlias
+    :members:
+
+.. module:: ARCCSSive.model.cmip5
 
 CMIP5 Outputs
 =============
 
-.. autoclass:: CMIP5Dataset
+.. autoclass:: Dataset
     :members:
 
-.. autoclass:: CMIP5Version
+.. autoclass:: Version
     :members:
 
-.. autoclass:: CMIP5File
+.. autoclass:: File
     :inherited-members:
     :members:
 
 CMIP5 Errata
 ============
 
-.. autoclass:: CMIP5VersionOverride
+.. autoclass:: VersionOverride
     :members:
 
-.. autoclass:: CMIP5Warning
+.. autoclass:: Warning
     :members:

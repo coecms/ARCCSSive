@@ -41,19 +41,22 @@ class Instance(Base):
     """
     A combination of a CMIP5 Dataset and a single variable
 
-    Relationships:
+    **Relationships:**
 
     .. attribute:: versions
-        [:class:`Version`]: List of all available versions of this dataset
+
+        list[:class:`Version`]: List of all available versions of this dataset
 
     .. attribute:: latest_version
+
         :class:`Version`: The most recent version of this dataset
 
     .. attribute:: files
-        [:class:`ARCCSSive.model.cmip5.File`]: All files belonging to this
+
+        list[:class:`ARCCSSive.model.cmip5.File`]: All files belonging to this
         dataset and variable, regardless of version
 
-    Attributes:
+    **Attributes:**
 
     .. attribute:: variable
 
@@ -175,18 +178,21 @@ class Version(Base):
     """
     A version of a model run's variable
 
-    Relationships:
+    **Relationships:**
 
     .. attribute:: variable
+
         :class:`Instance`: Dataset and variable this version is attached to
 
     .. attribute:: warnings
+
         [:class:`ARCCSSive.model.cmip5.Warning`]: Warnings attached to this dataset version
 
     .. attribute:: files
+
         [:class:`ARCCSSive.model.cmip5.File`]: Files belonging to this dataset version
 
-    Attributes:
+    **Attributes:**
 
     .. attribute:: version
 

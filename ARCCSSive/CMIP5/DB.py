@@ -46,7 +46,7 @@ class Session(object):
 
         Returns a list of files that match the arguments
 
-        :argument **kwargs: Match any attribute in :class:`Model.Instance`, e.g. `model = 'ACCESS1-3'`
+        :argument kwargs: Match any attribute in :class:`Model.Instance`, e.g. `model = 'ACCESS1-3'`
 
         :return: An iterable returning :py:class:`Model.File`
             matching the search query
