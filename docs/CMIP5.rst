@@ -36,13 +36,15 @@ model outputs:
     >>> outputs = cmip5.outputs(
     ...     experiment = 'rcp45',
     ...     variable   = 'tas',
-    ...     mip        = 'Amon')
+    ...     mip        = 'day',
+    ...     ensemble   = 'r1i1p1')
 
 You can then loop over the search results in normal Python fashion::
 
-    >>> for o in outputs:
+    >>> for o in outputs.filter_by(model='ACCESS1.3'):
     ...     six.print_(o.model, *o.filenames())
-    ACCESS1-3 example.nc
+    ACCESS1.3 tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc
+
 
 Examples
 --------
@@ -55,13 +57,16 @@ Get files from a single model variable
     >>> outputs = cmip5.outputs(
     ...     experiment = 'rcp45',
     ...     variable   = 'tas',
-    ...     mip        = 'Amon',
-    ...     model      = 'ACCESS1-3',
+    ...     mip        = 'day',
+    ...     model      = 'ACCESS1.3',
     ...     ensemble   = 'r1i1p1')
 
     >>> for f in outputs.first().filenames():
     ...     six.print_(f)
-    example.nc
+    tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc
+    tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc
+    tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc
+    tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc
 
 
 Get files from all models for a specific variable
@@ -72,7 +77,7 @@ Get files from all models for a specific variable
     >>> outputs = cmip5.outputs(
     ...     experiment = 'rcp45',
     ...     variable   = 'tas',
-    ...     mip        = 'Amon',
+    ...     mip        = 'day',
     ...     ensemble   = 'r1i1p1')
 
     >>> for m in outputs:

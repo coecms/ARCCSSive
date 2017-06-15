@@ -39,9 +39,21 @@ VersionFile = model2.File
 
 class Instance(Base):
     """
-    A model variable from a specific run
+    A combination of a CMIP5 Dataset and a single variable
 
-    Search through these using :func:`ARCCSSive.CMIP5.Session.outputs()`
+    Relationships:
+
+    .. attribute:: versions
+        [:class:`Version`]: List of all available versions of this dataset
+
+    .. attribute:: latest_version
+        :class:`Version`: The most recent version of this dataset
+
+    .. attribute:: files
+        [:class:`ARCCSSive.model.cmip5.File`]: All files belonging to this
+        dataset and variable, regardless of version
+
+    Attributes:
 
     .. attribute:: variable
 
@@ -66,10 +78,6 @@ class Instance(Base):
     .. attribute:: realm
 
         Realm: ie atmos, ocean
-
-    .. attribute:: versions
-
-        List of :class:`Version` available for this output
     """
     __tablename__ = 'old_cmip5_instance'
 
@@ -87,6 +95,10 @@ class Instance(Base):
                 ['dataset_id', 'variable_id'],
                 ['cmip5_latest_version.dataset_id', 'cmip5_latest_version.variable_id'],
                 ),
+            ForeignKeyConstraint(
+                ['dataset_id', 'variable_id'],
+                ['cmip5_attributes_links.dataset_id', 'cmip5_attributes_links.variable_id'],
+                ),
             )
 
     versions = relationship('CMIP5.Model.Version',
@@ -99,6 +111,10 @@ class Instance(Base):
     latest_version = relationship('CMIP5.Model.Version',
             secondary = model2.cmip5_latest_version,
             uselist = False,
+            viewonly = True)
+
+    files = relationship('cmip5.File',
+            secondary = model2.cmip5_attributes_links,
             viewonly = True)
 
 #     # Missing versions are labelled NA in database and v20110427 in drstree, this is CMOR documentation date
@@ -136,7 +152,7 @@ class Instance(Base):
 
         :returns: List of file names
         """
-        return self.latest()[0].filenames()
+        return self.latest_version.filenames()
 
     def drstree_path(self):
         """ 
@@ -159,6 +175,19 @@ class Version(Base):
     """
     A version of a model run's variable
 
+    Relationships:
+
+    .. attribute:: variable
+        :class:`Instance`: Dataset and variable this version is attached to
+
+    .. attribute:: warnings
+        [:class:`ARCCSSive.model.cmip5.Warning`]: Warnings attached to this dataset version
+
+    .. attribute:: files
+        [:class:`ARCCSSive.model.cmip5.File`]: Files belonging to this dataset version
+
+    Attributes:
+
     .. attribute:: version
 
         Version identifier
@@ -166,18 +195,6 @@ class Version(Base):
     .. attribute:: path
 
         Path to the output directory
-
-    .. attribute:: variable
-
-        :class:`Variable` associated with this version
-
-    .. attribute:: warnings
-
-        List of :class:`VersionWarning` available for this output
-
-    .. attribute:: files
-
-        List of :class:`VersionFile` available for this output
 
     .. testsetup::
 
@@ -219,8 +236,8 @@ class Version(Base):
                 ['cmip5_latest_version.version_id', 'cmip5_latest_version.variable_id', 'cmip5_latest_version.dataset_id'],
                 ),
             ForeignKeyConstraint(
-                ['version_id', 'variable_id'],
-                ['cmip5_attributes_links.version_id', 'cmip5_attributes_links.variable_id'],
+                ['version_id', 'variable_id', 'dataset_id'],
+                ['cmip5_attributes_links.version_id', 'cmip5_attributes_links.variable_id', 'cmip5_attributes_links.dataset_id'],
                 ),
             )
 
@@ -241,6 +258,8 @@ class Version(Base):
             viewonly=True)
 
     variable = relationship('Instance', viewonly=True)
+
+    file_paths = association_proxy('files','path')
 
     def glob(self):
         """
@@ -293,7 +312,7 @@ class Version(Base):
         >>> sorted(version.filenames())
         ['tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc']
         """
-        return [x.filename for x in self.files] 
+        return [os.path.basename(x) for x in self.file_paths] 
          
     def tracking_ids(self):
         """
