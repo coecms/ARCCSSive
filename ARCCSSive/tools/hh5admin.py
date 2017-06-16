@@ -21,7 +21,7 @@ from ARCCSSive.model.hh5 import *
 from sqlalchemy.sql import func
 from sqlalchemy.types import Float
 
-import xml.etree
+import xml.etree.ElementTree
 
 connect(echo=True)
 session = Session()
@@ -31,7 +31,7 @@ base = session.query(Path.pa_hash).filter_by(path='/g/data3/hh5/tmp').scalar()
 
 # Sum up the sizes of each level 5 directory
 sums = (session.query(Path.parents[5].label('parent_hash'),
-            func.sum(PosixFile.size.astext.cast(Float)).label('size'))
+            func.sum(PosixFile.size).label('size'))
         .select_from(PosixFile)
         .join(PosixFile.path)
         .filter(Path.parents[4] == base)
