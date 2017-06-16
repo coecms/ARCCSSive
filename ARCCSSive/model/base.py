@@ -15,7 +15,7 @@
 # limitations under the License.
 from __future__ import print_function
 
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Table
@@ -42,6 +42,7 @@ class Path(Base):
 
     #: str: Path on NCI's filesystem
     path = Column('pa_path', Text)
+    parents = Column('pa_parents', ARRAY(UUID))
 
 class Metadata(Base):
     """
@@ -53,7 +54,7 @@ class Metadata(Base):
     md_type = Column(Text, primary_key = True)
     md_json = Column(JSONB)
 
-    path_rel = relationship('Path')
+    path_rel = relationship('base.Path')
 
     #: str: Path to data file
     path = association_proxy('path_rel', 'path')

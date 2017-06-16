@@ -48,7 +48,7 @@ class File(Base):
     #: str: Data collection this file belongs to
     collection  = Column(Text)
 
-    path_rel = relationship('Path')
+    path_rel = relationship('base.Path')
     extra_rel = relationship('FileExtra')
 
     #: str: Path to data file
@@ -62,16 +62,16 @@ class File(Base):
             viewonly=True)
 
     metadata_netcdf_rel = relationship(
-            "Metadata",
-            primaryjoin='and_(cfnetcdf.File.md_hash == Metadata.md_hash,'
-                'Metadata.md_type == "netcdf")',
+            "base.Metadata",
+            primaryjoin='and_(cfnetcdf.File.md_hash == base.Metadata.md_hash,'
+                'base.Metadata.md_type == "netcdf")',
             viewonly=True,
             uselist=False)
 
     metadata_checksum_rel = relationship(
-            "Metadata",
-            primaryjoin='and_(cfnetcdf.File.md_hash == Metadata.md_hash,'
-                'Metadata.md_type == "checksum")',
+            "base.Metadata",
+            primaryjoin='and_(cfnetcdf.File.md_hash == base.Metadata.md_hash,'
+                'base.Metadata.md_type == "checksum")',
             viewonly=True,
             uselist=False)
 
