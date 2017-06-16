@@ -2,3 +2,4 @@ SQLAlchemy
 esgf-pyclient>=0.1.8
 six
 psycopg2
+tabulate
