@@ -108,6 +108,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_links_md_hash_idx ON cmip5_at
 CREATE INDEX IF NOT EXISTS cmip5_attributes_links_dataset_id_idx ON cmip5_attributes_links(dataset_id);
 CREATE INDEX IF NOT EXISTS cmip5_attributes_links_version_id_idx ON cmip5_attributes_links(version_id);
 CREATE INDEX IF NOT EXISTS cmip5_attributes_links_variable_id_idx ON cmip5_attributes_links(variable_id);
+CREATE INDEX IF NOT EXISTS cmip5_attributes_links_dataset_variable_id_idx ON cmip5_attributes_links(dataset_id, variable_id);
+CREATE INDEX IF NOT EXISTS cmip5_attributes_links_dataset_version_id_idx ON cmip5_attributes_links(dataset_id, version_id);
 
 /* A CMIP5 dataset
  * Like what you find on ESGF, however version_number is broken out into its
@@ -152,6 +154,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_file_version  AS
     FROM cmip5_attributes NATURAL INNER JOIN cmip5_attributes_links;
 CREATE UNIQUE INDEX IF NOT EXISTS cmip5_file_version_version_id_idx ON cmip5_file_version(version_id);
 CREATE INDEX IF NOT EXISTS cmip5_file_version_dataset_id_idx ON cmip5_file_version(dataset_id);
+CREATE INDEX IF NOT EXISTS cmip5_file_version_dataset_id_version_number_idx ON cmip5_file_version(dataset_id, version_number DESC);
+CREATE INDEX IF NOT EXISTS cmip5_file_version_dataset_id_version_id_idx ON cmip5_file_version(dataset_id, version_id);
 
 /* Manually entered version information, for the case when the file is
  * inaccurate or missing data
@@ -249,4 +253,13 @@ CREATE OR REPLACE VIEW cmip5_latest_version AS
         dataset_id
       , variable_id
       , is_latest DESC
-      , version_id DESC;
+      , version_number DESC;
+
+/* Fast table for path lookups */
+CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_path AS
+    SELECT
+        pa_hash
+      , pa_path
+    FROM paths
+    JOIN cmip5_attributes_links ON (pa_hash = md_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS cmip5_path_pa_hash_idx ON cmip5_path(pa_hash);

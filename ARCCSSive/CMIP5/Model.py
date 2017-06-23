@@ -265,7 +265,9 @@ class Version(Base):
 
     variable = relationship('Instance', viewonly=True)
 
-    file_paths = association_proxy('files','path')
+    paths = relationship('cmip5.Path',
+            secondary = model2.cmip5_attributes_links,
+            viewonly=True)
 
     def glob(self):
         """
