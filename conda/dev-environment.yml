@@ -7,3 +7,5 @@ channels:
 dependencies:
     - python
     - pbr
+    - sphinx
+    - sqlalchemy
