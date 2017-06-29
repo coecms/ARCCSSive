@@ -119,7 +119,7 @@ for constraints in combs:
 # search on local DB, return instance_ids
     if constraints['experiment'] in ['decadal','noVolc']:
         exp0=constraints.pop('experiment')
-        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%").filter(Instance.variable.in_(variables)))
+        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%")).filter(Instance.variable.in_(variables))
     else:
         outputs=cmip5.outputs(**constraints).filter(Instance.variable.in_(variables))
 # loop through returned Instance objects
