@@ -21,15 +21,15 @@ Use
 
 Connect to the database::
 
-    from ARCCSSive import db
-    db.connect()
+    from ARCCSSive.db import connect, Session
+    connect()
     
 This will prompt you for your NCI password (it gets your username from $USER).
 Probably best not to use this in ipython notebook for the moment.
 
 Create a session::
 
-    session = db.Session()
+    session = Session()
 
 The session used to perform actual queries to the database (see http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#querying)
 
