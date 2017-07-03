@@ -116,7 +116,7 @@ class Instance(Base):
             uselist = False,
             viewonly = True)
 
-    files = relationship('cmip5.File',
+    files = relationship('model.cmip5.File',
             secondary = model2.cmip5_attributes_links,
             viewonly = True)
 

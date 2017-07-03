@@ -23,7 +23,7 @@ import os
 
 from sqlalchemy import func, select, and_
 
-import ARCCSSive.db as db
+from ARCCSSive import db
 from ARCCSSive.CMIP5.Model import Instance
 
 class Session(object):

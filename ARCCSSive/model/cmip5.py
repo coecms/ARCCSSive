@@ -126,15 +126,15 @@ class Path(Base):
     __tablename__ = 'cmip5_path'
 
     pa_hash = Column(UUID,
-            ForeignKey('cmip5.File.md_hash'),
+            ForeignKey('cmip5_attributes.md_hash'),
             ForeignKey('cmip5_attributes_links.md_hash'),
             primary_key=True)
 
     path = Column('pa_path', Text)
 
-    file = relationship('model.cmip5.File',
-            viewonly=True,
-            primaryjoin='cmip5.Path.pa_hash == foreign(cmip5.File.md_hash)')
+    # file = relationship('cmip5.File',
+    #         viewonly=True,
+    #         primaryjoin='cmip5.Path.pa_hash == foreign(cmip5.File.md_hash)')
 
 class Version(Base):
     """
