@@ -17,12 +17,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from ARCCSSive.model.base import Base
-import ARCCSSive.model.cmip5 as cmip5
-import ARCCSSive.model.old_cmip5 as old_cmip5
+import ARCCSSive.model.cmip5
+import ARCCSSive.model.old_cmip5
 
 # Aliases to old names
-VersionWarning = cmip5.Warning
-VersionFile = cmip5.File
-Instance = old_cmip5.Instance
-Version = old_cmip5.Version
+VersionWarning = ARCCSSive.model.cmip5.Warning
+VersionFile = ARCCSSive.model.cmip5.File
+Instance = ARCCSSive.model.old_cmip5.Instance
+Version = ARCCSSive.model.old_cmip5.Version

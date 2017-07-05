@@ -261,6 +261,7 @@ class Version(Base):
 
     paths = relationship('cmip5.Path',
             secondary = model2.cmip5_attributes_links,
+            order_by='cmip5.Path.path',
             viewonly=True)
 
     def glob(self):
@@ -291,14 +292,19 @@ class Version(Base):
 
         .. testsetup::
 
+            >>> import six
+            >>> import pprint
             >>> cmip5  = getfixture('session')
             >>> version = cmip5.query(Version).filter_by(version_id = 'ed04fb7a-79e2-5b2f-2569-42abffd322db', variable_name='tas').one()
 
-        >>> version.build_filepaths()
-        []
+        >>> pprint.pprint(version.build_filepaths())
+        ['/g/data1/ua6/unofficial-ESG-replica/tmp/tree/pcmdi9.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/CSIRO-BOM/ACCESS1-3/rcp45/day/atmos/day/r1i1p1/tas/1/tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc',
+         '/g/data1/ua6/unofficial-ESG-replica/tmp/tree/pcmdi9.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/CSIRO-BOM/ACCESS1-3/rcp45/day/atmos/day/r1i1p1/tas/1/tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc',
+         '/g/data1/ua6/unofficial-ESG-replica/tmp/tree/pcmdi9.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/CSIRO-BOM/ACCESS1-3/rcp45/day/atmos/day/r1i1p1/tas/1/tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc',
+         '/g/data1/ua6/unofficial-ESG-replica/tmp/tree/pcmdi9.llnl.gov/thredds/fileServer/cmip5_css02_data/cmip5/output1/CSIRO-BOM/ACCESS1-3/rcp45/day/atmos/day/r1i1p1/tas/1/tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc']
+
         """
-        g = os.path.join(self.path, self.glob())
-        return glob.glob(g)
+        return [x.path for x in self.paths]
          
     def filenames(self):
         """
@@ -314,7 +320,7 @@ class Version(Base):
         >>> sorted(version.filenames())
         ['tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc']
         """
-        return [os.path.basename(x) for x in self.file_paths] 
+        return [os.path.basename(x.path) for x in self.paths] 
          
     def tracking_ids(self):
         """

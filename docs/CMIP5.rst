@@ -43,8 +43,7 @@ You can then loop over the search results in normal Python fashion::
 
     >>> for o in outputs.filter_by(model='ACCESS1.3'):
     ...     six.print_(o.model, *o.filenames())
-    ACCESS1.3 tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc
-
+    ACCESS1.3 tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc
 
 Examples
 --------
@@ -63,9 +62,6 @@ Get files from a single model variable
 
     >>> for f in outputs.first().filenames():
     ...     six.print_(f)
-    tas_day_ACCESS1-3_rcp45_r1i1p1_20560101-20801231.nc
-    tas_day_ACCESS1-3_rcp45_r1i1p1_20810101-21001231.nc
-    tas_day_ACCESS1-3_rcp45_r1i1p1_20060101-20301231.nc
     tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc
 
 
@@ -187,8 +183,8 @@ Each model class has a number of relationships, which can be used in a query to
 efficiently return linked data e.g.::
 
     >>> q = (cmip5.query(Instance, VersionFile)
-                .join(Instance.latest_version)
-                .join(Version.files))
+    ...         .join(Instance.latest_version)
+    ...         .join(Version.files))
 
 This query returns an iterator of (:class:`Instance`,
 :class:`ARCCSSive.model.cmip5.File`) pairs and only needs to query the database
