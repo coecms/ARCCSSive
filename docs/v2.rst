@@ -1,0 +1,129 @@
+New Postgres Database
+=====================
+
+
+Install
+-------
+
+Currently the v2 api is available as the 'postgres' branch of the repository::
+
+    git checkout https://github.com/coecms/ARCCSSive
+    cd ARCCSSive
+    git checkout -b postgres
+    conda env create -f conda/dev-environment
+    source activate arccssive-dev
+    pip install .
+
+You could also use virtualenv if preferred
+
+Use
+---
+
+Connect to the database::
+
+    from ARCCSSive.db import connect, Session
+    connect()
+    
+This will prompt you for your NCI password (it gets your username from $USER).
+Probably best not to use this in ipython notebook for the moment.
+
+Create a session::
+
+    session = Session()
+
+The session used to perform actual queries to the database (see http://docs.sqlalchemy.org/en/latest/orm/tutorial.html#querying)
+
+Models
+------
+
+Models represent tables in the database, you can feed them to `session.query()`
+
+Each model has a number of available relationships that can be used to `join()` to other models
+
+Models are in the `ARCCSSive.model` package, divided into sub-packages by category (eg. the cmip5 package holds cmip5 related models)
+
+.. py:currentmodule:: ARCCSSive.model
+
+:class:`ARCCSSive.model.cmip5.File`
+
+A CMIP5 file's metadata
+
+Joins:
+ - dataset: :class:`cmip5.Dataset` The dataset this file is part of
+ - version: :class:`cmip5.Version`: This file's dataset version
+ - warnings: list[:class:`cmip5.Warning`]: Warnings associated with this file
+ - timeseries: :class:`cmip5.Timeseries` Holds all files in the dataset with the same variable at different time periods
+ - variables: list[:class:`cfnetcdf.Variable`]: CF variables in the file (excluding axes)
+
+:class:`ARCCSSive.model.cmip5.Dataset`
+
+A CMIP5 dataset, pretty much what you'd find listed on ESGF, with the exception
+that there's no version field (this is held separately in the
+:class:`cmip5.Version` class)
+
+Joins:
+ - versions: list[:class:`cmip5.Version`]: Available versions of this dataset
+ - variables: list[:class:`cmip5.Timeseries`]: The latest version of each of the variables in the dataset
+
+:class:`ARCCSSive.model.cmip5.Version`
+
+A single version of a specific :class:`cmip5.Dataset`. Different versions exist
+due to bugfixes after publication.
+
+Joins:
+ - dataset: :class:`cmip5.Dataset`: The dataset this version is associated with
+ - files: list[:class:`cmip5.File`]: Files belonging to this version
+ - warnings: list[:class:`cmip5.Warning`]: Warnings for this version
+ - variables: list[:class:`cmip5.Timeseries`]: Collects the files by variable into timeseries
+
+:class:`ARCCSSive.model.cmip5.Timeseries`
+
+All files for a single dataset, version and variable. The full output is often
+split into multiple files covering different time periods, the timeseries model
+joins these files back together again.
+
+Joins:
+ - dataset: :class:`cmip5.Dataset`: the dataset this timeseries is part of
+ - version: :class:`cmip5.Version`: the dataset version
+ - files: list[:class:`cmip5.File`]: Files belonging to the timeseries
+
+:class:`ARCCSSive.model.cfnetcdf.File`
+
+Base class for CF compliant netcdf files
+
+Joins:
+ - variables: list[:class:`cfnetcdf.Variable`]: CF variables in the file (excluding axes)
+
+:class:`ARCCSSive.model.cfnetcdf.Variable`
+
+A CF compliant variable
+
+Joins:
+ - files: list[:class:`cfnetcdf.File`]: Files containing the variable
+
+Old-style models
+----------------
+
+These models are from the previous ARCCSSive iteration. They are mostly the
+same as the new version, however they also contain the variable name rather
+than this being a separate 'timeseries' table.
+
+It's intended that these be moved to the new top-level `model` namespace
+
+:class:`ARCCSSive.CMIP5.Model.Instance`
+
+Equivalent to the newer :class:`cmip5.Dataset` class but also has the variable name
+
+Joins:
+ - versions: list[:class:`ARCCSSive.CMIP5.Model.Version`]: Versions of the instance
+ - latest_version: :class:`ARCCSSive.CMIP5.Model.Version`: Latest version of the instance
+ - files: list[:class:`cmip5.File`] Files belonging to the instance
+
+:class:`ARCCSSive.CMIP5.Model.Version`
+
+Equivalent to the newer :class:`cmip5.Version` class but also has the variable name
+
+Joins:
+ - variable: :class:`ARCCSSive.CMIP5.Model.Instance`: Instance this is a version of
+ - files: list[:class:`cmip5.File`] Files belonging to the instance version
+ - new_version: :class:`cmip5.Version`: Equivalent new-style version

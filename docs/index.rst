@@ -32,6 +32,8 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   v2
+
    using
    CMIP5
    postgres

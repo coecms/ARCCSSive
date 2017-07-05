@@ -11,3 +11,4 @@ dependencies:
     - postgresql
     - git
     - requests
+    - sphinx
