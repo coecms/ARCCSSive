@@ -3,9 +3,6 @@ CMIP5
 
 .. default-domain:: py
 .. module:: ARCCSSive.CMIP5
-.. testsetup::
-
-    >>> import six
 
 The CMIP5 module provides tools for searching through the CMIP5 data stored on NCI's `/g/data` filesystem
 
@@ -42,8 +39,8 @@ model outputs:
 You can then loop over the search results in normal Python fashion::
 
     >>> for o in outputs.filter_by(model='ACCESS1.3'):
-    ...     six.print_(o.model, *o.filenames())
-    ACCESS1.3 tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc
+    ...     (o.model, *o.filenames())
+    ('ACCESS1.3', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc')
 
 Examples
 --------
@@ -61,8 +58,8 @@ Get files from a single model variable
     ...     ensemble   = 'r1i1p1')
 
     >>> for f in outputs.first().filenames():
-    ...     six.print_(f)
-    tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc
+    ...     f
+    'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc'
 
 
 Get files from all models for a specific variable
@@ -120,7 +117,7 @@ ARCCSSive:
     >>> # This returns a sequence of Version, get the variable information from
     >>> # the .variable property
     >>> for o in res:
-    ...     six.print_(o.variable.model, o.variable.variable, o.filenames())
+    ...     o.variable.model, o.variable.variable, o.filenames()
 
 Compare model results between two experiments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,7 +147,7 @@ Link two sets of outputs together using joins:
     ...         )
 
     >>> for r, h in rcp_hist:
-    ...     six.print_(r.versions[-1].path, h.versions[-1].path)
+    ...     r.versions[-1].path, h.versions[-1].path
 
 API
 ---
