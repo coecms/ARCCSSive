@@ -12,7 +12,7 @@ from ARCCSSive.db import *
 
 @pytest.fixture(scope='session')
 def database():
-    engine = connect(echo=False)
+    engine = connect(url='postgresql://localhost/postgres', user='postgres', password='', echo=False)
     engine.connect()
 
     yield Session

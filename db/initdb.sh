@@ -17,8 +17,8 @@
 
 set -eu
 
-ARCCSSIVE_USER=postgres
-ARCCSSIVE_DB=postgresql://localhost/postgres
+export ARCCSSIVE_USER=postgres
+export ARCCSSIVE_DB=postgresql://localhost/postgres
 
 psql -h localhost -U $ARCCSSIVE_USER -f db/000_nci.sql
 psql -h localhost -U $ARCCSSIVE_USER -f db/001_raw.sql

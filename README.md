@@ -39,22 +39,20 @@ ARCCSSive can be accessed on VDI using the Anaconda environments:
 
 ### Local Install
 
-You can install ARCCSSive locally using either Anaconda or Pip. You will need
-to copy the database file from Raijin
+You can install ARCCSSive locally using either Anaconda or Pip:
 
     $ pip install ARCCSSive
     # or
     $ conda install -c coecms arccssive
 
-    $ scp raijin:/g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db $PWD/cmip5.db
-    $ export CMIP5_DB=sqlite:///$PWD/cmip5.db
-
 ### Development Version
 
-To install the current development version with a test database:
+To install the current development version with a test database running under docker:
 
     $ pip install --user git+https://github.com/coecms/ARCCSSive.git 
-    $ export CMIP5_DB=sqlite:///$HOME/cmip5.db
+    $ docker run -p 127.0.0.1:5432:5432 -d postgres
+    $ bash db/initdb.sh
+    $ py.test
 
 CMIP5
 =====

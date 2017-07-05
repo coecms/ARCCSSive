@@ -17,7 +17,6 @@ from __future__ import print_function
 
 from ARCCSSive.model import *
 from ARCCSSive.model.cmip5 import *
-from ARCCSSive.db import connect, Session
 
 import pytest
 import psycopg2

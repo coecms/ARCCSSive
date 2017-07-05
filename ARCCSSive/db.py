@@ -48,7 +48,7 @@ def connect(url=default_url, user=default_user, password=None, echo=False):
         except ImportError:
             pass
 
-    if os.environ['CI'] == 'true':
+    if os.environ.get('CI') == 'true':
         _url.password = ''
     elif sys.__stdin__.isatty() and _url.password is None and _url.username is not None:
         # Prompt for password
