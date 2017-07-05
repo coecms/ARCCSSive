@@ -243,9 +243,9 @@ class Version(Base):
 
     timeseries = relationship('cmip5.Timeseries',
             primaryjoin='and_('
-                'Model.Version.dataset_id == foreign(cmip5.Timeseries.dataset_id),'
-                'Model.Version.version_id == foreign(cmip5.Timeseries.version_id),'
-                'cmip5.Timeseries.variable_list.any(Model.Version.variable_name)'
+                'old_cmip5.Version.dataset_id == foreign(cmip5.Timeseries.dataset_id),'
+                'old_cmip5.Version.version_id == foreign(cmip5.Timeseries.version_id),'
+                'cmip5.Timeseries.variable_list.any(old_cmip5.Version.variable_name)'
                 ')',
             uselist=False,
             viewonly=True)

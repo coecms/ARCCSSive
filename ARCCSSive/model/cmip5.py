@@ -102,10 +102,10 @@ class File(CFFile):
             secondary=cmip5_attributes_links,
             secondaryjoin='cmip5_attributes_links.c.version_id == Warning.version_id')
 
-    old_version = relationship(
-            'CMIP5.Model.Version',
-            secondary=cmip5_attributes_links,
-            viewonly=True)
+#@    old_version = relationship(
+#@            'old_cmip5.Model.Version',
+#@            secondary=cmip5_attributes_links,
+#@            viewonly=True)
 
     timeseries = relationship(
             'Timeseries',
