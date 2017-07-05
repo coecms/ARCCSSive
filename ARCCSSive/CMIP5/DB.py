@@ -99,7 +99,7 @@ class Session(object):
 # Default CMIP5 database
 default_db = 'sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db'
 
-def connect(path = None, echo=False):
+def connect(path = None, url=db.default_url, user=db.default_user, password=None, echo=False):
     """Connect to the CMIP5 catalog
 
     :return: A new :py:class:`Session`
@@ -111,7 +111,7 @@ def connect(path = None, echo=False):
     >>> outputs = cmip5.query() # doctest: +SKIP
     """
 
-    db.connect(echo=echo)
+    db.connect(url=url, user=user, password=password, echo=echo)
 
     connection = Session()
     connection.session = db.Session()
