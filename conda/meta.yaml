@@ -36,6 +36,10 @@ test:
         - pytest
     commands:
         - py.test
+    import:
+        - ARCCSSive
+        - ARCCSSive.db
+        - ARCCSSive.model
 
 about:
     home: https://github.com/coecms/ARCCSSive
