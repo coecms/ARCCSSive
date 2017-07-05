@@ -25,6 +25,7 @@ requirements:
         - sqlalchemy
         - esgf-pyclient
         - psycopg2
+        - requests
 
 test:
     source_files:
