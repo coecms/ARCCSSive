@@ -264,6 +264,10 @@ class Version(Base):
             order_by='cmip5.Path.path',
             viewonly=True)
 
+    @property
+    def path(self):
+        return os.path.dirname(self.paths[0].path)
+
     def glob(self):
         """
         Get the glob string matching the CMIP5 filename

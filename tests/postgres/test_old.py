@@ -19,6 +19,6 @@ from ARCCSSive.model.old_cmip5 import *
 import six
 
 def test_version(session):
-    v = session.query(Version).first()
+    v = session.query(Version).filter_by(version_id = '6e33fc9d-06aa-417b-7b88-99ac519ed7fe', variable_name = 'tauvo').one()
 
-    assert isinstance(v.path, six.string_types)
+    assert v.path == '/g/data1/ua6/unofficial-ESG-replica/tmp/tree/esgdata.gfdl.noaa.gov/thredds/fileServer/gfdl_dataroot/NOAA-GFDL/GFDL-CM3/historicalMisc/mon/ocean/Omon/r5i1p1/v20110601/tauvo'
