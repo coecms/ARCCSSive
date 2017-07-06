@@ -71,9 +71,11 @@ def parse_input():
 def assign_constraints():
     ''' Assign default values and input to constraints '''
     kwargs = parse_input()
+    out = {}
     for k,v in kwargs.items():
-        if v is None: kwargs.pop(k)
-    return kwargs
+        if v is not None:
+            out[k] = v
+    return out
 
 # Calling parse_input() function to build kwargs from external arguments passed by user 
 kwargs=assign_constraints()
@@ -111,7 +113,7 @@ for constraints in combs:
         if db_results!=[]:
             someresult=True
             for v in db_results:
-                fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
+                fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version if v.version is not None else 'NA',v.path]) + "\n")
                 if warnings and v.warnings != []:
                     fout.write("Warnings:\n")
                     for w in v.warnings:
