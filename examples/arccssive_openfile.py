@@ -27,6 +27,7 @@ from ARCCSSive import CMIP5
 from ARCCSSive.CMIP5.Model import Instance 
 import numpy as np
 from netCDF4 import MFDataset
+from glob import glob
 
 # define a function that open the files, read the variable and return max
 def var_max(var,path):
@@ -35,7 +36,8 @@ def var_max(var,path):
     # using path+"/*.nc" should be sufficient, unfortunately GISS models break conventions and they put all variables in one directory
     #  so I'm using "/"+var+"_*.nc" just in case, otherwise you can save the drstree_path instead, although if updated recently this might not work
     print(path+"/"+var+"_*.nc")
-    nc=MFDataset(path+"/*.nc",'r')
+    # Glob is required here in order to support python 2, for python 3 it's not needed
+    nc=MFDataset(glob(path+"/*.nc"),'r')
     #nc=MFDataset(path+"/"+var+"_*.nc",'r')
     data = nc.variables[var][:]
     return np.max(data)
