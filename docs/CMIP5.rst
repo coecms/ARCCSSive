@@ -39,8 +39,8 @@ model outputs:
 You can then loop over the search results in normal Python fashion::
 
     >>> for o in outputs.filter_by(model='ACCESS1.3'):
-    ...     (o.model, *o.filenames())
-    ('ACCESS1.3', 'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc')
+    ...     (o.model, o.filenames())
+    ('ACCESS1.3', ['tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc'])
 
 Examples
 --------
