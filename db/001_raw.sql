@@ -34,12 +34,16 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_raw AS
     JOIN paths ON metadata.md_hash = paths.pa_hash
     WHERE
         md_json->'attributes'->>'Conventions' IS NOT NULL
+      AND (pa_parents[4] IN (
+          md5('/g/data1/ua6/authorative')::uuid
+        , md5('/g/data1/ua6/drstree')::uuid
+        , md5('/g/data1/ua6/DRSv2')::uuid
+        )
+        OR
+          pa_parents[5] = md5('/g/data1/ua6/unofficial-ESG-replica/IPCC')::uuid
+        OR
+          pa_parents[6] = md5('/g/data1/ua6/unofficial-ESG-replica/tmp/tree')::uuid
+        )
       AND
-        md_json->'attributes'->>'project_id' = 'CMIP5'
-      AND pa_parents[4] IN (
-        md5('/g/data1/ua6/unofficial-ESG-replica')::uuid
-      , md5('/g/data1/ua6/authorative')::uuid
-      , md5('/g/data1/ua6/drstree')::uuid
-      , md5('/g/data1/ua6/DRSv2')::uuid
-      );
+        md_json->'attributes'->>'project_id' = 'CMIP5';
 CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_raw_md_hash_idx ON cmip5_attributes_raw(md_hash);
