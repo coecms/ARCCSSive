@@ -49,10 +49,18 @@ You can install ARCCSSive locally using either Anaconda or Pip:
 
 To install the current development version with a test database running under docker:
 
-    $ pip install --user git+https://github.com/coecms/ARCCSSive.git 
-    $ docker run -p 127.0.0.1:5432:5432 -d postgres
+Start the database container:
+
+    $ docker-compose up
+
+In a seperate terminal:
+
+    $ conda env create -f conda/dev-enviornment.yml
+    $ pip install -e .
     $ bash db/initdb.sh
     $ py.test
+
+You can connect to the test database with `psql -h localhost -U postgres`
 
 CMIP5
 =====
