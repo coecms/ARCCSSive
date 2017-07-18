@@ -62,6 +62,17 @@ In a seperate terminal:
 
 You can connect to the test database with `psql -h localhost -U postgres`
 
+## Migrating the database
+
+To migrate from the old-style database to the postgres database, make a copy of `import.pgloader` then run:
+
+    $ docker run --rm --name pgloader -v $PWD:/work dimitri/pgloader:latest pgloader /work/import.pgloader.copy
+
+The full URL to the postgres database must be set in 'import.pgloader.copy' DON'T COMMIT IT!, the
+sqlite database should also be put into the ARCCSSive directory before running.
+
+A test migration is in the docker compose file
+
 CMIP5
 =====
 
