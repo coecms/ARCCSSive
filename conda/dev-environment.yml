@@ -12,3 +12,4 @@ dependencies:
     - git
     - requests
     - sphinx
+    - pytest

@@ -98,9 +98,9 @@ class File(CFFile):
             back_populates='files')
 
     warnings = relationship(
-            'Warning',
+            'cmip5.Warning',
             secondary=cmip5_attributes_links,
-            secondaryjoin='cmip5_attributes_links.c.version_id == Warning.version_id')
+            secondaryjoin='cmip5_attributes_links.c.version_id == cmip5.Warning.version_id')
 
 #@    old_version = relationship(
 #@            'old_cmip5.Model.Version',
@@ -169,8 +169,8 @@ class Version(Base):
 
     #: list[:class:`Warning`]: Warnings attached to the datset by users
     warnings = relationship(
-            'Warning',
-            order_by='Warning.added_on',
+            'cmip5.Warning',
+            order_by='cmip5.Warning.added_on',
             back_populates='dataset_version')
 
     variables = relationship(

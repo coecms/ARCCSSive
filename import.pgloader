@@ -2,7 +2,7 @@ load database
     from 'cmip5_raijin_latest.db'
     into postgresql://postgres@arccssive_db_1/postgres
 
-with include drop, create tables, create indexes, disable triggers
+with create no tables, create no indexes, disable triggers
 
 alter table names matching 'files' rename to 'sqlite_files'
 alter table names matching 'instances' rename to 'sqlite_instances'

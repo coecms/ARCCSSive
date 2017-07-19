@@ -100,8 +100,8 @@ class Instance(Base):
 
     versions = relationship('old_cmip5.Version',
             order_by='(old_cmip5.Version.is_latest, old_cmip5.Version.version)',
-            primaryjoin='and_(Instance.dataset_id == old_cmip5.Version.dataset_id,'
-                'Instance.variable == old_cmip5.Version.variable_name)',
+            primaryjoin='and_(old_cmip5.Instance.dataset_id == old_cmip5.Version.dataset_id,'
+                'old_cmip5.Instance.variable == old_cmip5.Version.variable_name)',
             viewonly = True
             )
 
@@ -257,7 +257,7 @@ class Version(Base):
             secondary = model2.cmip5_attributes_links,
             viewonly=True)
 
-    variable = relationship('Instance', viewonly=True)
+    variable = relationship('old_cmip5.Instance', viewonly=True)
 
     paths = relationship('cmip5.Path',
             secondary = model2.cmip5_attributes_links,
