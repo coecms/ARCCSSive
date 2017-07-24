@@ -29,3 +29,23 @@ def test_checksums_match(session):
             .join(base.Path.checksum)
             .filter(sqlite.File.sha256 != base.Checksum.sha256))
     assert q.count() == 0
+
+def test_versions_match(session):
+    q = (session
+            .query(sqlite.File)
+            .join(sqlite.File.version)
+            .join(sqlite.File.path)
+            .join(cmip5.File)
+            .join(cmip5.File.version)
+            .filter(sqlite.Version.version != cmip5.Version.version_number))
+    assert q.count() == 0
+
+def test_tracking_ids_match(session):
+    q = (session
+            .query(sqlite.File)
+            .join(sqlite.File.version)
+            .join(sqlite.File.path)
+            .join(cmip5.File)
+            .join(cmip5.File.version)
+            .filter(sqlite.Version.version != cmip5.Version.version_number))
+    assert q.count() == 0
