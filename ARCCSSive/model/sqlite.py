@@ -19,9 +19,15 @@ limitations under the License.
 from __future__ import print_function
 
 from .base import Base
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy import BigInteger, Text, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID
+
+sqlite_paths_link = Table('sqlite_paths_link', Base.metadata,
+        Column('hash', UUID, ForeignKey('paths.pa_hash'), ForeignKey('metadata.md_hash')),
+        Column('file_id', BigInteger, ForeignKey('sqlite_files.file_id'), primary_key=True),
+        )
 
 class Instance(Base):
     __tablename__ = 'sqlite_instances'
@@ -32,6 +38,8 @@ class Instance(Base):
     experiment = Column(Text)
     ensemble = Column(Text)
     realm = Column(Text)
+
+    versions = relationship('sqlite.Version', back_populates='instance')
 
 class Version(Base):
     __tablename__ = 'sqlite_versions'
@@ -44,6 +52,9 @@ class Version(Base):
     to_update = Column(Boolean)
     instance_id = Column(BigInteger, ForeignKey('sqlite_instances.instance_id'))
 
+    instance = relationship('sqlite.Instance', back_populates='versions')
+    files = relationship('sqlite.File', back_populates='version')
+
 class File(Base):
     __tablename__ = 'sqlite_files'
     file_id = Column(BigInteger, primary_key=True)
@@ -52,6 +63,9 @@ class File(Base):
     md5 = Column(Text)
     sha256 = Column(Text)
     version_id = Column(BigInteger, ForeignKey('sqlite_versions.version_id'))
+
+    path = relationship('base.Path', secondary=sqlite_paths_link)
+    version = relationship('sqlite.Version', back_populates='files')
 
 class Warning(Base):
     __tablename__ = 'sqlite_warnings'
