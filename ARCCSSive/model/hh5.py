@@ -21,17 +21,9 @@ from sqlalchemy.types import Text, Boolean, BigInteger
 from sqlalchemy.orm import relationship
 
 from .base import Base
+from ARCCSSive.utils.pg_json_property import pg_json_property
 
 schema = 'hh5'
-
-class pg_json_property(index_property):
-    def __init__(self, attr_name, index, cast_type):
-        super(pg_json_property, self).__init__(attr_name, index)
-        self.cast_type = cast_type
-
-    def expr(self, model):
-        expr = super(pg_json_property, self).expr(model)
-        return expr.astext.cast(self.cast_type)
 
 class Path(Base):
     __tablename__ = 'paths'
