@@ -13,6 +13,8 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cf_attributes_raw AS
         md_json->'attributes'->>'Conventions' is not null;
 CREATE UNIQUE INDEX IF NOT EXISTS cf_attributes_raw_md_hash_idx ON cf_attributes_raw(md_hash);
 CREATE INDEX IF NOT EXISTS cf_attributes_raw_collection_idx ON cf_attributes_raw(collection);
+GRANT SELECT ON cf_attributes_raw TO PUBLIC;
+
 
 /*
  * View to more easily change file path filters
@@ -58,3 +60,4 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_raw AS
     AND
         cf_attributes_raw.collection = 'CMIP5';
 CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_raw_md_hash_idx ON cmip5_attributes_raw(md_hash);
+GRANT SELECT ON cmip5_attributes_raw TO PUBLIC;

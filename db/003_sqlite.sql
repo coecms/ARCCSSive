@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS sqlite_instances (
     ensemble TEXT,
     realm TEXT
 );
+GRANT SELECT ON sqlite_instances TO PUBLIC;
 
 CREATE TABLE IF NOT EXISTS sqlite_versions (
      version_id BIGINT PRIMARY KEY,
@@ -18,6 +19,7 @@ CREATE TABLE IF NOT EXISTS sqlite_versions (
      to_update BOOLEAN,
      instance_id BIGINT REFERENCES sqlite_instances(instance_id)
 );
+GRANT SELECT ON sqlite_versions TO PUBLIC;
 
 CREATE TABLE IF NOT EXISTS sqlite_files (
     file_id BIGINT PRIMARY KEY,
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS sqlite_files (
 );
 CREATE INDEX IF NOT EXISTS sqlite_files_file_id_idx ON sqlite_files(file_id);
 CREATE INDEX IF NOT EXISTS sqlite_files_version_id_idx ON sqlite_files(version_id);
+GRANT SELECT ON sqlite_files TO PUBLIC;
 
 CREATE TABLE IF NOT EXISTS sqlite_warnings (
      warning_id BIGINT PRIMARY KEY,
@@ -37,6 +40,7 @@ CREATE TABLE IF NOT EXISTS sqlite_warnings (
      added_on TEXT,
      version_id BIGINT REFERENCES sqlite_versions(version_id)
 );
+GRANT SELECT ON sqlite_warnings TO PUBLIC;
 
 CREATE MATERIALIZED VIEW IF NOT EXISTS sqlite_paths_link AS
     SELECT
@@ -48,3 +52,4 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS sqlite_paths_link AS
         sqlite_versions ON sqlite_files.version_id = sqlite_versions.version_id;
 CREATE INDEX IF NOT EXISTS sqlite_paths_link_hash_idx ON sqlite_paths_link(hash);
 CREATE INDEX IF NOT EXISTS sqlite_paths_link_file_id_idx ON sqlite_paths_link(file_id);
+GRANT SELECT ON sqlite_paths_link TO PUBLIC;
