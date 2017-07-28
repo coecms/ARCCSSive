@@ -42,14 +42,15 @@ CREATE TABLE IF NOT EXISTS sqlite_warnings (
 );
 GRANT SELECT ON sqlite_warnings TO PUBLIC;
 
-CREATE MATERIALIZED VIEW IF NOT EXISTS sqlite_paths_link AS
-    SELECT
-        md5(path || '/' || filename)::uuid AS hash
-      , file_id
-    FROM
-        sqlite_files
-    JOIN 
-        sqlite_versions ON sqlite_files.version_id = sqlite_versions.version_id;
-CREATE INDEX IF NOT EXISTS sqlite_paths_link_hash_idx ON sqlite_paths_link(hash);
-CREATE INDEX IF NOT EXISTS sqlite_paths_link_file_id_idx ON sqlite_paths_link(file_id);
-GRANT SELECT ON sqlite_paths_link TO PUBLIC;
+CREATE MATERIALIZED VIEW IF NOT EXISTS sqlite_metadata_link AS
+    SELECT 
+        file_id,
+        version_id,
+        md_hash
+    FROM sqlite_files
+    JOIN metadata
+    ON md_json->>'sha256' = sha256 
+    AND md_type='checksum';
+CREATE INDEX IF NOT EXISTS sqlite_metadata_link_file_id_idx ON sqlite_metadata_link(file_id);
+CREATE INDEX IF NOT EXISTS sqlite_metadata_link_md_hash_idx ON sqlite_metadata_link(md_hash);
+GRANT SELECT ON sqlite_metadata_link TO PUBLIC;

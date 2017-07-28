@@ -26,7 +26,7 @@ from sqlalchemy.orm.session import object_session
 from ARCCSSive.data import *
 
 from ARCCSSive.model.base import Base
-import ARCCSSive.model.cmip5 as model2
+import ARCCSSive.model.cmip5 as cmip5
 
 import os
 import glob
@@ -106,12 +106,12 @@ class Instance(Base):
             )
 
     latest_version = relationship('old_cmip5.Version',
-            secondary = model2.cmip5_latest_version,
+            secondary = cmip5.cmip5_latest_version,
             uselist = False,
             viewonly = True)
 
     files = relationship('model.cmip5.File',
-            secondary = model2.cmip5_attributes_links,
+            secondary = cmip5.cmip5_attributes_links,
             viewonly = True)
 
 #     # Missing versions are labelled NA in database and v20110427 in drstree, this is CMOR documentation date
@@ -254,13 +254,13 @@ class Version(Base):
     warnings = association_proxy('new_version', 'warnings')
     files = relationship(
             'cmip5.File',
-            secondary = model2.cmip5_attributes_links,
+            secondary = cmip5.cmip5_attributes_links,
             viewonly=True)
 
     variable = relationship('old_cmip5.Instance', viewonly=True)
 
     paths = relationship('cmip5.Path',
-            secondary = model2.cmip5_attributes_links,
+            secondary = cmip5.cmip5_attributes_links,
             order_by='cmip5.Path.path',
             viewonly=True)
 

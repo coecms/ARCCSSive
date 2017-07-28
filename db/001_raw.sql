@@ -48,7 +48,6 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_raw AS
       , md_json->'attributes'->>'product'               as product
       , md_json->'attributes'->>'table_id'              as table_id
       , md_json->'attributes'->>'tracking_id'           as tracking_id
-      , md_json->'attributes'->>'version_number'        as version_number
       , md_json->'attributes'->>'realization'           as realization
       , md_json->'attributes'->>'initialization_method' as initialization_method
       , md_json->'attributes'->>'physics_version'       as physics_version

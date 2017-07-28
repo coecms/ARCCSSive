@@ -17,11 +17,13 @@ from __future__ import print_function
 
 from ARCCSSive.model import *
 from ARCCSSive.model.cmip5 import *
+from sqlalchemy import and_
 
 import pytest
 import psycopg2
 import getpass
 import six
+import sys
 
 def test_path(session):
     q = session.query(base.Path).limit(5)
@@ -114,4 +116,54 @@ def test_file(session):
     assert t.filename is not None
     assert isinstance(t.filename, six.string_types)
 
+def test_latest(session):
+    t = (session
+            .query(cmip5.File)
+            .join(old_cmip5.Instance.files)
+            .filter(and_(
+                old_cmip5.Instance.model == 'MIROC5',
+                old_cmip5.Instance.experiment == 'historical',
+                old_cmip5.Instance.mip == 'Amon',
+                old_cmip5.Instance.variable == 'tas')))
+    assert t.count() == 2
+
+    t = (session
+            .query(old_cmip5.Version)
+            .select_from(old_cmip5.Instance)
+            .join(old_cmip5.Instance.latest_version)
+            .filter(and_(
+                old_cmip5.Instance.model == 'MIROC5',
+                old_cmip5.Instance.experiment == 'historical',
+                old_cmip5.Instance.mip == 'Amon',
+                old_cmip5.Instance.variable == 'tas'))
+            )
+    assert t.count() == 1
+
+    t = (session
+            .query(cmip5.File)
+            .select_from(old_cmip5.Instance)
+            .join(old_cmip5.Instance.latest_version)
+            .join(old_cmip5.Version.files)
+            .filter(and_(
+                old_cmip5.Instance.model == 'MIROC5',
+                old_cmip5.Instance.experiment == 'historical',
+                old_cmip5.Instance.mip == 'Amon',
+                old_cmip5.Instance.variable == 'tas'))
+            )
+    assert t[0].version_number is not None
+    assert t.count() == 1
+
+    t = (session
+            .query(base.Path)
+            .select_from(old_cmip5.Instance)
+            .join(old_cmip5.Instance.latest_version)
+            .join(old_cmip5.Version.files)
+            .join(cmip5.File.path_rel)
+            .filter(and_(
+                old_cmip5.Instance.model == 'MIROC5',
+                old_cmip5.Instance.experiment == 'historical',
+                old_cmip5.Instance.mip == 'Amon',
+                old_cmip5.Instance.variable == 'tas'))
+           )
+    assert t.count() == 1
 
