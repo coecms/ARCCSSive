@@ -55,8 +55,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_raw AS
     JOIN cmip5_paths_filter AS paths ON metadata.md_hash = paths.pa_hash
     JOIN cf_attributes_raw ON metadata.md_hash = cf_attributes_raw.md_hash
     WHERE
-        md_type = 'netcdf'
-    AND
-        cf_attributes_raw.collection = 'CMIP5';
+        md_type = 'netcdf';
 CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_raw_md_hash_idx ON cmip5_attributes_raw(md_hash);
 GRANT SELECT ON cmip5_attributes_raw TO PUBLIC;
+
