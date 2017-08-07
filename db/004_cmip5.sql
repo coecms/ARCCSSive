@@ -12,13 +12,15 @@ GRANT SELECT ON cmip5_attributes TO PUBLIC;
 CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_file_dataset_link AS
     SELECT
         md_hash
-      , md5 ( experiment_id 
-            || ':' || institute_id 
-            || ':' || model_id 
-            || ':' || modeling_realm 
-            || ':' || frequency
-            || ':' || mip_table
-            || ':' || ensemble_member
+      , md5 ( 'cmip5'
+            || '.' || product
+            || '.' || institute_id 
+            || '.' || model_id 
+            || '.' || experiment_id 
+            || '.' || frequency
+            || '.' || modeling_realm 
+            || '.' || mip_table
+            || '.' || ensemble_member
             )::uuid as dataset_id
     FROM cmip5_attributes;
 GRANT SELECT ON cmip5_file_dataset_link TO PUBLIC;
@@ -37,6 +39,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_dataset AS
       , frequency
       , mip_table
       , ensemble_member
+      , product
     FROM cmip5_attributes
     JOIN cmip5_file_dataset_link ON cmip5_attributes.md_hash = cmip5_file_dataset_link.md_hash;
 CREATE UNIQUE INDEX IF NOT EXISTS cmip5_dataset_dataset_id_idx ON cmip5_dataset(dataset_id);
@@ -61,13 +64,13 @@ CREATE TABLE IF NOT EXISTS cmip5_version (
 GRANT SELECT ON cmip5_version TO PUBLIC; 
 
 /* View for the most recent version */
-CREATE OR REPLACE VIEW cmip5_latest_version AS
+CREATE OR REPLACE VIEW cmip5_latest_version_link AS
     SELECT DISTINCT ON (dataset_id)
         dataset_id
         version_id
     FROM cmip5_version
     ORDER BY dataset_id, version, is_latest;
-GRANT SELECT ON cmip5_latest_version TO PUBLIC; 
+GRANT SELECT ON cmip5_latest_version_link TO PUBLIC; 
 
 /* Version/File association */
 CREATE TABLE IF NOT EXISTS cmip5_file_version_link (

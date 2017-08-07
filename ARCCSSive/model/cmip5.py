@@ -25,19 +25,44 @@ from sqlalchemy import Column, ForeignKey, Table, join, ForeignKeyConstraint
 from sqlalchemy.orm import relationship, column_property
 from sqlalchemy.types import Text, Boolean, Integer, Date
 
-cmip5_attributes_links = Table('cmip5_attributes_links', Base.metadata,
-        Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash'), ForeignKey('paths.pa_hash'), primary_key=True),
-        Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')),
-        Column('version_id', UUID, ForeignKey('cmip5_version.version_id')),
-        Column('variable_id', UUID),
-        Column('variable_list', ARRAY(Text)))
+cmip5_file_dataset_link = Table('cmip5_file_dataset_link', Base.metadata,
+        Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash'), ForeignKey('paths.pa_hash'),
+            primary_key = True),
+        Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')))
 
-cmip5_latest_version = Table('cmip5_latest_version', Base.metadata,
-        Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id')),
-        Column('version_id', UUID, ForeignKey('cmip5_version.version_id'), primary_key=True),
-        Column('variable_id', UUID, primary_key=True))
+cmip5_file_version_link = Table('cmip5_file_version_link', Base.metadata,
+        Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash'), ForeignKey('paths.pa_hash'),
+            primary_key = True),
+        Column('version_id', UUID, ForeignKey('cmip5_version.version_id'), primary_key = True))
 
-class File(CFFile):
+cmip5_latest_version_link = Table('cmip5_file_version_link', Base.metadata,
+        Column('dataset_id', UUID, ForeignKey('cmip5_dataset.dataset_id'), primary_key = True),
+        Column('version_id', UUID, ForeignKey('cmip5_version.version_id')))
+
+cmip5_attributes = Table('cmip5_attributes', Base.metadata,
+        Column('md_hash', UUID, ForeignKey('cf_attributes_raw.md_hash'), primary_key = True),
+        Column('experiment_id', Text),
+        Column('frequency', Text),
+        Column('institute_id', Text),
+        Column('model_id', Text),
+        Column('modeling_realm', Text),
+        Column('product', Text),
+        Column('table_id', Text),
+        Column('tracking_id', Text),
+        Column('version_number', Text),
+        Column('realization', Text),
+        Column('initialization_method', Text),
+        Column('physics_version', Text),
+        )
+
+cmip5_external_attributes = Table('cmip5_external_attributes', Base.metadata,
+        Column('md_hash', UUID, ForeignKey('cmip5_attributes.md_hash')),
+        Column('variable_id', Integer, ForeignKey('cf_variable.variable_id')),
+        )
+
+attribute_join = join(cmip5_attributes, cmip5_external_attributes)
+
+class File(Base):
     """
     A CMIP5 output file's attributes
 
@@ -70,141 +95,26 @@ class File(CFFile):
     attribute:: initialization_method
     attribute:: physics_version
     """
-    __tablename__ = 'cmip5_attributes'
-
-    md_hash               = Column(UUID, ForeignKey('cf_attributes_raw.md_hash'), primary_key = True)
-    experiment_id         = Column(Text)
-    frequency             = Column(Text)
-    institute_id          = Column(Text)
-    model_id              = Column(Text)
-    modeling_realm        = Column(Text)
-    product               = Column(Text)
-    table_id              = Column(Text)
-    tracking_id           = Column(Text)
-    version_number        = Column(Text)
-    realization           = Column(Text)
-    initialization_method = Column(Text)
-    physics_version       = Column(Text)
+    __tablename__ = attribute_join
 
     dataset = relationship(
             'Dataset',
             uselist=False,
-            secondary=cmip5_attributes_links)
+            secondary=cmip5_file_dataset_link)
 
-    version = relationship(
+    versions = relationship(
             'cmip5.Version',
-            uselist=False,
-            secondary=cmip5_attributes_links,
+            secondary=cmip5_file_version_link,
             back_populates='files')
+
+    variable = relationship(
+            'cfnetcdf.Variable'
+            )
 
     warnings = relationship(
             'cmip5.Warning',
             secondary=cmip5_attributes_links,
             secondaryjoin='cmip5_attributes_links.c.version_id == cmip5.Warning.version_id')
-
-#@    old_version = relationship(
-#@            'old_cmip5.Model.Version',
-#@            secondary=cmip5_attributes_links,
-#@            viewonly=True)
-
-    timeseries = relationship(
-            'Timeseries',
-            uselist=False,
-            secondary = cmip5_attributes_links,
-            secondaryjoin = 'and_('
-                'Timeseries.version_id == cmip5_attributes_links.c.version_id,'
-                'Timeseries.variable_id == cmip5_attributes_links.c.variable_id'
-                ')',
-            back_populates = 'files')
-
-    __mapper_args__ = {'polymorphic_identity': 'CMIP5'}
-
-class Path(Base):
-    """
-    A indexed table of CMIP5 paths only
-    """
-    __tablename__ = 'cmip5_path'
-
-    pa_hash = Column(UUID,
-            ForeignKey('cmip5_attributes.md_hash'),
-            ForeignKey('cmip5_attributes_links.md_hash'),
-            primary_key=True)
-
-    path = Column('pa_path', Text)
-
-    # file = relationship('cmip5.File',
-    #         viewonly=True,
-    #         primaryjoin='cmip5.Path.pa_hash == foreign(cmip5.File.md_hash)')
-
-class Version(Base):
-    """
-    A version of a ESGF dataset
-
-    Over time files within a dataset get updated, due to bug fixes and
-    processing improvements. This results in multiple versions of files getting
-    published to ESGF
-    """
-    __tablename__ = 'cmip5_version'
-
-    version_id     = Column(UUID, primary_key = True)
-    dataset_id     = Column(Text, ForeignKey('cmip5_dataset.dataset_id'))
-
-    #: str: Version number
-    version_number = Column(Text)
-
-    #: boolean: True if this is the latest version available
-    is_latest      = Column(Boolean)
-
-    #: :class:`Dataset`: Dataset associated with this version
-    dataset         = relationship('Dataset', back_populates='versions')
-
-    #: :class:`VersionOverride`: Errata information for this version
-    override        = relationship('VersionOverride', uselist=False)
-
-    #: list[:class:`File`]: Files belonging to this dataset version
-    files = relationship(
-            'cmip5.File',
-            secondary=cmip5_attributes_links,
-            back_populates='version')
-
-    #: list[:class:`Warning`]: Warnings attached to the datset by users
-    warnings = relationship(
-            'cmip5.Warning',
-            order_by='cmip5.Warning.added_on',
-            back_populates='dataset_version')
-
-    variables = relationship(
-            'Timeseries',
-            back_populates='version',
-            viewonly = True)
-
-    def open(self):
-        """
-        Open all variables in the dataset
-        """
-        pass
-
-class VersionOverride(Base):
-    """
-    Errata for a CMIP5 dataset version, for cases when the published version_id
-    is unset or incorrect
-
-    Editing this table will automatically update the corresponding
-    :class:`Version`.
-
-    v = session.query(Version).first()
-    v.override = VersionOverride(version_number='v20120101')
-    session.add(v)
-    """
-    __tablename__ = 'cmip5_override_version'
-
-    version_id     = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key = True)
-
-    #: str: New version number
-    version_number = Column(Text)
-
-    #: boolean: True if this is the latest version available
-    is_latest      = Column(Boolean)
 
 class Dataset(Base):
     """
@@ -227,6 +137,8 @@ class Dataset(Base):
     ensemble_member = Column(Text)
     #: str: MIP Table
     mip_table = Column(Text)
+    #: str: CMIP Product
+    product = Column(Text)
 
     #: list[:class:`Version`]: Available versions of this dataset, in release order
     versions = relationship(
@@ -234,32 +146,62 @@ class Dataset(Base):
             back_populates='dataset',
             order_by='(cmip5.Version.is_latest, cmip5.Version.version_number)')
 
-    #: list[:class:`Timeseries`]: The most recent versions of the variables in this dataset
-    variables = relationship('Timeseries',
-            secondary=cmip5_latest_version,
-            secondaryjoin='and_(Timeseries.version_id == cmip5_latest_version.c.version_id,'
-                'Timeseries.variable_id == cmip5_latest_version.c.variable_id)',
-            back_populates='dataset')
+    latest_version = relationship(
+            'cmip5.Version',
+            secondary = cmip5_latest_version_link,
+            use_list = False,
+            view_only = True)
 
-    @property
-    def latest_version(self):
-        """
-        The latest :class:`Version` for this dataset
-        """
-        return self.versions[-1]
+    def __str__(self):
+        return 'cmip5.%(product)s.%(institute)s.%(model)s.%(experiment)s.%(time_frequency)s.%(realm)s.%(cmor_table)s.%(ensemble)s'%{
+                product: self.product,
+                institute: self.institute_id,
+                model: self.model_id,
+                experiment: self.experiment_id,
+                time_frequency: self.frequency,
+                realm: self.modelling_realm,
+                cmor_table: self.mip_table,
+                ensemble: self.ensemble_member}
 
-    def drstree_path(self):
-        """
-        Get the drs tree path to variables within this dataset
-        """
-        base = '/g/data1/ua6/DRSv2/CMIP5'
-        return os.path.join(
-                base,
-                self.model_id,
-                self.experiment_id,
-                self.frequency,
-                self.modeling_realm,
-                self.ensemble_member)
+class Version(Base):
+    """
+    A version of a ESGF dataset
+
+    Over time files within a dataset get updated, due to bug fixes and
+    processing improvements. This results in multiple versions of files getting
+    published to ESGF
+    """
+    __tablename__ = 'cmip5_version'
+
+    version_id     = Column(UUID, primary_key = True)
+    dataset_id     = Column(Text, ForeignKey('cmip5_dataset.dataset_id'))
+
+    #: str: Version number
+    version = Column(Text)
+
+    #: boolean: True if this is the latest version available
+    is_latest      = Column(Boolean)
+
+    #: :class:`Dataset`: Dataset associated with this version
+    dataset         = relationship('Dataset', back_populates='versions')
+
+    #: list[:class:`File`]: Files belonging to this dataset version
+    files = relationship(
+            'cmip5.File',
+            secondary=cmip5_file_version_link,
+            back_populates='version')
+
+    #: list[:class:`Warning`]: Warnings attached to the datset by users
+    warnings = relationship(
+            'cmip5.Warning',
+            order_by='cmip5.Warning.added_on',
+            back_populates='dataset_version')
+
+    def __str__(self):
+        return '%(dataset)s.%(version)s'%{
+                dataset: self.dataset,
+                version: self.version,
+                }
 
 class Warning(Base):
     __tablename__ = 'cmip5_warning'
@@ -274,49 +216,10 @@ class Warning(Base):
     #: str: Date the warning was added
     added_on = Column(Date)
 
+    #: :class:`Version`: Dataset version this warning is attached to
     dataset_version = relationship(
             'cmip5.Version',
             back_populates='warnings')
 
     def __str__(self):
         return u'%s (%s): %s'%(self.added_on, self.added_by, self.warning) 
-
-class Timeseries(Base):
-    """
-    All the files at a given Dataset, Variable and Version
-    """
-    __tablename__ = 'cmip5_timeseries_link'
-
-    dataset_id = Column(UUID, ForeignKey('cmip5_dataset.dataset_id'))
-    version_id = Column(UUID, ForeignKey('cmip5_version.version_id'), primary_key=True)
-    variable_id = Column(UUID, primary_key=True)
-    variable_list = Column(ARRAY(Text))
-
-    __table_args__ = (
-            ForeignKeyConstraint(
-                ['version_id', 'variable_id'],
-                ['cmip5_attributes_links.version_id', 'cmip5_attributes_links.variable_id'],
-                ),
-            )
-
-    #: Dataset this timeseries is part of
-    dataset = relationship('Dataset', back_populates='variables')
-    #: Dataset version of this timeseries
-    version = relationship('cmip5.Version', back_populates='variables', viewonly=True)
-
-    #: List of files in this timeseries
-    files = relationship('cmip5.File', 
-            secondary = cmip5_attributes_links,
-#            primaryjoin = 'and_('
-#                'Timeseries.version_id == cmip5_attributes_links.c.version_id,'
-#                'Timeseries.variable_id == cmip5_attributes_links.c.variable_id'
-#                ')',
-            back_populates = 'timeseries')
-    
-    warnings = association_proxy('version', 'warnings')
-
-    def open(self):
-        """
-        Open all files in the set
-        """
-        return xarray.concat([x.open() for x in self.files], 'time')
