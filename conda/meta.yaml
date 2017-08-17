@@ -24,7 +24,7 @@ requirements:
         - python
         - six
         - sqlalchemy
-        - esgf-pyclient
+        - esgf-pyclient # [py2k]
 
 test:
     source_files:
