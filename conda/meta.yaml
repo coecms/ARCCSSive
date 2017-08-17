@@ -12,6 +12,10 @@ source:
 build:
     script: python setup.py install
 
+    entry_points:
+        - search_replica = ARCCSSive.cli.search_replica:main
+        - compare_ESGF = ARCCSSive.cli.compare_ESGF:main # [py2k]
+
 requirements:
     build:
         - python
@@ -30,6 +34,8 @@ test:
         - pytest
     commands:
         - py.test
+        - search_replica -h
+        - compare_ESGF -h # [py2k]
 
 about:
     home: https://github.com/coecms/ARCCSSive
