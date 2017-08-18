@@ -34,11 +34,6 @@ from ARCCSSive.CMIP5.Model import Instance
 import argparse
 import sys
 
-# check python version and then call main()
-if sys.version_info < ( 2, 7):
-    # python too old, kill the script
-    sys.exit("This script requires Python 2.7 or newer!")
-
 def parse_input():
     ''' Parse input arguments '''
     parser = argparse.ArgumentParser(description='''Checks all the CMIP5 ensembles
@@ -75,49 +70,57 @@ def assign_constraints():
         if v is None: kwargs.pop(k)
     return kwargs
 
-# Calling parse_input() function to build kwargs from external arguments passed by user 
-kwargs=assign_constraints()
-all_versions=kwargs.pop("all_versions")
-warnings=kwargs.pop("warnings")
-# open output file
-outfile=kwargs.pop("output",["search_result.txt"])
-fout=open(outfile[0],'w')
+def main():
 
-# open connection to local database and intiate SQLalchemy session 
-cmip5 = CMIP5.connect()
+    # Calling parse_input() function to build kwargs from external arguments passed by user 
+    kwargs=assign_constraints()
+    all_versions=kwargs.pop("all_versions")
+    warnings=kwargs.pop("warnings")
+    # open output file
+    outfile=kwargs.pop("output",["search_result.txt"])
+    fout=open(outfile[0],'w')
 
-# get constraints combination
-combs=combine_constraints(**kwargs)
-# for each constraints combination
-for constraints in combs:
-    db_results=[]
-    print(constraints)
-# search on local DB, return instance_ids
-# allow "decadal" keyword to search for all decadalYYYY experiments
-# allow "noVolc" keyword to search for all noVolcYYYY experiments
-    if constraints['experiment'] in ['decadal','noVolc']:
-        exp0=constraints.pop('experiment')
-        outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%"))
-    else:
-        outputs=cmip5.outputs(**constraints)
-# loop through returned Instance objects
-    someresult=False
-    for o in outputs:
-        if all_versions:
-            db_results=[v for v in o.versions]
+    # open connection to local database and intiate SQLalchemy session 
+    cmip5 = CMIP5.connect()
+
+    # get constraints combination
+    combs=combine_constraints(**kwargs)
+    # for each constraints combination
+    for constraints in combs:
+        db_results=[]
+        print(constraints)
+    # search on local DB, return instance_ids
+    # allow "decadal" keyword to search for all decadalYYYY experiments
+    # allow "noVolc" keyword to search for all noVolcYYYY experiments
+        if constraints['experiment'] in ['decadal','noVolc']:
+            exp0=constraints.pop('experiment')
+            outputs=cmip5.outputs(**constraints).filter(Instance.experiment.like(exp0+"%"))
         else:
-            db_results=[v for v in o.versions if v==o.latest()[0]]
-# write result to output file
-        if db_results!=[]:
-            someresult=True
-            for v in db_results:
-                fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
-                if warnings and v.warnings != []:
-                    fout.write("Warnings:\n")
-                    for w in v.warnings:
-                        fout.write(w.warning + "\n added by " + w.added_by + " on the " + w.added_on + "\n")
-    if not someresult:
-         print("No local version exists for constraints:\n",constraints)
-fout.close()
-       
+            outputs=cmip5.outputs(**constraints)
+    # loop through returned Instance objects
+        someresult=False
+        for o in outputs:
+            if all_versions:
+                db_results=[v for v in o.versions]
+            else:
+                db_results=[v for v in o.versions if v==o.latest()[0]]
+    # write result to output file
+            if db_results!=[]:
+                someresult=True
+                for v in db_results:
+                    fout.write(",".join([o.experiment,o.variable,o.mip,o.model,o.ensemble,v.version,v.path]) + "\n")
+                    if warnings and v.warnings != []:
+                        fout.write("Warnings:\n")
+                        for w in v.warnings:
+                            fout.write(w.warning + "\n added by " + w.added_by + " on the " + w.added_on + "\n")
+        if not someresult:
+             print("No local version exists for constraints:\n",constraints)
+    fout.close()
+           
+if __name__ == '__main__':
+    # check python version and then call main()
+    if sys.version_info < ( 2, 7):
+        # python too old, kill the script
+        sys.exit("This script requires Python 2.7 or newer!")
 
+    main()
