@@ -1,0 +1,12 @@
+load database
+    from 'cmip5_raijin_latest.db'
+    into postgresql://postgres@arccssive_db_1/postgres
+
+with create no tables, create no indexes, disable triggers
+
+alter table names matching 'files' rename to 'sqlite_files'
+alter table names matching 'instances' rename to 'sqlite_instances'
+alter table names matching 'versions' rename to 'sqlite_versions'
+alter table names matching 'warnings' rename to 'sqlite_warnings'
+
+set work_mem to '16MB', maintenance_work_mem to '512 MB';

@@ -64,3 +64,4 @@ target/
 *.db
 
 /private.py
+import.pgloader.copy

@@ -39,22 +39,39 @@ ARCCSSive can be accessed on VDI using the Anaconda environments:
 
 ### Local Install
 
-You can install ARCCSSive locally using either Anaconda or Pip. You will need
-to copy the database file from Raijin
+You can install ARCCSSive locally using either Anaconda or Pip:
 
     $ pip install ARCCSSive
     # or
     $ conda install -c coecms arccssive
 
-    $ scp raijin:/g/data1/ua6/unofficial-ESG-replica/tmp/tree/cmip5_raijin_latest.db $PWD/cmip5.db
-    $ export CMIP5_DB=sqlite:///$PWD/cmip5.db
-
 ### Development Version
 
-To install the current development version with a test database:
+To install the current development version with a test database running under docker:
 
-    $ pip install --user git+https://github.com/coecms/ARCCSSive.git 
-    $ export CMIP5_DB=sqlite:///$HOME/cmip5.db
+Start the database container:
+
+    $ docker-compose up
+
+In a seperate terminal:
+
+    $ conda env create -f conda/dev-enviornment.yml
+    $ pip install -e .
+    $ bash db/initdb.sh
+    $ py.test
+
+You can connect to the test database with `psql -h localhost -U postgres`
+
+## Migrating the database
+
+To migrate from the old-style database to the postgres database, make a copy of `import.pgloader` then run:
+
+    $ docker run --rm --name pgloader -v $PWD:/work dimitri/pgloader:latest pgloader /work/import.pgloader.copy
+
+The full URL to the postgres database must be set in 'import.pgloader.copy' DON'T COMMIT IT!, the
+sqlite database should also be put into the ARCCSSive directory before running.
+
+A test migration is in the docker compose file
 
 CMIP5
 =====

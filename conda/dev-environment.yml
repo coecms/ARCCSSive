@@ -7,3 +7,9 @@ channels:
 dependencies:
     - python
     - pbr
+    - sqlalchemy
+    - postgresql
+    - git
+    - requests
+    - sphinx
+    - pytest

@@ -21,7 +21,10 @@ jobs:
                 EOF
             - run: |
                 /opt/docker/bin/entrypoint /bin/bash << EOF
-                yum install -y postgresql
+                git status
+                conda env create -f conda/dev-environment.yml
+                source activate arccssive-dev
+                git status
 
                 # Install for set-up tools
                 pip install .

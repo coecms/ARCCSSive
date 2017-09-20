@@ -15,12 +15,13 @@
 # limitations under the License.
 from __future__ import print_function
 
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID, JSONB, ARRAY
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import relationship
-from sqlalchemy.types import Text, Boolean, Integer
+from sqlalchemy.types import Text, Boolean, Integer, BigInteger
+from ARCCSSive.utils.pg_json_property import pg_json_property
 
 Base = declarative_base()
 
@@ -42,6 +43,14 @@ class Path(Base):
 
     #: str: Path on NCI's filesystem
     path = Column('pa_path', Text)
+    parents = Column('pa_parents', ARRAY(UUID))
+
+    #: Posix metadata
+    posix = relationship('base.Posix', back_populates='path', uselist=False)
+    #: Checksums
+    checksum = relationship('base.Checksum', back_populates='path', uselist=False)
+    #: Netcdf metadata
+    netcdf = relationship('base.Netcdf', back_populates='path', uselist=False)
 
 class Metadata(Base):
     """
@@ -53,7 +62,41 @@ class Metadata(Base):
     md_type = Column(Text, primary_key = True)
     md_json = Column(JSONB)
 
-    path_rel = relationship('Path')
+    __mapper_args__ = {
+            'polymorphic_on': md_type
+            }
 
-    #: str: Path to data file
-    path = association_proxy('path_rel', 'path')
+    path = relationship('base.Path')
+
+class Posix(Metadata):
+    """
+    Posix metadata
+    """
+
+    __mapper_args__ = {
+            'polymorphic_identity': 'posix',
+            }
+    size = pg_json_property('md_json','size', BigInteger)
+    type = pg_json_property('md_json','type', Text)
+    user = pg_json_property('md_json','user', Text)
+    group = pg_json_property('md_json','group', Text)
+
+class Checksum(Metadata):
+    """
+    Checksum metadata
+    """
+
+    __mapper_args__ = {
+            'polymorphic_identity': 'checksum',
+            }
+    md5 = pg_json_property('md_json','md5', Text)
+    sha256 = pg_json_property('md_json','sha256', Text)
+
+class Netcdf(Metadata):
+    """
+    Netcdf metadata
+    """
+
+    __mapper_args__ = {
+            'polymorphic_identity': 'checksum',
+            }

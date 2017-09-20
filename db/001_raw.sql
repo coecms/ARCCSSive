@@ -8,9 +8,31 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cf_attributes_raw AS
     FROM
         metadata 
     WHERE
+        md_type = 'netcdf'
+    AND
         md_json->'attributes'->>'Conventions' is not null;
-CREATE UNIQUE INDEX ON cf_attributes_raw(md_hash);
-CREATE INDEX ON cf_attributes_raw(collection);
+CREATE UNIQUE INDEX IF NOT EXISTS cf_attributes_raw_md_hash_idx ON cf_attributes_raw(md_hash);
+CREATE INDEX IF NOT EXISTS cf_attributes_raw_collection_idx ON cf_attributes_raw(collection);
+GRANT SELECT ON cf_attributes_raw TO PUBLIC;
+
+
+/*
+ * View to more easily change file path filters
+ */
+CREATE OR REPLACE VIEW cmip5_paths_filter AS
+    SELECT pa_hash
+    FROM paths
+    WHERE
+      (
+        pa_parents[4] IN (
+            md5('/g/data1/ua6/authoritative')::uuid
+          )
+      OR
+        pa_parents[5] = md5('/g/data1/ua6/unofficial-ESG-replica/IPCC')::uuid
+      OR
+        pa_parents[6] = md5('/g/data1/ua6/unofficial-ESG-replica/tmp/tree')::uuid
+      )
+    AND pa_type = 'file';
 
 /* Metadata from the file specific to CMIP5 
  * Gets the attributes out of JSON format into a more usable format
@@ -26,20 +48,15 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS cmip5_attributes_raw AS
       , md_json->'attributes'->>'product'               as product
       , md_json->'attributes'->>'table_id'              as table_id
       , md_json->'attributes'->>'tracking_id'           as tracking_id
-      , md_json->'attributes'->>'version_number'        as version_number
       , md_json->'attributes'->>'realization'           as realization
       , md_json->'attributes'->>'initialization_method' as initialization_method
       , md_json->'attributes'->>'physics_version'       as physics_version
     FROM metadata 
-    JOIN paths ON metadata.md_hash = paths.pa_hash
+    JOIN cmip5_paths_filter AS paths ON metadata.md_hash = paths.pa_hash
+    JOIN cf_attributes_raw ON metadata.md_hash = cf_attributes_raw.md_hash
     WHERE
-        md_json->'attributes'->>'Conventions' IS NOT NULL
-      AND
-        md_json->'attributes'->>'project_id' = 'CMIP5'
-      AND pa_parents[4] IN (
-        md5('/g/data1/ua6/unofficial-ESG-replica')::uuid
-      , md5('/g/data1/ua6/authorative')::uuid
-      , md5('/g/data1/ua6/drstree')::uuid
-      , md5('/g/data1/ua6/DRSv2')::uuid
-      );
-CREATE UNIQUE INDEX ON cmip5_attributes_raw (md_hash);
+        md_type = 'netcdf'
+    AND
+        cf_attributes_raw.collection = 'CMIP5';
+CREATE UNIQUE INDEX IF NOT EXISTS cmip5_attributes_raw_md_hash_idx ON cmip5_attributes_raw(md_hash);
+GRANT SELECT ON cmip5_attributes_raw TO PUBLIC;

@@ -25,6 +25,7 @@ requirements:
         - sqlalchemy
         - esgf-pyclient
         - psycopg2
+        - requests
 
 test:
     source_files:
@@ -35,6 +36,10 @@ test:
         - pytest
     commands:
         - py.test
+    import:
+        - ARCCSSive
+        - ARCCSSive.db
+        - ARCCSSive.model
 
 about:
     home: https://github.com/coecms/ARCCSSive

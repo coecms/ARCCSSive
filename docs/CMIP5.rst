@@ -3,9 +3,6 @@ CMIP5
 
 .. default-domain:: py
 .. module:: ARCCSSive.CMIP5
-.. testsetup::
-
-    >>> import six
 
 The CMIP5 module provides tools for searching through the CMIP5 data stored on NCI's `/g/data` filesystem
 
@@ -25,7 +22,7 @@ To use the CMIP5 catalog you first need to connect to it::
 .. testsetup::
 
     >>> # Get a fixture to show examples
-    >>> cmip5 = getfixture('session')
+    >>> cmip5 = getfixture('CMIP5_session')
 
 The session object allows you to run queries on the catalog. There are a number
 of helper functions for common operations, for instance searching through the
@@ -36,13 +33,14 @@ model outputs:
     >>> outputs = cmip5.outputs(
     ...     experiment = 'rcp45',
     ...     variable   = 'tas',
-    ...     mip        = 'Amon')
+    ...     mip        = 'day',
+    ...     ensemble   = 'r1i1p1')
 
 You can then loop over the search results in normal Python fashion::
 
-    >>> for o in outputs:
-    ...     six.print_(o.model, *o.filenames())
-    ACCESS1-3 example.nc
+    >>> for o in outputs.filter_by(model='ACCESS1.3'):
+    ...     (o.model, o.filenames())
+    ('ACCESS1.3', ['tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc'])
 
 Examples
 --------
@@ -55,13 +53,13 @@ Get files from a single model variable
     >>> outputs = cmip5.outputs(
     ...     experiment = 'rcp45',
     ...     variable   = 'tas',
-    ...     mip        = 'Amon',
-    ...     model      = 'ACCESS1-3',
+    ...     mip        = 'day',
+    ...     model      = 'ACCESS1.3',
     ...     ensemble   = 'r1i1p1')
 
     >>> for f in outputs.first().filenames():
-    ...     six.print_(f)
-    example.nc
+    ...     f
+    'tas_day_ACCESS1-3_rcp45_r1i1p1_20310101-20551231.nc'
 
 
 Get files from all models for a specific variable
@@ -72,7 +70,7 @@ Get files from all models for a specific variable
     >>> outputs = cmip5.outputs(
     ...     experiment = 'rcp45',
     ...     variable   = 'tas',
-    ...     mip        = 'Amon',
+    ...     mip        = 'day',
     ...     ensemble   = 'r1i1p1')
 
     >>> for m in outputs:
@@ -119,7 +117,7 @@ ARCCSSive:
     >>> # This returns a sequence of Version, get the variable information from
     >>> # the .variable property
     >>> for o in res:
-    ...     six.print_(o.variable.model, o.variable.variable, o.filenames())
+    ...     o.variable.model, o.variable.variable, o.filenames()
 
 Compare model results between two experiments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -149,7 +147,7 @@ Link two sets of outputs together using joins:
     ...         )
 
     >>> for r, h in rcp_hist:
-    ...     six.print_(r.versions[-1].path, h.versions[-1].path)
+    ...     r.versions[-1].path, h.versions[-1].path
 
 API
 ---
@@ -178,6 +176,17 @@ variable can have a number of different data versions, as errors get corrected
 by the publisher, and each version can consist of a number of files split into
 a time sequence.
 
+Each model class has a number of relationships, which can be used in a query to
+efficiently return linked data e.g.::
+
+    >>> q = (cmip5.query(Instance, VersionFile)
+    ...         .join(Instance.latest_version)
+    ...         .join(Version.files))
+
+This query returns an iterator of (:class:`Instance`,
+:class:`ARCCSSive.model.cmip5.File`) pairs and only needs to query the database
+once, whereas using a loop requires a database query for each iteration.
+
 .. autoclass:: Instance
     :members:
     :member-order: bysource
@@ -185,3 +194,9 @@ a time sequence.
 .. autoclass:: Version
     :members:
     :member-order: bysource
+
+.. autoclass:: ARCCSSive.model.cmip5.File
+    :noindex:
+    :members:
+    :member-order: bysource
+
