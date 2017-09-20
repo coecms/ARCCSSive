@@ -20,9 +20,10 @@ limitations under the License.
 
 from __future__ import print_function
 
-from ARCCSSive.CMIP5.other_functions import write_log, get_instance, get_mip, compare_tracking_ids, compare_checksums, today 
-from ARCCSSive.CMIP5.Model import Instance 
+from ARCCSSive.CMIP5.other_functions import check_hash, write_log, get_instance, get_mip, compare_tracking_ids, compare_checksums, today 
+from ARCCSSive.CMIP5.Model import Instance, Version, VersionFile
 from ARCCSSive.CMIP5.pyesgf_functions import FileResult 
+from ARCCSSive.CMIP5.update_db_functions import * 
 from collections import defaultdict
 import argparse
 from datetime import datetime 
