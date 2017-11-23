@@ -25,7 +25,6 @@ from ARCCSSive.CMIP5.pyesgf_functions import ESGFSearch
 from ARCCSSive.CMIP5.other_functions import assign_mips, combine_constraints 
 from ARCCSSive.CMIP5.compare_helpers import *
 import sys
-from multiprocessing import Pool
 
 def parse_input():
     ''' Parse input arguments '''
@@ -44,12 +43,10 @@ def parse_input():
             If a constraint isn't specified for one of the fields automatically all values
             for that field will be selected.
             The additional arguments replica, node and project modify the main ESGF search parameters. Defaults are
-            no replicas, PCMDI node and CMIP5 project. If you chnage project you need to export a different local database,
+            no replicas, PCMDI node and CMIP5 project. If you change project you need to export a different local database,
             currently only geomip is available:
                export CMIP5_DB=sqlite:////g/data1/ua6/unofficial-ESG-replica/tmp/tree/geomip_latest.db 
-            NB this script uses Pool module to parallelise downloading information from the ESGF.
-               You can choose to use more than one cpu by changing parameter at line 247 from 1 to ncpus available.
-               Please do not do this on raijin unless you're submitting job to queue.''',formatter_class=argparse.RawTextHelpFormatter)
+               ''',formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-a','--admin', action='store_true', default=False, help='running script as admin', required=False)
     parser.add_argument('-e','--experiment', type=str, nargs="*", help='CMIP5 experiment', required=True)
     parser.add_argument('-m','--model', type=str, nargs="*", help='CMIP5 model', required=False)
@@ -136,8 +133,8 @@ def main():
     # using 8 here as it is the number ov VCPU on VDI
         if esgf.ds_count()>=1:
             results=[(ds,variables) for ds in esgf.get_ds()]
-            async_results = Pool(1).map_async(retrieve_ds, results)
-            for ds_info in async_results.get():
+            async_results = map(retrieve_ds, results)
+            for ds_info in async_results:
                 esgf_results.extend(ds_info)
     # append to results list of version dictionaries containing useful info 
     # NB search should return only one latest, not replica version if any

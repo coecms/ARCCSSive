@@ -191,8 +191,16 @@ def check_same(same,v,dsfiles,ctype):
 def retrieve_ds(args):
     ''' Retrieve info from a remote dataset object '''
     (ds, variables) = args
+    # skip dataset if from NCI 
+    if 'esgf.nci.org.au' in ds.dataset_id:
+        return []
     fvar=FileResult.get_variable
     allfiles=ds.files()
+    if len(allfiles) == 0:
+        print('There is an issue with the server response for dataset:\n')
+        print(ds.dataset_id)
+        print('We have to skip this dataset, please send this warning to climate_help@nci.org.au')
+        return [] 
     #  use first file checksum to work out checksum type 
     # this is faster than calling ds.chksum_type()
     if allfiles[0].checksum is None:
