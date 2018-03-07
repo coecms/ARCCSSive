@@ -25,6 +25,16 @@ from ARCCSSive.CMIP5.pyesgf_functions import ESGFSearch
 from ARCCSSive.CMIP5.other_functions import assign_mips, combine_constraints 
 from ARCCSSive.CMIP5.compare_helpers import *
 import sys
+from six.moves import input
+from distutils.util import strtobool
+
+def query_yes_no(prompt):
+    answer = input(prompt)
+    try:
+        return strtobool(answer)
+    except ValueError:
+        print("Please answer Y or N")
+        return query_yes_no(prompt)
 
 def parse_input():
     ''' Parse input arguments '''
@@ -148,11 +158,8 @@ def main():
                 print("Nothing currently available on ESGF nodes and no local version exists for constraints:\n",constraints,"and variables:",variables)
         else:
             print(esgf.ds_count(),"instances were found on ESGF and ",outputs.count()," on the local database")
-            if sys.version_info < ( 3, 0 ):
-                request=raw_input("Do you want to proceed with comparison (Y) or write current results (N) ? Y/N \n")
-            else:
-                request=input("Do you want to proceed with comparison (Y) or write current results (N) ? Y/N \n")
-            if request == "Y":
+            request = query_yes_no("Do you want to proceed with comparison (Y) or write current results (N) ? Y/N \n")
+            if request:
                 esgf_results, db_results=compare_instances(cmip5.session, esgf_results, db_results, orig_args.keys(), admin)
 
     # build table to summarise results
@@ -184,11 +191,8 @@ def main():
                         print(s.split("'")[0])
                         fout.writelines("'" +s + "'\n")
                     fout.close()
-                    if sys.version_info < ( 3, 0 ):
-                        request2=raw_input("submit a request to download these files? Y/N \n")
-                    else:
-                        request2=input("submit a request to download these files? Y/N \n")
-                    if request2 == "Y": os.system ("cp %s %s" % (outfile, outdir+outfile)) 
+                    request2 = query_yes_no("submit a request to download these files? Y/N \n")
+                    if request2: os.system ("cp %s %s" % (outfile, outdir+outfile)) 
         for var in variables:
             remote=[ds for ds in esgf_results if ds['variable']==var]
             local=[v for v in db_results if v.variable.__dict__['variable']==var]
