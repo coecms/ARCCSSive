@@ -33,6 +33,7 @@ test:
         - tests
     requires:
         - pytest
+        - mock # [py2k]
     commands:
         - py.test
         - search_replica -h
