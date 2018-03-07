@@ -29,9 +29,11 @@ requirements:
 test:
     source_files:
         - setup.cfg
+        - conftest.py
         - tests
     requires:
         - pytest
+        - mock # [py2k]
     commands:
         - py.test
         - search_replica -h
