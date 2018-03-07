@@ -11,3 +11,4 @@ if sys.version_info >= (3,0):
     collect_ignore.append('ARCCSSive/CMIP5/pyesgf_functions.py')
     collect_ignore.append('ARCCSSive/CMIP5/compare_helpers.py')
     collect_ignore.append('ARCCSSive/cli/compare_ESGF.py')
+    collect_ignore.append('tests/cli/test_compare_ESGF.py')
