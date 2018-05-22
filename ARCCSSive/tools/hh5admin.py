@@ -17,73 +17,47 @@ from __future__ import print_function
 
 from ARCCSSive.db import connect, Session
 from ARCCSSive.model.hh5 import *
-from ARCCSSive.model.roadmap import Disks, loadSession 
+#from ARCCSSive.model.roadmap import Disks, loadSession 
 
 from sqlalchemy.sql import func
-from sqlalchemy import create_engine
 
 import xml.etree.ElementTree
-import os
+from os.path import expanduser, basename
+
 from datetime import datetime, date
 from tabulate import tabulate
 import argparse
+import requests
 
-def roadmap_session():
-    """
-    Open a connection to roadmap database to read/update the disks table
-    """
-    f=open('/home/581/pxp581/.roadmap')
-    db_user, db_psswrd = f.readlines()[0][:-1].split(" ") 
-    f.close()
-    engine = create_engine('mysql+pymysql://'+ db_user + ":" + db_psswrd + '@144.6.225.37/roadmapdev') 
-    try:
-        rm_session = engine.connect()
-    except Exception as e:
-        print('Cannot connect to roadamap database', e)
-    return rm_session
+#def roadmap_session():
+    #"""
+    #Open a connection to roadmap database to read/update the disks table
+    #"""
+#    f=open('/home/581/pxp581/.roadmap')
+#    db_user, db_psswrd = f.readlines()[0][:-1].split(" ") 
+#    f.close()
+#    engine = create_engine('mysql+pymysql://'+ db_user + ":" + db_psswrd + '@144.6.225.37/roadmapdev') 
+#    try:
+#        rm_session = engine.connect()
+#    except Exception as e:
+#        print('Cannot connect to roadamap database', e)
+#    return rm_session
 
-
-def process_path_admin(path, size, rows, rm_session):
-    """
-    Compare the disk usage with the allocation
-    """
-    name = os.path.basename(path)
-    size_tb = float(size) / 1024.0**4
-    messages = []
-
-    disks = rows.filter(Disks.dirname == name).all()
-    if len(disks) > 1:
-        messages.append('Multiple allocations for this directory')
-
-    try:
-        old_size_tb = disks[0].size
-        quota_tb = disks[0].allocation
-        expire_date = disks[0].expire
-        check_date = disks[0].checked_at
-        managers = disks[0].managers
-        contact = disks[0].contact
-        disks[0].size = size_tb
-        disks[0].checked_at = date.today() 
-        rm_session.commit()
-        
-
-    except IndexError:
-        expire_date = date.min
-        quota_tb = 0
-        old_size__tb = 0
-        managers = ''
-        contact = ''
-        messages.append('No allocation')
-
-    if size_tb > quota_tb:
-        messages.append('Over quota')
-        messages.append('Contact: '+ contact)
-
-    if expire_date > date.today():
-        messages.append('Allocation expired')
-
-    return [name, managers, size_tb, quota_tb, ', '.join(messages)]
-
+def get_xml():
+    ''' 
+    Get requests.xml file via api using requests
+    '''
+    # set api url
+    api_url = 'http://144.6.225.151:3000//api/v0/disks.xml'
+    # read authoprization token
+    f = open(expanduser('~')+'/.roadmapapi', 'r')
+    token = f.readline().strip()
+    # set headers
+    headers = { "Content-type": "application/xml",  "Authorization": "Token token="+token}
+    # get url
+    r = requests.get(api_url, headers=headers)
+    r.encoding='utf-8'
+    return r.content 
 
 def main():
     parser = argparse.ArgumentParser(description="Shows allocations for project hh5 (Climate LIEF)")
@@ -113,10 +87,12 @@ def main():
     q = session.query(Path.path, sums.c.size).select_from(sums).join(Path, Path.pa_hash == sums.c.parent_hash)
     
     if args.admin:
-        rm_session = loadSession(args.debug)
-        rows = rm_session.query(Disks)
-    else:
-        etree = xml.etree.ElementTree.parse(args.requests).getroot()
+        response = get_xml()
+        args.requests = '/g/data/ua8/pxp581/roadmap_requests.xml'
+        f = open(args.requests,'w')
+        f.write(response)
+        f.close()
+    etree = xml.etree.ElementTree.parse(args.requests).getroot()
  
 
 
@@ -124,7 +100,7 @@ def main():
         """
         Compare the disk usage with the allocation
         """
-        name = os.path.basename(path)
+        name = basename(path)
         size_tb = float(size) / 1024.0**4
         messages = []
 
@@ -133,13 +109,24 @@ def main():
             messages.append('Multiple allocations for this directory')
 
         try:
-            quota_tb = float(disks[0].find('size').text)
+            quota_tb = float(disks[0].find('allocation').text)
             expire_date = datetime.strptime(disks[0].find('expire').text, "%Y-%m-%d")
             managers = disks[0].find('managers').text
+            old_size_tb = float(disks[0].find('last_size').text)
+            size_diff = size_tb - old_size_tb
+            print(size_diff)
+            check_date = datetime.strptime(disks[0].find('last_check').text, "%Y-%m-%d")
+            contact = disks[0].find('contact').text
+        # post_json({'size':str(size_tb), 'last_check': date.today()})
+        #disks[0].size = size_tb
+        #disks[0].checked_at = date.today() 
 
         except IndexError:
             expire_date = datetime.min
             quota_tb = 0
+            old_size_tb = 0.
+            size_diff = 0.
+            contact = ''
             managers = ''
             messages.append('No allocation')
 
@@ -149,16 +136,11 @@ def main():
         if expire_date > datetime.now():
             messages.append('Allocation expired')
 
-        return [name, managers, size_tb, quota_tb, ', '.join(messages)]
+        return [name, managers, quota_tb, size_tb, size_diff, contact, ', '.join(messages)]
 
-    if args.admin:
-        print(tabulate(
-            [process_path_admin(path, size, rows, rm_session) for path, size in q],
-            headers = ['Project', 'Managers', 'Size (Tb)', 'Quota (Tb)', 'Warnings']))
-    else:
-        print(tabulate(
-            [process_path(path, size) for path, size in q],
-            headers = ['Project', 'Managers', 'Size (Tb)', 'Quota (Tb)', 'Warnings']))
+    print(tabulate(
+         [process_path(path, size) for path, size in q],
+         headers = ['Project', 'Managers', 'Quota (Tb)', 'Size (Tb)', 'Diff (Tb)', 'Contact', 'Warnings']))
 
 if __name__ == '__main__':
     main()
