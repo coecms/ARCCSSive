@@ -43,15 +43,27 @@ import requests
 #        print('Cannot connect to roadamap database', e)
 #    return rm_session
 
+def parse_args():
+    """
+    Set and return input arguments
+    """
+    parser = argparse.ArgumentParser(description="Shows allocations for project hh5 (Climate LIEF)")
+    parser.add_argument('--debug', action='store_true',
+        help="Show database actions")
+    parser.add_argument('--admin', action='store_true',
+        help="Get and update allocations from roadmap"),
+    parser.add_argument('--requests', default='/g/data1/ua8/pxp581/requests_storage.xml',
+        help="XML file containing allocation requests")
+    return parser.parse_args()
+
 def get_xml():
-    ''' 
+    """ 
     Get requests.xml file via api using requests
-    '''
+    """
+    global token
     # set api url
     api_url = 'http://144.6.225.151:3000//api/v0/disks.xml'
     # read authoprization token
-    f = open(expanduser('~')+'/.roadmapapi', 'r')
-    token = f.readline().strip()
     # set headers
     headers = { "Content-type": "application/xml",  "Authorization": "Token token="+token}
     # get url
@@ -59,16 +71,18 @@ def get_xml():
     r.encoding='utf-8'
     return r.content 
 
-def main():
-    parser = argparse.ArgumentParser(description="Shows allocations for project hh5 (Climate LIEF)")
-    parser.add_argument('--debug', action='store_true',
-            help="Show database actions")
-    parser.add_argument('--admin', action='store_true',
-            help="Get and update allocations from roadmap"),
-    parser.add_argument('--requests', default='/g/data1/ua8/pxp581/requests_storage.xml',
-            help="XML file containing allocation requests")
-    args = parser.parse_args()
+def post_json(json_url, data):
+    """
+    Post dir size and checked_at date for a disk using json and the api
+    """
+    global token
+    headers = { "Content-type": "application/json",  "Authorization": "Token token="+token}
+    r = requests.post(json_url, json=data, headers=headers)
+    return r
 
+def main():
+    global token
+    args = parse_args()
     connect(echo = args.debug)
     session = Session()
 
@@ -87,13 +101,18 @@ def main():
     q = session.query(Path.path, sums.c.size).select_from(sums).join(Path, Path.pa_hash == sums.c.parent_hash)
     
     if args.admin:
+       # read user api token 
+        f = open(expanduser('~')+'/.roadmapapi', 'r')
+        token = f.readline().strip()
+        f.close()
+       # get allocations list as xml file from api and update file
         response = get_xml()
         args.requests = '/g/data/ua8/pxp581/roadmap_requests.xml'
         f = open(args.requests,'w')
         f.write(response)
         f.close()
+    # parse the xml file listing the allocations
     etree = xml.etree.ElementTree.parse(args.requests).getroot()
- 
 
 
     def process_path(path, size):
@@ -105,23 +124,12 @@ def main():
         messages = []
 
         disks = etree.findall("disk[dirname='%s']"%name)
+        print(type(etree))
+
         if len(disks) > 1:
             messages.append('Multiple allocations for this directory')
 
-        try:
-            quota_tb = float(disks[0].find('allocation').text)
-            expire_date = datetime.strptime(disks[0].find('expire').text, "%Y-%m-%d")
-            managers = disks[0].find('managers').text
-            old_size_tb = float(disks[0].find('last_size').text)
-            size_diff = size_tb - old_size_tb
-            print(size_diff)
-            check_date = datetime.strptime(disks[0].find('last_check').text, "%Y-%m-%d")
-            contact = disks[0].find('contact').text
-        # post_json({'size':str(size_tb), 'last_check': date.today()})
-        #disks[0].size = size_tb
-        #disks[0].checked_at = date.today() 
-
-        except IndexError:
+        if len(disks) == 0:
             expire_date = datetime.min
             quota_tb = 0
             old_size_tb = 0.
@@ -129,6 +137,17 @@ def main():
             contact = ''
             managers = ''
             messages.append('No allocation')
+        else:
+            quota_tb = float(disks[0].find('allocation').text)   or 0.0
+            expire_date = datetime.strptime(disks[0].find('expire').text, "%Y-%m-%d") or ''
+            managers = disks[0].find('managers').text or ''
+            disk_id = disks[0].find('id').text or ''
+            old_size_tb = float(disks[0].find('last_size').text)  or 0.0
+            size_diff = size_tb - old_size_tb
+            contact = disks[0].find('contact').text or ''
+            json_url='http://144.6.225.151:3000/api/v0/disks/' + disk_id + '/update.json'
+            check_date = date.today().strftime("%Y-%m-%d")
+            post_json(json_url, {'size':str(size_tb), 'last_check': check_date})
 
         if size_tb > quota_tb:
             messages.append('Over quota')
