@@ -124,7 +124,6 @@ def main():
         messages = []
 
         disks = etree.findall("disk[dirname='%s']"%name)
-        print(type(etree))
 
         if len(disks) > 1:
             messages.append('Multiple allocations for this directory')
